@@ -1,0 +1,458 @@
+// ============================================================
+// Shop Inventory & Ledger SaaS — Prisma schema (PostgreSQL)
+// Multi-tenant: every business-data model carries shopId.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------
+
+enum Role {
+  OWNER
+  MANAGER
+  CASHIER
+  EMPLOYEE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  EXPIRED
+  CANCELED
+}
+
+enum UnitType {
+  PIECE
+  CARTON
+  KG
+  LITER
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  RETURN
+  WASTE
+  ADJUSTMENT
+}
+
+enum PaymentType {
+  CUSTOMER_PAYMENT
+  SUPPLIER_PAYMENT
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_MONEY
+  CHEQUE
+  OTHER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+enum ExpenseCategory {
+  RENT
+  ELECTRICITY
+  WATER
+  SALARY
+  TRANSPORT
+  OTHER
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum WasteReason {
+  EXPIRED
+  RAT_DAMAGE
+  BROKEN
+  SPOILED
+  OTHER
+}
+
+// ------------------------------------------------------------
+// Tenant / Auth
+// ------------------------------------------------------------
+
+model Shop {
+  id              String   @id @default(cuid())
+  name            String
+  location        String?
+  phone           String?
+  ownerName       String?
+  taxRatePercent  Decimal  @default(0) @db.Decimal(5, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  refreshTokens   RefreshToken[]
+
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+trialEnd           DateTime?
+subscriptionEnd    DateTime?
+
+  users           User[]
+  products        Product[]
+  suppliers       Supplier[]
+  customers       Customer[]
+  sales           Sale[]
+  purchases       Purchase[]
+  payments        Payment[]
+  expenses        Expense[]
+  employees       Employee[]
+  stockMovements  StockMovement[]
+  wasteRecords    WasteRecord[]
+  taxPayments     TaxPayment[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String?  @unique
+  email        String?
+  passwordHash String
+  refreshTokens RefreshToken[]
+  role         Role     @default(CASHIER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  stockMovements StockMovement[]
+  wasteRecords   WasteRecord[]
+  sales          Sale[]
+
+  @@index([shopId])
+  @@unique([shopId, email])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  shopId    String
+  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([shopId])
+}
+
+// ------------------------------------------------------------
+// Products & Stock
+// ------------------------------------------------------------
+
+model Product {
+  id                 String    @id @default(cuid())
+  shopId             String
+  shop               Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name               String
+  photoUrl           String?
+  category           String?
+  unitType           UnitType  @default(PIECE)
+  unitsPerPackage    Int?      // e.g. 1 carton = 24 pieces
+  buyingPrice        Decimal   @db.Decimal(12, 2)
+  sellingPrice       Decimal   @db.Decimal(12, 2)
+  quantity           Decimal   @default(0) @db.Decimal(12, 3)
+  minQuantityAlert   Decimal   @default(0) @db.Decimal(12, 3)
+  expiryDate         DateTime?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  stockMovements  StockMovement[]
+  saleItems       SaleItem[]
+  purchaseItems   PurchaseItem[]
+  wasteRecords    WasteRecord[]
+
+  @@index([shopId])
+  @@index([shopId, expiryDate])
+  @@index([shopId, quantity])
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  shopId      String
+  shop        Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product           @relation(fields: [productId], references: [id])
+  type        StockMovementType
+  quantity    Decimal           @db.Decimal(12, 3) // signed: +in / -out
+  note        String?
+  saleId      String?
+  sale        Sale?             @relation(fields: [saleId], references: [id])
+  purchaseId  String?
+  purchase    Purchase?         @relation(fields: [purchaseId], references: [id])
+  wasteId     String?
+  waste       WasteRecord?      @relation(fields: [wasteId], references: [id])
+  createdById String?
+  createdBy   User?             @relation(fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now())
+
+  @@index([shopId, productId])
+  @@index([shopId, createdAt])
+}
+
+// ------------------------------------------------------------
+// Suppliers & Purchases
+// ------------------------------------------------------------
+
+model Supplier {
+  id        String     @id @default(cuid())
+  shopId    String
+  shop      Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  address   String?
+  createdAt DateTime   @default(now())
+
+  purchases Purchase[]
+  payments  Payment[]
+
+  @@index([shopId])
+}
+
+model Purchase {
+  id            String         @id @default(cuid())
+  shopId        String
+  shop          Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  supplierId    String
+  supplier      Supplier       @relation(fields: [supplierId], references: [id])
+  date          DateTime       @default(now())
+  totalAmount   Decimal        @db.Decimal(12, 2)
+  status        PaymentStatus  @default(UNPAID) // cached/denormalized; recompute from allocations
+  createdAt     DateTime       @default(now())
+
+  items          PurchaseItem[]
+  stockMovements StockMovement[]
+  allocations    PaymentAllocation[]
+
+  @@index([shopId, supplierId])
+  @@index([shopId, status])
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Decimal  @db.Decimal(12, 3)
+  unitCost   Decimal  @db.Decimal(12, 2)
+  subtotal   Decimal  @db.Decimal(12, 2)
+
+  @@index([purchaseId])
+}
+
+// ------------------------------------------------------------
+// Customers & Sales
+// ------------------------------------------------------------
+
+model Customer {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  shopName  String?
+  phone     String?
+  location  String?
+  createdAt DateTime @default(now())
+
+  sales    Sale[]
+  payments Payment[]
+
+  @@index([shopId])
+}
+
+model Sale {
+  id           String        @id @default(cuid())
+  shopId       String
+  shop         Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customerId   String?
+  customer     Customer?     @relation(fields: [customerId], references: [id])
+  soldById     String?
+  soldBy       User?         @relation(fields: [soldById], references: [id])
+  date         DateTime      @default(now())
+  subtotal     Decimal       @db.Decimal(12, 2)
+  taxAmount    Decimal       @default(0) @db.Decimal(12, 2)
+  totalAmount  Decimal       @db.Decimal(12, 2)
+  status       PaymentStatus @default(UNPAID) // cached/denormalized; recompute from allocations
+  createdAt    DateTime      @default(now())
+
+  items          SaleItem[]
+  stockMovements StockMovement[]
+  allocations    PaymentAllocation[]
+
+  @@index([shopId, customerId])
+  @@index([shopId, status])
+  @@index([shopId, date])
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Decimal @db.Decimal(12, 3)
+  unitPrice Decimal @db.Decimal(12, 2)
+  subtotal  Decimal @db.Decimal(12, 2)
+
+  @@index([saleId])
+}
+
+// ------------------------------------------------------------
+// Payments (customer + supplier), with allocations
+// ------------------------------------------------------------
+// A Payment is money received from a customer or paid to a
+// supplier. It can cover one or many Sales/Purchases at once,
+// or be entered with no allocation yet (sits as unapplied
+// credit). PaymentAllocation is the join that records exactly
+// how much of a Payment applies to which Sale/Purchase.
+
+model Payment {
+  id          String        @id @default(cuid())
+  shopId      String
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  type        PaymentType
+  customerId  String?
+  customer    Customer?     @relation(fields: [customerId], references: [id])
+  supplierId  String?
+  supplier    Supplier?     @relation(fields: [supplierId], references: [id])
+  amount      Decimal       @db.Decimal(12, 2) // total amount received/paid
+  method      PaymentMethod @default(CASH)
+  reference   String?
+  note        String?
+  date        DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+
+  allocations PaymentAllocation[]
+
+  @@index([shopId, customerId])
+  @@index([shopId, supplierId])
+  @@index([shopId, date])
+}
+
+model PaymentAllocation {
+  id         String    @id @default(cuid())
+  paymentId  String
+  payment    Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  saleId     String?
+  sale       Sale?     @relation(fields: [saleId], references: [id])
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
+  amount     Decimal   @db.Decimal(12, 2) // portion of the payment applied here
+
+  @@index([paymentId])
+  @@index([saleId])
+  @@index([purchaseId])
+}
+
+// ------------------------------------------------------------
+// Expenses
+// ------------------------------------------------------------
+
+model Expense {
+  id          String          @id @default(cuid())
+  shopId      String
+  shop        Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category    ExpenseCategory
+  amount      Decimal         @db.Decimal(12, 2)
+  date        DateTime        @default(now())
+  description String?
+  createdAt   DateTime        @default(now())
+
+  @@index([shopId, date])
+}
+
+// ------------------------------------------------------------
+// Employees & Payroll
+// ------------------------------------------------------------
+
+model Employee {
+  id        String         @id @default(cuid())
+  shopId    String
+  shop      Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  position  String?
+  salary    Decimal        @db.Decimal(12, 2)
+  status    EmployeeStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+
+  payrollPayments PayrollPayment[]
+
+  @@index([shopId])
+}
+
+model PayrollPayment {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  salary      Decimal  @db.Decimal(12, 2)
+  bonus       Decimal  @default(0) @db.Decimal(12, 2)
+  deduction   Decimal  @default(0) @db.Decimal(12, 2)
+  amountPaid  Decimal  @db.Decimal(12, 2)
+  date        DateTime @default(now())
+
+  @@index([employeeId, date])
+}
+
+// ------------------------------------------------------------
+// Waste / Expiry
+// ------------------------------------------------------------
+
+model WasteRecord {
+  id          String      @id @default(cuid())
+  shopId      String
+  shop        Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product     @relation(fields: [productId], references: [id])
+  quantity    Decimal     @db.Decimal(12, 3)
+  reason      WasteReason
+  photoUrl    String?
+  date        DateTime    @default(now())
+  createdById String?
+  createdBy   User?       @relation(fields: [createdById], references: [id])
+
+  stockMovements StockMovement[]
+
+  @@index([shopId, date])
+  @@index([shopId, productId])
+}
+
+// ------------------------------------------------------------
+// Tax
+// ------------------------------------------------------------
+
+model TaxPayment {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(12, 2)
+  period    String   // e.g. "2026-08"
+  paidDate  DateTime
+  reference String?
+  createdAt DateTime @default(now())
+
+  @@index([shopId, period])
+}

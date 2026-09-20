@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "scheme": "fciapp",
+    "name": "Pharmacy Stock Management",
+    "slug": "PharmacyStockManagement",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ic_launcher_foreground.png",
+        "monochromeImage": "./assets/ic_launcher_monochrome.png",
+        "backgroundColor": "#2563eb"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.kidusbasazinew.PharmacyStockManagement"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#eff6ff"
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ec72c181-337c-4452-befd-7c8bc8420170"
+      }
+    },
+    "owner": "kidusbasazinew"
+  }
+}
