@@ -11,6 +11,7 @@ import customerRouter from "./customer.routes.js";
 import saleRouter from "./sale.routes.js";
 import paymentRouter from "./payment.routes.js";
 import expenseRouter from "./expense.routes.js";
+import employeeRouter from "./employee.routes.js";
 
 export const apiRouter = Router();
 
@@ -25,8 +26,6 @@ apiRouter.use("/customers", customerRouter);
 apiRouter.use("/sales", saleRouter);
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/expenses", expenseRouter);
-
-// TODO as each module is rebuilt against the new schema:
-// apiRouter.use("/employees", employeeRouter);
+apiRouter.use("/employees", employeeRouter);
 
 export default apiRouter;
