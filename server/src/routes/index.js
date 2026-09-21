@@ -8,6 +8,7 @@ import productRouter from "./product.routes.js";
 import supplierRouter from "./supplier.routes.js";
 import purchaseRouter from "./purchase.routes.js";
 import customerRouter from "./customer.routes.js";
+import saleRouter from "./sale.routes.js";
 
 export const apiRouter = Router();
 
@@ -19,9 +20,9 @@ apiRouter.use("/products", productRouter);
 apiRouter.use("/suppliers", supplierRouter);
 apiRouter.use("/purchases", purchaseRouter);
 apiRouter.use("/customers", customerRouter);
+apiRouter.use("/sales", saleRouter);
 
 // TODO as each module is rebuilt against the new schema:
-// apiRouter.use("/sales", saleRouter);
 // apiRouter.use("/payments", paymentRouter);
 // apiRouter.use("/expenses", expenseRouter);
 // apiRouter.use("/employees", employeeRouter);
