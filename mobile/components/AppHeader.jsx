@@ -18,10 +18,10 @@ const CURVE_ZONE_HEIGHT = 100; // depth at the corners
 const CARD_HEIGHT = 76;
 const CARD_TOP_OFFSET = 26; // how far into the curve zone the card sits
 
-export function AppHeader({ navigation, route, pharmacy }) {
+export function AppHeader({ navigation, route, shop }) {
   const insets = useSafeAreaInsets();
   const title = ROUTE_TITLES[route.name] ?? route.name;
-  const isTrial = pharmacy?.subscriptionStatus === "TRIAL";
+  const isTrial = shop?.subscriptionStatus === "TRIAL";
 
   const iconRowHeight = insets.top + 68;
 
@@ -95,24 +95,30 @@ export function AppHeader({ navigation, route, pharmacy }) {
         >
           <View>
             <Text className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
-              PHARMACY
+              SHOP
             </Text>
             <Text className="text-[15px] font-bold text-on-surface mt-0.5">
-              {pharmacy?.name ?? "—"}
+              {shop?.name ?? "—"}
             </Text>
           </View>
 
           <View className="items-end">
             <View className="bg-primary/10 px-2.5 py-1 rounded-full">
               <Text className="text-[10px] font-bold text-primary">
-                {pharmacy?.subscriptionStatus ?? "—"}
+                {shop?.subscriptionStatus ?? "—"}
               </Text>
             </View>
-            {isTrial && pharmacy?.daysRemainingInTrial != null ? (
+            {isTrial && shop?.trialEnd ? (
               <View className="flex-row items-center gap-1 mt-1">
                 <Calendar size={11} color="#565E74" />
                 <Text className="text-[11px] font-medium text-secondary">
-                  {pharmacy.daysRemainingInTrial}d left
+                  {Math.max(
+                    0,
+                    Math.ceil(
+                      (new Date(shop.trialEnd) - new Date()) / 86400000,
+                    ),
+                  )}
+                  d left
                 </Text>
               </View>
             ) : null}

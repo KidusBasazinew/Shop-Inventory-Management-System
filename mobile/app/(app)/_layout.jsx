@@ -2,11 +2,11 @@ import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { CustomSidebar } from "../../components/CustomSidebar";
 import { AppHeader } from "../../components/AppHeader";
-import { useUser } from "../../hooks/useUser";
+import { useAuth } from "../../context/AuthContext";
 import { View, ActivityIndicator } from "react-native";
 
 export default function AppLayout() {
-  const { pharmacy, isLoading } = useUser();
+  const { shop, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -19,12 +19,10 @@ export default function AppLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
-        drawerContent={(props) => (
-          <CustomSidebar {...props} pharmacy={pharmacy} />
-        )}
+        drawerContent={(props) => <CustomSidebar {...props} shop={shop} />}
         screenOptions={{
           headerShown: true,
-          header: (props) => <AppHeader {...props} pharmacy={pharmacy} />,
+          header: (props) => <AppHeader {...props} shop={shop} />,
           drawerType: "front",
           drawerStyle: { width: "80%" },
           overlayColor: "rgba(11,28,48,0.4)",
@@ -32,17 +30,6 @@ export default function AppLayout() {
         }}
       >
         <Drawer.Screen name="overview" options={{ title: "Overview" }} />
-        <Drawer.Screen name="inventory" options={{ title: "Inventory" }} />
-        <Drawer.Screen name="finance" options={{ title: "Finance" }} />
-        <Drawer.Screen
-          name="notifications"
-          options={{ title: "Notifications" }}
-        />
-        <Drawer.Screen name="settings" options={{ title: "Settings" }} />
-        <Drawer.Screen
-          name="subscription"
-          options={{ title: "Subscription" }}
-        />
       </Drawer>
     </GestureHandlerRootView>
   );

@@ -11,9 +11,10 @@ import {
 } from "react-native";
 import { Stack } from "expo-router";
 import { ShoppingBag, X, Plus, ChevronDown, Check } from "lucide-react-native";
-import { useMedicines } from "../../../hooks/useMedicines";
-import { useSuppliers } from "../../../hooks/useSuppliers";
-import { useBatches, useCreateBatch } from "../../../hooks/useBatches";
+// Temporarily disabled: inventory hooks are not available in this checkout.
+// import { useMedicines } from "../../../hooks/useMedicines";
+// import { useSuppliers } from "../../../hooks/useSuppliers";
+// import { useBatches, useCreateBatch } from "../../../hooks/useBatches";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";

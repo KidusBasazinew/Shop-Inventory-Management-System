@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Link, router } from "expo-router";
 import {
@@ -26,8 +27,8 @@ export default function Register() {
   const { register, registerPending, registerError } = useAuth();
 
   const [form, setForm] = useState({
-    pharmacyName: "",
-    pharmacyAddress: "",
+    shopName: "",
+    shopLocation: "",
     ownerName: "",
     phone: "",
     password: "",
@@ -42,22 +43,16 @@ export default function Register() {
 
   const handleRegister = async () => {
     const {
-      pharmacyName,
-      pharmacyAddress,
+      shopName,
+      shopLocation,
       ownerName,
       phone,
       password,
       confirmPassword,
     } = form;
 
-    if (
-      !pharmacyName ||
-      !pharmacyAddress ||
-      !ownerName ||
-      !phone ||
-      !password
-    ) {
-      setLocalError("Please fill in all fields");
+    if (!shopName || !ownerName || !phone || !password) {
+      setLocalError("Please fill in all required fields");
       return;
     }
     if (password !== confirmPassword) {
@@ -68,24 +63,25 @@ export default function Register() {
     setLocalError("");
     try {
       await register({
-        pharmacyName,
-        pharmacyAddress,
+        shopName,
+        shopLocation,
         ownerName,
         phone,
         password,
       });
       router.replace("/(app)/overview");
     } catch (e) {
-      // registerError from the mutation already reflects this
+      // registerError handled by context
     }
   };
 
-  const serverErrorMessage = registerError?.response?.data?.message;
+  const serverErrorMessage =
+    registerError?.response?.data?.message ||
+    registerError?.response?.data?.error;
   const errorMessage = localError || serverErrorMessage;
 
   const canSubmit =
-    form.pharmacyName &&
-    form.pharmacyAddress &&
+    form.shopName &&
     form.ownerName &&
     form.phone &&
     form.password &&
@@ -110,7 +106,7 @@ export default function Register() {
               Create your account
             </Text>
             <Text className="text-sm text-on-surface-variant mt-1 text-center">
-              Set up your pharmacy on KLABS
+              Set up your shop on KLABS
             </Text>
           </View>
 
@@ -120,19 +116,19 @@ export default function Register() {
             </View>
           ) : null}
 
-          <SectionLabel text="Pharmacy Details" />
+          <SectionLabel text="Shop Details" />
           <View className="gap-3 mb-6">
             <Field
               icon={Store}
-              value={form.pharmacyName}
-              onChangeText={update("pharmacyName")}
-              placeholder="Pharmacy name"
+              value={form.shopName}
+              onChangeText={update("shopName")}
+              placeholder="Shop name"
             />
             <Field
               icon={MapPin}
-              value={form.pharmacyAddress}
-              onChangeText={update("pharmacyAddress")}
-              placeholder="Address (e.g. Bole, Addis Ababa)"
+              value={form.shopLocation}
+              onChangeText={update("shopLocation")}
+              placeholder="Location (e.g. Bole, Addis Ababa)"
             />
           </View>
 
@@ -198,10 +194,16 @@ export default function Register() {
             className="rounded-2xl py-4 items-center mt-8 flex-row justify-center gap-2"
             style={{ backgroundColor: "#2563eb", opacity: canSubmit ? 1 : 0.5 }}
           >
-            <Text className="text-white font-semibold text-[15px]">
-              {registerPending ? "Creating account..." : "Create Account"}
-            </Text>
-            {!registerPending && <ArrowRight size={16} color="#ffffff" />}
+            {registerPending ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <>
+                <Text className="text-white font-semibold text-[15px]">
+                  Create Account
+                </Text>
+                <ArrowRight size={16} color="#ffffff" />
+              </>
+            )}
           </Pressable>
 
           <View className="flex-row justify-center mt-6">

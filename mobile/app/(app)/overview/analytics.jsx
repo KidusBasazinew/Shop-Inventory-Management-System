@@ -17,9 +17,10 @@ import {
   Award,
 } from "lucide-react-native";
 
-import { useBatches } from "../../../hooks/useBatches";
-import { useMedicines } from "../../../hooks/useMedicines";
-import { useSuppliers } from "../../../hooks/useSuppliers";
+// Temporarily disabled: analytics hooks are not available in this checkout.
+// import { useBatches } from "../../../hooks/useBatches";
+// import { useMedicines } from "../../../hooks/useMedicines";
+// import { useSuppliers } from "../../../hooks/useSuppliers";
 
 import PillTabs from "../../../components/common/PillTabs";
 import KPICard from "../../../components/analytics/KPICard";

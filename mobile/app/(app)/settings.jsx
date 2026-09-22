@@ -19,8 +19,9 @@ import {
   X,
 } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
-import { useUser } from "../../hooks/useUser";
-import { useUpdatePharmacy } from "../../hooks/usePharmacy";
+// Temporarily disabled: settings hooks are not available in this checkout.
+// import { useUser } from "../../hooks/useUser";
+// import { useUpdatePharmacy } from "../../hooks/usePharmacy";
 
 export default function Settings() {
   const { user } = useAuth();

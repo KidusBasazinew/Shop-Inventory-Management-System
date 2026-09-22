@@ -1,4 +1,5 @@
 import { useState } from "react";
+/* Temporarily disabled until the staff hooks are restored.
 import {
   View,
   Text,
@@ -20,6 +21,7 @@ import {
   useUpdateUser,
   useDeactivateUser,
 } from "../../hooks/useUsers";
+*/
 import StaffCard from "../../components/staff/StaffCard";
 
 const STAFF_ROLES = ["MANAGER", "CASHIER"];

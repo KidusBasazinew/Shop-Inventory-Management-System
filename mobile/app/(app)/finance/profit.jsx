@@ -8,8 +8,9 @@ import {
   Receipt,
   Wallet,
 } from "lucide-react-native";
-import { useSales } from "../../../hooks/useSales";
-import { useExpenseSummary } from "../../../hooks/useExpenses";
+// Temporarily disabled: finance hooks are not available in this checkout.
+// import { useSales } from "../../../hooks/useSales";
+// import { useExpenseSummary } from "../../../hooks/useExpenses";
 
 export default function FinanceProfit() {
   // 1. Fetch real sales and real expense data

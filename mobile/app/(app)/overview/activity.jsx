@@ -20,7 +20,8 @@ import {
   Hash,
 } from "lucide-react-native";
 import { useAuth } from "../../../context/AuthContext";
-import { useInventoryMovements } from "../../../hooks/useInventoryMovements";
+// Temporarily disabled: activity hooks are not available in this checkout.
+// import { useInventoryMovements } from "../../../hooks/useInventoryMovements";
 
 const MOVEMENT_TYPES = [
   "PURCHASE",

@@ -22,7 +22,8 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react-native";
-import { useSales, useSale } from "../../hooks/useSales";
+// Temporarily disabled: sales hooks are not available in this checkout.
+// import { useSales, useSale } from "../../hooks/useSales";
 
 // Dedicated Payment Config with matching background and pillar styles
 const PAYMENT_CONFIG = {

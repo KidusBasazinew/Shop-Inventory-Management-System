@@ -17,18 +17,24 @@ import {
   TrendingUp,
 } from "lucide-react-native";
 
-import { useUser } from "../../../hooks/useUser";
-import { useDailyReport, useProfitReport } from "../../../hooks/useSales";
-import {
-  useLowStockMedicines,
-  useMedicines,
-} from "../../../hooks/useMedicines";
-import { useExpiringBatches } from "../../../hooks/useBatches";
+// Temporarily disabled: dashboard data hooks are not available in this checkout.
+// import { useUser } from "../../../hooks/useUser";
+// import { useDailyReport, useProfitReport } from "../../../hooks/useSales";
+// import { useLowStockMedicines, useMedicines } from "../../../hooks/useMedicines";
+// import { useExpiringBatches } from "../../../hooks/useBatches";
 import DonutChart from "../../../components/analytics/DonutChart";
 import ChartCard from "../../../components/analytics/ChartCard";
 import TrialBanner from "../../../components/overview/TrialBanner";
 import QuickAction from "../../../components/overview/QuickAction";
 import AlertRow from "../../../components/overview/AlertRow";
+
+const emptyQuery = () => ({ data: undefined });
+const useUser = () => ({ pharmacy: null, user: null });
+const useDailyReport = emptyQuery;
+const useProfitReport = emptyQuery;
+const useLowStockMedicines = emptyQuery;
+const useMedicines = emptyQuery;
+const useExpiringBatches = emptyQuery;
 
 const PAYMENT_COLORS = {
   CASH: "#004ac6",

@@ -38,6 +38,7 @@ export default function Login() {
 
   const errorMessage =
     loginError?.response?.data?.message ||
+    loginError?.response?.data?.error ||
     (loginError ? "Something went wrong. Please try again." : null);
 
   const canSubmit = phone.length > 0 && password.length > 0 && !loginPending;
@@ -59,7 +60,7 @@ export default function Login() {
             </View>
             <Text className="text-xl font-bold text-primary">Welcome back</Text>
             <Text className="text-sm text-on-surface-variant mt-1">
-              Sign in to continue to KLABS Pharmacy
+              Sign in to continue to KLABS
             </Text>
           </View>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -28,6 +29,7 @@ import {
   useAdjustBatch,
 } from "../../hooks/useBatches";
 import { useSuppliers } from "../../hooks/useSuppliers";
+*/
 import FormField from "../../components/common/FormField";
 import DateField from "../../components/common/DateField";
 import UnitPicker from "../../components/medicines/UnitPicker";

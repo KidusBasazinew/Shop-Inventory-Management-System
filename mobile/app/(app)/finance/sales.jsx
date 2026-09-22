@@ -22,8 +22,9 @@ import {
   AlertTriangle,
 } from "lucide-react-native";
 import { router } from "expo-router";
-import { useMedicines } from "../../../hooks/useMedicines";
-import { useCreateSale } from "../../../hooks/useSales";
+// Temporarily disabled: finance hooks are not available in this checkout.
+// import { useMedicines } from "../../../hooks/useMedicines";
+// import { useCreateSale } from "../../../hooks/useSales";
 
 import BatchPreviewModal from "../../../components/BatchPreviewModal";
 

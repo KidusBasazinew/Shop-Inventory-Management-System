@@ -26,17 +26,8 @@ import {
   Activity,
   BarChart2,
 } from "lucide-react-native";
-import { useExpiringBatches } from "../hooks/useBatches";
 const OVERVIEW_ITEMS = [
   { group: "overview", target: "index", label: "Dashboard", icon: LayoutGrid },
-  { group: "overview", target: "activity", label: "Activity", icon: Activity },
-  {
-    group: "overview",
-    target: "analytics",
-    label: "Analytics",
-    icon: BarChart2,
-  },
-  { group: "overview", target: "alerts", label: "Alerts", icon: AlertTriangle },
 ];
 
 const INVENTORY_ITEMS = [
@@ -86,14 +77,11 @@ const FOOTER_ITEMS = [
   { name: "help", label: "Help & Support", icon: HelpCircle },
 ];
 
-export function CustomSidebar({ pharmacy, ...props }) {
+export function CustomSidebar({ shop, ...props }) {
   const { navigation } = props;
   const insets = useSafeAreaInsets();
-  const pathname = usePathname(); // 2. Get current URL path (e.g. "/overview/alerts")
+  const pathname = usePathname();
   const { logout } = useAuth();
-
-  const { data: expiringData } = useExpiringBatches(30);
-  const expiringCount = expiringData?.length ?? 0;
 
   const [openSections, setOpenSections] = useState({
     inventory: true,
@@ -125,7 +113,10 @@ export function CustomSidebar({ pharmacy, ...props }) {
   const handleNavigate = (item) => {
     if (item.group) {
       if (item.target === "expiring") {
-        router.push({ pathname: "/inventory", params: { filter: "EXPIRING" } });
+        router.push({
+          pathname: "/inventory",
+          params: { filter: "expiringSoon" },
+        });
         return;
       }
       const targetPath = item.target === "index" ? "" : `/${item.target}`;
@@ -145,14 +136,7 @@ export function CustomSidebar({ pharmacy, ...props }) {
       router.replace("login");
     }
   };
-  const inventoryItems = INVENTORY_ITEMS.map((item) =>
-    item.target === "expiring"
-      ? {
-          ...item,
-          badge: expiringCount > 0 ? String(expiringCount) : undefined,
-        }
-      : item,
-  );
+  const inventoryItems = INVENTORY_ITEMS;
   return (
     <View className="flex-1 bg-surface">
       <DrawerContentScrollView
@@ -169,9 +153,7 @@ export function CustomSidebar({ pharmacy, ...props }) {
             <View className="w-10 h-10 bg-primary-container rounded-lg items-center justify-center">
               <Stethoscope size={20} color="#eeefff" strokeWidth={2.2} />
             </View>
-            <Text className="text-[20px] font-bold text-primary">
-              KLABS Pharmacy
-            </Text>
+            <Text className="text-[20px] font-bold text-primary">KLABS</Text>
           </View>
 
           {/* Profile */}
@@ -184,10 +166,10 @@ export function CustomSidebar({ pharmacy, ...props }) {
             </View>
             <View>
               <Text className="text-[16px] font-semibold text-on-surface">
-                {pharmacy?.name}
+                {shop?.name}
               </Text>
               <Text className="text-[12px] text-on-surface-variant">
-                {pharmacy?.phone}
+                {shop?.phone}
               </Text>
             </View>
           </View>
@@ -197,20 +179,22 @@ export function CustomSidebar({ pharmacy, ...props }) {
             <View className="bg-surface-container-low p-2 rounded-xl gap-1">
               <View className="flex-row items-center justify-between">
                 <Text className="text-[12px] font-semibold text-on-surface-variant">
-                  {pharmacy?.name}
+                  {shop?.name}
                 </Text>
                 <View className="bg-primary/10 px-2 py-0.5 rounded-full">
                   <Text className="text-[10px] font-bold text-primary">
-                    {pharmacy?.subscriptionStatus}
+                    {shop?.subscriptionStatus}
                   </Text>
                 </View>
               </View>
               <View className="flex-row items-center gap-1">
                 <Calendar size={13} color="#004ac6" />
                 <Text className="text-[11px] font-medium text-secondary">
-                  {pharmacy?.subscriptionStatus === "PRO"
-                    ? "Pro Plan (14 days left)"
-                    : "Basic Plan"}
+                  {shop?.subscriptionStatus === "TRIAL"
+                    ? "Trial Plan"
+                    : shop?.subscriptionStatus === "ACTIVE"
+                      ? "Active Plan"
+                      : "Subscription Inactive"}
                 </Text>
               </View>
             </View>
@@ -230,35 +214,7 @@ export function CustomSidebar({ pharmacy, ...props }) {
             ))}
           </Section>
 
-          <CollapsibleSection
-            title="INVENTORY"
-            open={openSections.inventory}
-            onToggle={() => toggleSection("inventory")}
-          >
-            {inventoryItems.map((item) => (
-              <NavItem
-                key={`${item.group}-${item.target}`}
-                item={item}
-                isActive={isItemActive(item)}
-                onPress={() => handleNavigate(item)}
-              />
-            ))}
-          </CollapsibleSection>
-
-          <CollapsibleSection
-            title="FINANCE"
-            open={openSections.finance}
-            onToggle={() => toggleSection("finance")}
-          >
-            {FINANCE_ITEMS.map((item) => (
-              <NavItem
-                key={`${item.group}-${item.target}`}
-                item={item}
-                isActive={isItemActive(item)}
-                onPress={() => handleNavigate(item)}
-              />
-            ))}
-          </CollapsibleSection>
+          {/* Inventory and finance navigation are temporarily hidden. */}
         </View>
       </DrawerContentScrollView>
 
@@ -267,14 +223,7 @@ export function CustomSidebar({ pharmacy, ...props }) {
         className="px-3 border-t border-outline-variant/30 pt-2 gap-1"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        {FOOTER_ITEMS.map((item) => (
-          <NavItem
-            key={item.name}
-            item={item}
-            isActive={isItemActive(item)}
-            onPress={() => handleNavigate(item)}
-          />
-        ))}
+        {/* Secondary pages are temporarily hidden. */}
 
         <Pressable
           onPress={handleLogout}

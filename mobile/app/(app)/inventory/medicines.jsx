@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
+/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -19,6 +20,7 @@ import {
   useUpdateMedicine,
   useDeleteMedicine,
 } from "../../../hooks/useMedicines";
+*/
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+/* Temporarily disabled until the finance hooks are restored.
 import {
   View,
   Text,
@@ -31,6 +32,7 @@ import {
   useUpdateExpense,
   useDeleteExpense,
 } from "../../../hooks/useExpenses";
+*/
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";

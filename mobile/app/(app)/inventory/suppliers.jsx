@@ -1,4 +1,5 @@
 import { useState } from "react";
+/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ import {
   useUpdateSupplier,
   useDeleteSupplier,
 } from "../../../hooks/useSuppliers";
+*/
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";

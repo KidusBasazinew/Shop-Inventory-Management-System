@@ -18,8 +18,9 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 import { LineChart, BarChart } from "react-native-gifted-charts";
-import { useSales } from "../../../hooks/useSales";
-import { useExpenseSummary } from "../../../hooks/useExpenses";
+// Temporarily disabled: finance hooks are not available in this checkout.
+// import { useSales } from "../../../hooks/useSales";
+// import { useExpenseSummary } from "../../../hooks/useExpenses";
 
 export default function FinanceOverview() {
   const [chartType, setChartType] = useState("bar");

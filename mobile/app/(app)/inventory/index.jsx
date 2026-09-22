@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -22,6 +23,7 @@ import {
   useLowStockMedicines,
 } from "../../../hooks/useMedicines";
 import { useExpiringBatches } from "../../../hooks/useBatches";
+*/
 import InventoryStockCard from "../../../components/inventory/InventoryStockCard";
 
 export default function InventoryScreen() {

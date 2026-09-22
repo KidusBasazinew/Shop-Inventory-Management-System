@@ -12,9 +12,9 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [pharmacy, setPharmacy] = useState(null);
+  const [shop, setShop] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const queryClient = useQueryClient(); // ← add this
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     (async () => {
@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
         refreshToken: data.refreshToken,
       });
       setUser(data.user);
-      setPharmacy(data.pharmacy);
-      queryClient.setQueryData(["pharmacy-me"], data.pharmacy); // ← add this
+      setShop(data.shop);
+      queryClient.setQueryData(["shop-me"], data.shop);
     },
   });
 
@@ -50,30 +50,29 @@ export function AuthProvider({ children }) {
         refreshToken: data.refreshToken,
       });
       setUser(data.user);
-      setPharmacy(data.pharmacy);
-      queryClient.setQueryData(["pharmacy-me"], data.pharmacy); // ← add this
+      setShop(data.shop);
+      queryClient.setQueryData(["shop-me"], data.shop); // ← add this
     },
   });
 
   const logout = async () => {
     try {
-      const refreshToken = await getRefreshToken(); // fixed: was getAccessToken()
+      const refreshToken = await getRefreshToken();
       await api.post("/auth/logout", { refreshToken });
     } catch (e) {
       // logout is idempotent server-side — ignore network errors here
     } finally {
       await clearTokens();
       setUser(null);
-      setPharmacy(null);
-      queryClient.removeQueries({ queryKey: ["pharmacy-me"] }); // ← add this
+      setShop(null);
+      queryClient.removeQueries({ queryKey: ["shop-me"] });
     }
   };
-
   return (
     <AuthContext.Provider
       value={{
         user,
-        pharmacy,
+        shop,
         isLoading,
         login: loginMutation.mutateAsync,
         loginPending: loginMutation.isPending,

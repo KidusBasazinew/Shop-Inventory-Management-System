@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { CheckCircle2, Clock, XCircle, CreditCard } from "lucide-react-native";
+/* Temporarily disabled until the payment hooks are restored.
 import {
   View,
   Text,
@@ -8,7 +10,6 @@ import {
   Alert,
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import { CheckCircle2, Clock, XCircle, CreditCard } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import {
   useSubscription,
@@ -16,6 +17,7 @@ import {
   useInitializePayment,
   useVerifyPayment,
 } from "../../hooks/usePayments";
+*/
 
 const PLANS = [
   { months: 1, label: "1 Month" },

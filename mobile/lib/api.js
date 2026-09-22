@@ -6,8 +6,10 @@ import {
   clearTokens,
 } from "./secureStore";
 
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "");
+
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: apiBaseUrl,
   timeout: 15000,
 });
 
@@ -41,8 +43,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Don't try to refresh using the refresh endpoint itself
-    if (originalRequest.url?.includes("/auth/refresh")) {
+    // Auth requests must surface their own 401 response. They do not have an
+    // existing session to refresh.
+    if (
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register") ||
+      originalRequest.url?.includes("/auth/refresh")
+    ) {
       await clearTokens();
       return Promise.reject(error);
     }
@@ -66,10 +73,9 @@ api.interceptors.response.use(
       const refreshToken = await getRefreshToken();
       if (!refreshToken) throw new Error("No refresh token");
 
-      const { data } = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`,
-        { refreshToken },
-      );
+      const { data } = await axios.post(`${apiBaseUrl}/auth/refresh`, {
+        refreshToken,
+      });
 
       await saveTokens({
         accessToken: data.accessToken,

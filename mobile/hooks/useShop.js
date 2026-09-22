@@ -1,19 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "../lib/api";
 
-export function useUser() {
+export function useShop() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["pharmacy-me"],
+    queryKey: ["shop-me"],
     queryFn: async () => {
-      const { data } = await api.get("/pharmacy/me");
-      return data; // pharmacy record
+      const { data } = await api.get("/shop");
+      return data; // shop record
     },
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
   return {
-    pharmacy: data ?? null,
+    shop: data ?? null,
     isLoading,
     isError,
   };

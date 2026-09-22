@@ -1,4 +1,5 @@
-import { useBatchesForMedicine } from "../hooks/useBatches";
+// Temporarily disabled: this modal belongs to the hidden sales page.
+// import { useBatchesForMedicine } from "../hooks/useBatches";
 import {
   Modal,
   View,

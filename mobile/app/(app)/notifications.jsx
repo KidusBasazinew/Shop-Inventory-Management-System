@@ -4,10 +4,11 @@ import { router } from "expo-router";
 import SectionHeader from "../../components/common/SectionHeader";
 import NotificationCard from "../../components/notifications/NotificationCard";
 import { COLORS, SPACING } from "../../theme/theme";
-import { useUser } from "../../hooks/useUser";
-import { useLowStockMedicines } from "../../hooks/useMedicines";
-import { useExpiringBatches } from "../../hooks/useBatches";
-import { useInventoryMovements } from "../../hooks/useInventoryMovements";
+// Temporarily disabled: notification hooks are not available in this checkout.
+// import { useUser } from "../../hooks/useUser";
+// import { useLowStockMedicines } from "../../hooks/useMedicines";
+// import { useExpiringBatches } from "../../hooks/useBatches";
+// import { useInventoryMovements } from "../../hooks/useInventoryMovements";
 
 function daysUntil(dateStr) {
   return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
