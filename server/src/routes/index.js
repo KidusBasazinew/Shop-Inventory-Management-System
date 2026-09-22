@@ -15,6 +15,7 @@ import employeeRouter from "./employee.routes.js";
 import wasteRouter from "./waste.routes.js";
 import taxRouter from "./tax.routes.js";
 import reportRouter from "./report.routes.js";
+import stockMovementRouter from "./stockMovement.routes.js";
 
 export const apiRouter = Router();
 
@@ -33,5 +34,6 @@ apiRouter.use("/employees", employeeRouter);
 apiRouter.use("/waste", wasteRouter);
 apiRouter.use("/tax", taxRouter);
 apiRouter.use("/reports", reportRouter);
+apiRouter.use("/stock-movements", stockMovementRouter);
 
 export default apiRouter;

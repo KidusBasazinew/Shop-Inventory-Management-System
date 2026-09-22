@@ -4,12 +4,13 @@ import { router } from "expo-router";
 import SectionHeader from "../../../components/common/SectionHeader";
 import NotificationCard from "../../../components/notifications/NotificationCard";
 
-import { COLORS, SPACING } from "../../../theme/theme";
-// Temporarily disabled: alert hooks are not available in this checkout.
-// import { useUser } from "../../../hooks/useUser";
-// import { useLowStockMedicines } from "../../../hooks/useMedicines";
-// import { useExpiringBatches } from "../../../hooks/useBatches";
-// import { useInventoryMovements } from "../../../hooks/useInventoryMovements";
+import { SPACING } from "../../../theme/theme";
+import { useShop } from "../../../hooks/useShop";
+import {
+  useLowStockProducts,
+  useExpiringProducts,
+} from "../../../hooks/useProducts";
+import { useStockMovements } from "../../../hooks/useStockMovements";
 
 function daysUntil(dateStr) {
   return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
@@ -41,54 +42,52 @@ function formatTime(dateStr) {
 }
 
 export default function AlertsScreen() {
-  const { pharmacy } = useUser();
-  const { data: lowStock, isLoading: lowStockLoading } = useLowStockMedicines();
-  const { data: expiring, isLoading: expiringLoading } = useExpiringBatches(60);
+  const { shop } = useShop();
+  const { data: lowStockData, isLoading: lowStockLoading } =
+    useLowStockProducts();
+  const { data: expiringData, isLoading: expiringLoading } =
+    useExpiringProducts(30);
   const { data: movementsData, isLoading: movementsLoading } =
-    useInventoryMovements({
+    useStockMovements({
       type: "PURCHASE",
       limit: 20,
     });
 
-  const [readIds, setReadIds] = useState(new Set());
-  const markAsRead = (id) => {
-    setReadIds((prev) => new Set(prev).add(id));
-  };
+  const lowStock = lowStockData?.items ?? [];
+  const expiring = expiringData?.items ?? [];
 
-  // "Needs Attention" — current state, not timestamped events
+  const [readIds, setReadIds] = useState(new Set());
+  const markAsRead = (id) => setReadIds((prev) => new Set(prev).add(id));
+
   const attentionItems = useMemo(() => {
     const items = [];
 
-    (lowStock ?? []).forEach((m) => {
-      const isOut = m.totalQuantity === 0;
+    lowStock.forEach((p) => {
+      const isOut = Number(p.quantity) === 0;
       items.push({
-        id: `low-stock-${m.id}`,
+        id: `low-stock-${p.id}`,
         severity: isOut ? "critical" : "warning",
         title: isOut ? "Out of Stock" : "Low Stock Alert",
         time: "Now",
-        description: `${m.name} — ${m.totalQuantity} ${m.unit?.toLowerCase() ?? "units"} left (reorder at ${m.reorderLevel}).`,
-        actionLabel: "VIEW BATCHES",
-        onActionPress: () =>
-          router.push({
-            pathname: "/medicine-batches",
-            params: { medicineId: m.id, medicineName: m.name },
-          }),
+        description: `${p.name} — ${p.quantity} ${p.unitType?.toLowerCase() ?? "units"} left (reorder at ${p.minQuantityAlert}).`,
+        actionLabel: "VIEW PRODUCTS",
+        onActionPress: () => router.push("(app)/inventory/medicines"),
       });
     });
 
-    (expiring ?? []).forEach((b) => {
-      const daysLeft = daysUntil(b.expiryDate);
+    expiring.forEach((p) => {
+      const daysLeft = daysUntil(p.expiryDate);
       items.push({
-        id: `expiring-${b.id}`,
+        id: `expiring-${p.id}`,
         severity: daysLeft <= 14 ? "critical" : "warning",
         title: "Expiry Warning",
         time: "Now",
-        description: `${b.medicine?.name ?? b.batchNumber} — batch ${b.batchNumber}, ${b.quantity} units expire in ${daysLeft}d.`,
+        description: `${p.name} — ${p.quantity} units expire in ${daysLeft}d.`,
       });
     });
 
-    if (pharmacy?.subscriptionStatus === "TRIAL" && pharmacy?.trialEnd) {
-      const daysLeft = daysUntil(pharmacy.trialEnd);
+    if (shop?.subscriptionStatus === "TRIAL" && shop?.trialEnd) {
+      const daysLeft = daysUntil(shop.trialEnd);
       if (daysLeft <= 7) {
         items.push({
           id: "trial-ending",
@@ -102,22 +101,20 @@ export default function AlertsScreen() {
       }
     }
 
-    // most urgent first
     const order = { critical: 0, warning: 1, neutral: 2 };
     return items.sort((a, b) => order[a.severity] - order[b.severity]);
-  }, [lowStock, expiring, pharmacy]);
+  }, [lowStock, expiring, shop]);
 
-  // "Recent Activity" — real timestamped events, genuinely bucketable
   const activityBuckets = useMemo(() => {
     const buckets = { today: [], yesterday: [], earlier: [] };
-    (movementsData?.movements ?? []).forEach((mv) => {
+    (movementsData?.items ?? []).forEach((mv) => {
       const bucket = relativeDay(mv.createdAt);
       buckets[bucket].push({
         id: `movement-${mv.id}`,
         severity: "success",
         title: "Stock Arrived",
         time: formatTime(mv.createdAt),
-        description: `${mv.batch?.medicine?.name ?? "Medicine"} — batch ${mv.batch?.batchNumber ?? "—"}, +${mv.quantity} units added.`,
+        description: `${mv.product?.name ?? "Product"} — +${mv.quantity} units added.`,
       });
     });
     return buckets;
@@ -160,6 +157,7 @@ export default function AlertsScreen() {
           </View>
         ) : null}
 
+        {/* {["today", "Today"], ["yesterday", "Yesterday"], ["earlier", "Earlier"]} */}
         {activityBuckets.today.length > 0 ? (
           <View style={{ gap: SPACING.cardGap }}>
             <SectionHeader label="Today" />

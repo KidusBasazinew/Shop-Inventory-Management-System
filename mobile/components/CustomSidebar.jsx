@@ -28,6 +28,14 @@ import {
 } from "lucide-react-native";
 const OVERVIEW_ITEMS = [
   { group: "overview", target: "index", label: "Dashboard", icon: LayoutGrid },
+  { group: "overview", target: "activity", label: "Activity", icon: Activity },
+  {
+    group: "overview",
+    target: "analytics",
+    label: "Analytics",
+    icon: BarChart2,
+  },
+  { group: "overview", target: "alerts", label: "Alerts", icon: AlertTriangle },
 ];
 
 const INVENTORY_ITEMS = [

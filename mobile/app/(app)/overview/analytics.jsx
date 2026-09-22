@@ -1,15 +1,7 @@
 import { useState, useMemo } from "react";
-import {
-  ScrollView,
-  View,
-  Text,
-  ActivityIndicator,
-  Pressable,
-} from "react-native";
-import { Stack } from "expo-router";
+import { ScrollView, View, Text, ActivityIndicator } from "react-native";
 import {
   Boxes,
-  ShoppingCart,
   Package2,
   Coins,
   TrendingUp,
@@ -17,14 +9,12 @@ import {
   Award,
 } from "lucide-react-native";
 
-// Temporarily disabled: analytics hooks are not available in this checkout.
-// import { useBatches } from "../../../hooks/useBatches";
-// import { useMedicines } from "../../../hooks/useMedicines";
-// import { useSuppliers } from "../../../hooks/useSuppliers";
+import { useProducts } from "../../../hooks/useProducts";
+import { useSuppliers } from "../../../hooks/useSuppliers";
 
 import PillTabs from "../../../components/common/PillTabs";
 import KPICard from "../../../components/analytics/KPICard";
-import { ChartCard } from "../../../components/ChartCard"; // Using the updated ChartCard component
+import { ChartCard } from "../../../components/ChartCard";
 
 const DATE_OPTIONS = [
   { label: "Today", value: "today" },
@@ -36,40 +26,30 @@ const DATE_OPTIONS = [
 export default function AnalyticsScreen() {
   const [dateRange, setDateRange] = useState("30d");
 
-  // Fetch real data from hooks
-  const { data: batchesData, isLoading: loadingBatches } = useBatches({});
-  const { data: medicinesData, isLoading: loadingMeds } = useMedicines({
+  const { data: productsData, isLoading: loadingProducts } = useProducts({
     limit: 100,
   });
   const { data: suppliersData } = useSuppliers({ limit: 50 });
 
-  const batches = useMemo(() => batchesData?.batches ?? [], [batchesData]);
-  const medicines = useMemo(
-    () => medicinesData?.medicines ?? [],
-    [medicinesData],
-  );
-  const suppliers = useMemo(
-    () => suppliersData?.suppliers ?? [],
-    [suppliersData],
-  );
+  const products = useMemo(() => productsData?.items ?? [], [productsData]);
+  const suppliers = useMemo(() => suppliersData?.items ?? [], [suppliersData]);
 
-  // Real Metric Calculations
   const metrics = useMemo(() => {
     let totalValue = 0;
     let totalStockUnits = 0;
     let totalProfitPotential = 0;
     let lowStockCount = 0;
 
-    batches.forEach((b) => {
-      const qty = Number(b.quantity || 0);
-      const buy = Number(b.buyPrice || 0);
-      const sell = Number(b.sellPrice || 0);
+    products.forEach((p) => {
+      const qty = Number(p.quantity || 0);
+      const buy = Number(p.buyingPrice || 0);
+      const sell = Number(p.sellingPrice || 0);
 
       totalValue += qty * buy;
       totalStockUnits += qty;
       totalProfitPotential += qty * (sell - buy);
 
-      if (qty <= 15) {
+      if (qty <= Number(p.minQuantityAlert || 0)) {
         lowStockCount += 1;
       }
     });
@@ -88,25 +68,23 @@ export default function AnalyticsScreen() {
       totalProfitPotential,
       avgMargin,
       lowStockCount,
-      totalMedicines: medicines.length,
+      totalProducts: products.length,
       totalSuppliers: suppliers.length,
     };
-  }, [batches, medicines, suppliers]);
+  }, [products, suppliers]);
 
-  // Derive Top-Selling / High-Value Batches from Real Data
-  const topBatches = useMemo(() => {
-    return [...batches]
+  const topProducts = useMemo(() => {
+    return [...products]
       .sort((a, b) => {
-        const valA = Number(a.quantity || 0) * Number(a.sellPrice || 0);
-        const valB = Number(b.quantity || 0) * Number(b.sellPrice || 0);
+        const valA = Number(a.quantity || 0) * Number(a.sellingPrice || 0);
+        const valB = Number(b.quantity || 0) * Number(b.sellingPrice || 0);
         return valB - valA;
       })
       .slice(0, 5);
-  }, [batches]);
+  }, [products]);
 
-  // Construct chart series dynamically using real batch dates/prices
   const chartSeries = useMemo(() => {
-    if (batches.length === 0) {
+    if (products.length === 0) {
       return [
         {
           key: "value",
@@ -119,18 +97,18 @@ export default function AnalyticsScreen() {
       ];
     }
 
-    const samplePoints = batches.slice(0, 6).map((b, idx) => ({
-      value: Number(b.quantity || 0) * Number(b.sellPrice || 0),
-      label: `B-${idx + 1}`,
+    const samplePoints = products.slice(0, 6).map((p, idx) => ({
+      value: Number(p.quantity || 0) * Number(p.sellingPrice || 0),
+      label: p.name.slice(0, 6),
     }));
 
-    const marginPoints = batches.slice(0, 6).map((b, idx) => ({
+    const marginPoints = products.slice(0, 6).map((p, idx) => ({
       value: Math.max(
         0,
-        (Number(b.sellPrice || 0) - Number(b.buyPrice || 0)) *
-          Number(b.quantity || 0),
+        (Number(p.sellingPrice || 0) - Number(p.buyingPrice || 0)) *
+          Number(p.quantity || 0),
       ),
-      label: `B-${idx + 1}`,
+      label: p.name.slice(0, 6),
     }));
 
     return [
@@ -151,9 +129,9 @@ export default function AnalyticsScreen() {
         formatValue: (v) => `ETB ${v.toLocaleString()}`,
       },
     ];
-  }, [batches]);
+  }, [products]);
 
-  if (loadingBatches || loadingMeds) {
+  if (loadingProducts) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#004ac6" />
@@ -171,7 +149,6 @@ export default function AnalyticsScreen() {
         showsVerticalScrollIndicator={false}
         className="px-4"
       >
-        {/* Date Filter Bar */}
         <View className="mt-4 mb-4">
           <PillTabs
             options={DATE_OPTIONS}
@@ -180,13 +157,10 @@ export default function AnalyticsScreen() {
           />
         </View>
 
-        {/* Hero KPI Summary Matrix */}
         <View className="flex-col flex-wrap gap-3 mb-6">
           <KPICard
             label="Total Inventory Value"
-            value={`ETB ${metrics.totalValue.toLocaleString(undefined, {
-              maximumFractionDigits: 0,
-            })}`}
+            value={`ETB ${metrics.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             icon={Boxes}
             iconColor="#004ac6"
             iconBgClassName="bg-primary/10"
@@ -196,12 +170,7 @@ export default function AnalyticsScreen() {
 
           <KPICard
             label="Projected Profit"
-            value={`ETB ${metrics.totalProfitPotential.toLocaleString(
-              undefined,
-              {
-                maximumFractionDigits: 0,
-              },
-            )}`}
+            value={`ETB ${metrics.totalProfitPotential.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             icon={Coins}
             iconColor="#16a34a"
             iconBgClassName="bg-emerald-50"
@@ -210,8 +179,8 @@ export default function AnalyticsScreen() {
           />
 
           <KPICard
-            label="Active Formulations"
-            value={String(metrics.totalMedicines)}
+            label="Active Products"
+            value={String(metrics.totalProducts)}
             icon={Package2}
             iconColor="#8b5cf6"
             iconBgClassName="bg-purple-50"
@@ -232,7 +201,6 @@ export default function AnalyticsScreen() {
           />
         </View>
 
-        {/* Interactive Dynamic Multi-Series Trend Chart */}
         <View className="mb-6">
           <ChartCard
             title="Financial & Stock Asset Projections"
@@ -240,13 +208,12 @@ export default function AnalyticsScreen() {
           />
         </View>
 
-        {/* Highest Capital Allocation Batches Section */}
         <View className="bg-surface-container-low rounded-3xl p-5 border border-outline-variant/20 mb-6">
           <View className="flex-row items-center justify-between mb-4">
             <View className="flex-row items-center gap-2">
               <Award size={20} color="#004ac6" />
               <Text className="font-bold text-base text-on-surface">
-                Highest Value Batches
+                Highest Value Products
               </Text>
             </View>
             <Text className="text-xs font-semibold text-primary">
@@ -254,19 +221,19 @@ export default function AnalyticsScreen() {
             </Text>
           </View>
 
-          {topBatches.length === 0 ? (
+          {topProducts.length === 0 ? (
             <Text className="text-sm text-on-surface-variant italic py-4 text-center">
-              No active batches registered.
+              No active products registered.
             </Text>
           ) : (
             <View className="gap-3">
-              {topBatches.map((item, idx) => {
+              {topProducts.map((item, idx) => {
                 const totalAssetValue =
-                  Number(item.quantity || 0) * Number(item.sellPrice || 0);
+                  Number(item.quantity || 0) * Number(item.sellingPrice || 0);
 
                 return (
                   <View
-                    key={item.id ?? idx}
+                    key={item.id}
                     className="flex-row items-center justify-between p-3 rounded-2xl bg-surface border border-outline-variant/10"
                   >
                     <View className="flex-row items-center gap-3">
@@ -278,10 +245,10 @@ export default function AnalyticsScreen() {
 
                       <View>
                         <Text className="font-bold text-sm text-on-surface">
-                          {item.medicine?.name ?? "Unknown Medicine"}
+                          {item.name}
                         </Text>
                         <Text className="text-xs text-on-surface-variant">
-                          Batch: {item.batchNumber} • {item.quantity} units left
+                          {item.quantity} units left
                         </Text>
                       </View>
                     </View>
@@ -293,7 +260,7 @@ export default function AnalyticsScreen() {
                       <View className="flex-row items-center gap-1">
                         <TrendingUp size={12} color="#16a34a" />
                         <Text className="text-[10px] font-semibold text-emerald-600">
-                          Cost ETB {item.buyPrice}/u
+                          Cost ETB {item.buyingPrice}/u
                         </Text>
                       </View>
                     </View>

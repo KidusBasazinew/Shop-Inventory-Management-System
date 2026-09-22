@@ -9,28 +9,19 @@ import {
 } from "react-native";
 import {
   ArrowDownCircle,
-  ArrowUpCircle,
-  RotateCcw,
-  AlertTriangle,
-  ArrowLeftRight,
   ShoppingCart,
+  RotateCcw,
+  Trash2,
+  ArrowUpCircle,
+  AlertTriangle,
   Inbox,
   ShieldAlert,
   Calendar,
-  Hash,
 } from "lucide-react-native";
 import { useAuth } from "../../../context/AuthContext";
-// Temporarily disabled: activity hooks are not available in this checkout.
-// import { useInventoryMovements } from "../../../hooks/useInventoryMovements";
+import { useStockMovements } from "../../../hooks/useStockMovements";
 
-const MOVEMENT_TYPES = [
-  "PURCHASE",
-  "SALE",
-  "ADJUSTMENT",
-  "EXPIRED",
-  "RETURN",
-  "TRANSFER",
-];
+const MOVEMENT_TYPES = ["PURCHASE", "SALE", "RETURN", "WASTE", "ADJUSTMENT"];
 
 const TYPE_CONFIG = {
   PURCHASE: {
@@ -49,22 +40,6 @@ const TYPE_CONFIG = {
     label: "Sale",
     tag: "Stock Out",
   },
-  ADJUSTMENT: {
-    icon: RotateCcw,
-    color: "#d97706",
-    pillarBg: "bg-orange-500/20",
-    badgeBg: "bg-amber-500/15",
-    label: "Adjustment",
-    tag: "Correction",
-  },
-  EXPIRED: {
-    icon: AlertTriangle,
-    color: "#ba1a1a",
-    pillarBg: "bg-red-500/20",
-    badgeBg: "bg-red-500/15",
-    label: "Expired",
-    tag: "Disposal",
-  },
   RETURN: {
     icon: ArrowUpCircle,
     color: "#059669",
@@ -73,17 +48,24 @@ const TYPE_CONFIG = {
     label: "Return",
     tag: "Stock In",
   },
-  TRANSFER: {
-    icon: ArrowLeftRight,
-    color: "#625b71",
-    pillarBg: "bg-slate-500/20",
-    badgeBg: "bg-slate-500/15",
-    label: "Transfer",
-    tag: "Relocation",
+  WASTE: {
+    icon: Trash2,
+    color: "#ba1a1a",
+    pillarBg: "bg-red-500/20",
+    badgeBg: "bg-red-500/15",
+    label: "Waste",
+    tag: "Disposal",
+  },
+  ADJUSTMENT: {
+    icon: RotateCcw,
+    color: "#d97706",
+    pillarBg: "bg-orange-500/20",
+    badgeBg: "bg-amber-500/15",
+    label: "Adjustment",
+    tag: "Correction",
   },
 };
 
-// Isolated Filter Chip component prevents NativeWind interop / context drops during .map()
 const FilterChip = ({ label, isSelected, onPress }) => (
   <Pressable
     onPress={onPress}
@@ -94,9 +76,7 @@ const FilterChip = ({ label, isSelected, onPress }) => (
     }`}
   >
     <Text
-      className={`text-xs font-bold ${
-        isSelected ? "text-on-primary" : "text-on-surface-variant"
-      }`}
+      className={`text-xs font-bold ${isSelected ? "text-on-primary" : "text-on-surface-variant"}`}
     >
       {label}
     </Text>
@@ -108,11 +88,12 @@ export default function Activity() {
   const canView = user?.role === "OWNER" || user?.role === "MANAGER";
 
   const [typeFilter, setTypeFilter] = useState(null);
-  const { data, isLoading, isError, refetch, isRefetching } =
-    useInventoryMovements({
+  const { data, isLoading, isError, refetch, isRefetching } = useStockMovements(
+    {
       type: typeFilter ?? undefined,
       limit: 50,
-    });
+    },
+  );
 
   if (!canView) {
     return (
@@ -124,21 +105,20 @@ export default function Activity() {
           Access Restricted
         </Text>
         <Text className="text-on-surface-variant text-xs text-center leading-relaxed">
-          The inventory activity log is reserved for Pharmacy Owners and
-          Managers.
+          The stock activity log is reserved for Shop Owners and Managers.
         </Text>
       </View>
     );
   }
 
-  const movements = data?.movements ?? [];
+  const movements = data?.items ?? [];
 
   if (isLoading) {
     return (
       <View className="flex-1 bg-background items-center justify-center">
         <ActivityIndicator size="large" color="#4f378a" />
         <Text className="text-xs font-medium text-secondary mt-3">
-          Fetching Inventory Trail...
+          Fetching stock trail...
         </Text>
       </View>
     );
@@ -170,12 +150,11 @@ export default function Activity() {
 
   return (
     <View className="flex-1 bg-background">
-      {/* HEADER & TOP FILTERS */}
       <View className="px-5 pt-4 pb-2">
         <View className="flex-row items-center justify-between mb-3">
           <View>
             <Text className="font-bold text-xl text-on-surface">
-              Movement Audit Log
+              Stock Movement Log
             </Text>
             <Text className="text-xs font-medium text-secondary mt-0.5">
               Real-time Inventory Tracking
@@ -188,7 +167,6 @@ export default function Activity() {
           </View>
         </View>
 
-        {/* HORIZONTAL TYPE FILTERS */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -199,7 +177,6 @@ export default function Activity() {
             isSelected={typeFilter === null}
             onPress={() => setTypeFilter(null)}
           />
-
           {MOVEMENT_TYPES.map((t) => (
             <FilterChip
               key={t}
@@ -211,7 +188,6 @@ export default function Activity() {
         </ScrollView>
       </View>
 
-      {/* ACTIVITY CARDS LIST */}
       <FlatList
         data={movements}
         keyExtractor={(item) => item.id}
@@ -228,18 +204,17 @@ export default function Activity() {
               No Activity Recorded
             </Text>
             <Text className="text-xs text-on-surface-variant text-center mt-1 max-w-[220px]">
-              No inventory movements match the selected filter criteria.
+              No stock movements match the selected filter.
             </Text>
           </View>
         }
         renderItem={({ item }) => {
           const config = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.ADJUSTMENT;
           const Icon = config.icon;
-          const isPositive = item.quantity > 0;
+          const isPositive = Number(item.quantity) > 0;
 
           return (
             <View className="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-xs border border-outline-variant/20 flex-row">
-              {/* 1. LEFT ACCENT PILLAR */}
               <View
                 className={`w-14 items-center justify-start pt-4 ${config.pillarBg} border-r border-outline-variant/15 shrink-0`}
               >
@@ -248,9 +223,7 @@ export default function Activity() {
                 </View>
               </View>
 
-              {/* 2. CARD CONTENT AREA */}
               <View className="flex-1 p-4 pl-3.5">
-                {/* Header Row: Category Badge + Quantity Pill */}
                 <View className="flex-row items-center justify-between gap-2 mb-1.5">
                   <View className="flex-row items-center gap-1.5">
                     <View
@@ -268,39 +241,24 @@ export default function Activity() {
                     </Text>
                   </View>
 
-                  {/* Quantity Indicator Pill */}
                   <View
-                    className={`px-2.5 py-0.5 rounded-full ${
-                      isPositive ? "bg-emerald-500/10" : "bg-red-500/10"
-                    }`}
+                    className={`px-2.5 py-0.5 rounded-full ${isPositive ? "bg-emerald-500/10" : "bg-red-500/10"}`}
                   >
                     <Text
-                      className={`font-bold text-xs ${
-                        isPositive ? "text-emerald-700" : "text-red-700"
-                      }`}
+                      className={`font-bold text-xs ${isPositive ? "text-emerald-700" : "text-red-700"}`}
                     >
                       {isPositive ? `+${item.quantity}` : item.quantity}
                     </Text>
                   </View>
                 </View>
 
-                {/* Medicine Title */}
                 <Text
                   className="font-bold text-sm text-on-surface leading-snug"
                   numberOfLines={1}
                 >
-                  {item.batch?.medicine?.name ?? "Unknown Medicine"}
+                  {item.product?.name ?? "Unknown product"}
                 </Text>
 
-                {/* Batch Number & Meta */}
-                <View className="flex-row items-center gap-1 mt-1">
-                  <Hash size={12} color="#7a7582" />
-                  <Text className="text-xs font-medium text-on-surface-variant">
-                    Batch: {item.batch?.batchNumber ?? "—"}
-                  </Text>
-                </View>
-
-                {/* Note Strip (if present) */}
                 {item.note ? (
                   <View className="bg-surface-container-low/70 rounded-xl p-2 mt-2.5 border border-outline-variant/15">
                     <Text className="text-xs text-on-surface-variant italic">
@@ -309,7 +267,6 @@ export default function Activity() {
                   </View>
                 ) : null}
 
-                {/* Footer Timestamp */}
                 <View className="flex-row items-center gap-1 mt-3 pt-2 border-t border-outline-variant/10">
                   <Calendar size={11} color="#9aa0a6" />
                   <Text className="text-[10px] font-medium text-outline">

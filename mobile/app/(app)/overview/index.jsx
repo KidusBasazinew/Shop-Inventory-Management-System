@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
 import {
@@ -17,31 +17,26 @@ import {
   TrendingUp,
 } from "lucide-react-native";
 
-// Temporarily disabled: dashboard data hooks are not available in this checkout.
-// import { useUser } from "../../../hooks/useUser";
-// import { useDailyReport, useProfitReport } from "../../../hooks/useSales";
-// import { useLowStockMedicines, useMedicines } from "../../../hooks/useMedicines";
-// import { useExpiringBatches } from "../../../hooks/useBatches";
+import { useShop } from "../../../hooks/useShop";
+import { useAuth } from "../../../context/AuthContext";
+import { useDashboard } from "../../../hooks/useDashboard";
+import {
+  useLowStockProducts,
+  useExpiringProducts,
+} from "../../../hooks/useProducts";
+import { usePayments } from "../../../hooks/usePayments";
 import DonutChart from "../../../components/analytics/DonutChart";
 import ChartCard from "../../../components/analytics/ChartCard";
 import TrialBanner from "../../../components/overview/TrialBanner";
 import QuickAction from "../../../components/overview/QuickAction";
 import AlertRow from "../../../components/overview/AlertRow";
 
-const emptyQuery = () => ({ data: undefined });
-const useUser = () => ({ pharmacy: null, user: null });
-const useDailyReport = emptyQuery;
-const useProfitReport = emptyQuery;
-const useLowStockMedicines = emptyQuery;
-const useMedicines = emptyQuery;
-const useExpiringBatches = emptyQuery;
-
 const PAYMENT_COLORS = {
   CASH: "#004ac6",
-  TELEBIRR: "#10b981",
-  BANK: "#565e74",
-  CBE_BIRR: "#b45309",
-  CREDIT: "#ba1a1a",
+  BANK_TRANSFER: "#565e74",
+  MOBILE_MONEY: "#10b981",
+  CHEQUE: "#b45309",
+  OTHER: "#94a3b8",
 };
 
 const formatLocalDate = (date) => {
@@ -52,47 +47,43 @@ const formatLocalDate = (date) => {
 };
 
 export default function OverviewPage() {
-  const [activeAlertTab, setActiveAlertTab] = useState("lowStock");
+  const [activeAlertTab, setActiveAlertTab] = React.useState("lowStock");
 
   const now = new Date();
-  const todayStr = formatLocalDate(now);
-  console.log("OVERVIEW todayStr:", todayStr, "raw now:", now.toString());
-  const startOfMonthStr = formatLocalDate(
-    new Date(now.getFullYear(), now.getMonth(), 1),
-  );
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
 
-  const { pharmacy, user } = useUser();
-  const { data: rawDailyReport } = useDailyReport(todayStr);
-  const { data: rawProfitReport } = useProfitReport(startOfMonthStr, todayStr);
-  const { data: lowStockData } = useLowStockMedicines();
-  const { data: expiringData } = useExpiringBatches(60);
-  const { data: medicinesData } = useMedicines({ page: 1, limit: 10 });
+  const { shop } = useShop();
+  const { user } = useAuth();
+  const { data: dashboard } = useDashboard();
+  const { data: lowStockData } = useLowStockProducts();
+  const { data: expiringData } = useExpiringProducts(30);
+  const { data: todayPayments } = usePayments({
+    type: "CUSTOMER_PAYMENT",
+    from: todayStart.toISOString(),
+    to: now.toISOString(),
+    limit: 100,
+  });
 
-  // Handle both standard axios response structure { data: { ... } } and raw payload
-  const dailyReport = rawDailyReport?.data ?? rawDailyReport ?? {};
-  const profitReport = rawProfitReport?.data ?? rawProfitReport ?? {};
+  const salesToday = Number(dashboard?.sales ?? 0);
+  const moneyReceivedToday = Number(dashboard?.moneyReceived ?? 0);
+  const customersOwe = Number(dashboard?.customersOwe ?? 0);
+  const lowStockList = lowStockData?.items ?? [];
+  const expiringList = expiringData?.items ?? [];
+  const alertCount =
+    Number(dashboard?.lowStock ?? 0) + Number(dashboard?.expiringSoon ?? 0);
 
-  // Safely extract report metrics
-  const todayRevenue = Number(dailyReport?.totalRevenue ?? 0);
-  const transactionCount = Number(dailyReport?.transactionCount ?? 0);
-  const monthlyNetProfit = Number(profitReport?.netProfit ?? 0);
-  const unitsSold = Number(profitReport?.unitsSold ?? 0);
-
-  const lowStockList = lowStockData ?? [];
-  const expiringList = expiringData ?? [];
-  const totalMedicines = medicinesData?.total ?? 0;
-
-  // Build chart metrics
-  const byPayment = dailyReport?.byPaymentMethod ?? {};
+  // Payment-method mix for today, built from today's customer payments —
+  // there's no server-side breakdown endpoint, so it's grouped here.
+  const byPayment = (todayPayments?.items ?? []).reduce((acc, p) => {
+    acc[p.method] = (acc[p.method] ?? 0) + Number(p.amount);
+    return acc;
+  }, {});
   const paymentEntries = Object.entries(byPayment);
-  const paymentTotal = paymentEntries.reduce(
-    (sum, [, v]) => sum + Number(v),
-    0,
-  );
+  const paymentTotal = paymentEntries.reduce((sum, [, v]) => sum + v, 0);
   const paymentData = paymentEntries.map(([method, amount]) => ({
     label: method.replace("_", " "),
-    percent:
-      paymentTotal > 0 ? Math.round((Number(amount) / paymentTotal) * 100) : 0,
+    percent: paymentTotal > 0 ? Math.round((amount / paymentTotal) * 100) : 0,
     color: PAYMENT_COLORS[method] ?? "#94a3b8",
   }));
 
@@ -109,11 +100,11 @@ export default function OverviewPage() {
       showsVerticalScrollIndicator={false}
     >
       {/* 1. Trial Status Banner */}
-      {pharmacy?.subscriptionStatus === "TRIAL" && (
-        <TrialBanner trialEnd={pharmacy.trialEnd} />
+      {shop?.subscriptionStatus === "TRIAL" && (
+        <TrialBanner trialEnd={shop.trialEnd} />
       )}
 
-      {/* 2. Pharmacy Profile Header */}
+      {/* 2. Shop Profile Header */}
       <View className="bg-surface-container-lowest rounded-3xl p-5 border border-outline-variant/30 shadow-xs gap-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-3 flex-1">
@@ -126,7 +117,7 @@ export default function OverviewPage() {
                   className="text-lg font-bold text-on-surface"
                   numberOfLines={1}
                 >
-                  {pharmacy?.name || "My Pharmacy"}
+                  {shop?.name || "My Shop"}
                 </Text>
                 <View className="bg-emerald/10 px-2 py-0.5 rounded-full flex-row items-center gap-1">
                   <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -136,7 +127,7 @@ export default function OverviewPage() {
                 </View>
               </View>
               <Text className="text-xs text-on-surface-variant">
-                {todayLabel} • Welcome back, {user?.name || "Pharmacist"}
+                {todayLabel} • Welcome back, {user?.name || "there"}
               </Text>
             </View>
           </View>
@@ -150,7 +141,7 @@ export default function OverviewPage() {
             </Text>
           </View>
           <Text className="text-xs text-on-surface-variant font-medium">
-            {totalMedicines} Products Cataloged
+            {customersOwe.toLocaleString()} ETB owed by customers
           </Text>
         </View>
       </View>
@@ -184,7 +175,7 @@ export default function OverviewPage() {
 
         <Text className="text-white font-black text-3xl tracking-tight my-1">
           ETB{" "}
-          {todayRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          {salesToday.toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </Text>
 
         <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-white/15">
@@ -193,21 +184,20 @@ export default function OverviewPage() {
               <TrendingUp size={14} color="#4ade80" />
             </View>
             <Text className="text-white text-xs font-bold">
-              ETB {monthlyNetProfit.toLocaleString()}{" "}
-              <Text className="font-normal text-white/70">MTD Net Profit</Text>
+              ETB {moneyReceivedToday.toLocaleString()}{" "}
+              <Text className="font-normal text-white/70">received today</Text>
             </Text>
           </View>
 
           <Text className="text-white/60 text-xs">
-            {transactionCount} Completed{" "}
-            {transactionCount === 1 ? "Sale" : "Sales"}
+            ETB {Number(dashboard?.creditSales ?? 0).toLocaleString()} on credit
           </Text>
         </View>
       </View>
 
       {/* 4. Secondary Metrics Grid */}
       <View className="flex-row gap-3">
-        {/* MTD Profit Card */}
+        {/* Expenses today */}
         <View className="flex-1 bg-primary p-4 rounded-3xl shadow-md relative overflow-hidden justify-between min-h-[135px]">
           <View className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-white/10" />
           <View className="absolute -bottom-6 -left-6 w-16 h-16 rounded-full bg-black/10" />
@@ -218,27 +208,28 @@ export default function OverviewPage() {
             </View>
             <View className="bg-white/20 px-2 py-0.5 rounded-full border border-white/20">
               <Text className="text-[10px] font-extrabold text-white uppercase tracking-wider">
-                MTD
+                TODAY
               </Text>
             </View>
           </View>
 
           <View className="mt-2">
             <Text className="text-white/70 text-[11px] font-medium tracking-wide">
-              Monthly Net Profit
+              Expenses
             </Text>
             <Text
               className="font-black text-lg text-white tracking-tight"
               numberOfLines={1}
               adjustsFontSizeToFit
             >
-              ETB {monthlyNetProfit.toLocaleString()}
+              ETB {Number(dashboard?.expenses ?? 0).toLocaleString()}
             </Text>
             <Text
               className="text-[11px] text-white/70 font-semibold mt-0.5"
               numberOfLines={1}
             >
-              ↑ {unitsSold} units sold
+              Suppliers owed: ETB{" "}
+              {Number(dashboard?.suppliersOwe ?? 0).toLocaleString()}
             </Text>
           </View>
         </View>
@@ -251,38 +242,28 @@ export default function OverviewPage() {
           <View className="flex-row items-center justify-between">
             <View
               className={`w-8 h-8 rounded-xl items-center justify-center backdrop-blur-md ${
-                lowStockList.length + expiringList.length > 0
-                  ? "bg-rose-500/30"
-                  : "bg-white/20"
+                alertCount > 0 ? "bg-rose-500/30" : "bg-white/20"
               }`}
             >
               <AlertTriangle
                 size={16}
-                color={
-                  lowStockList.length + expiringList.length > 0
-                    ? "#fca5a5"
-                    : "#ffffff"
-                }
+                color={alertCount > 0 ? "#fca5a5" : "#ffffff"}
               />
             </View>
 
             <View
               className={`px-2 py-0.5 rounded-full border ${
-                lowStockList.length + expiringList.length > 0
+                alertCount > 0
                   ? "bg-rose-500/30 border-rose-300/40"
                   : "bg-white/20 border-white/20"
               }`}
             >
               <Text
                 className={`text-[10px] font-extrabold uppercase tracking-wider ${
-                  lowStockList.length + expiringList.length > 0
-                    ? "text-rose-200"
-                    : "text-white"
+                  alertCount > 0 ? "text-rose-200" : "text-white"
                 }`}
               >
-                {lowStockList.length + expiringList.length > 0
-                  ? "Action Needed"
-                  : "Healthy"}
+                {alertCount > 0 ? "Action Needed" : "Healthy"}
               </Text>
             </View>
           </View>
@@ -292,18 +273,16 @@ export default function OverviewPage() {
               Inventory Alerts
             </Text>
             <Text className="font-black text-2xl text-white tracking-tight">
-              {lowStockList.length + expiringList.length}
+              {alertCount}
             </Text>
             <Text
               className={`text-[11px] font-semibold mt-0.5 ${
-                lowStockList.length + expiringList.length > 0
-                  ? "text-rose-200"
-                  : "text-emerald-300"
+                alertCount > 0 ? "text-rose-200" : "text-emerald-300"
               }`}
               numberOfLines={1}
             >
-              {lowStockList.length + expiringList.length > 0
-                ? `${lowStockList.length} low stock · ${expiringList.length} expiring`
+              {alertCount > 0
+                ? `${dashboard?.lowStock ?? 0} low stock · ${dashboard?.expiringSoon ?? 0} expiring`
                 : "All stock healthy"}
             </Text>
           </View>
@@ -325,7 +304,7 @@ export default function OverviewPage() {
           />
           <QuickAction
             icon={Plus}
-            label="Add Medicine"
+            label="Add Product"
             iconColor="#004ac6"
             iconBgClassName="bg-primary/10"
             onPress={() => router.push("(app)/inventory/medicines")}
@@ -415,27 +394,24 @@ export default function OverviewPage() {
                 </Text>
               </View>
             ) : (
-              lowStockList.slice(0, 5).map((m) => (
-                <AlertRow
-                  key={m.id}
-                  icon={PackageMinus}
-                  tone="warning"
-                  title={m.name}
-                  subtitle={`Reorder threshold: ${m.reorderLevel}`}
-                  trailing={`${m.currentStock ?? m.quantity ?? 0} ${m.unit ?? ""}`}
-                  onPress={() =>
-                    router.push({
-                      pathname: "(app)/inventory/medicine-batches",
-                      params: { medicineId: m.id, medicineName: m.name },
-                    })
-                  }
-                />
-              ))
+              lowStockList
+                .slice(0, 5)
+                .map((p) => (
+                  <AlertRow
+                    key={p.id}
+                    icon={PackageMinus}
+                    tone="warning"
+                    title={p.name}
+                    subtitle={`Reorder threshold: ${p.minQuantityAlert}`}
+                    trailing={`${p.quantity} ${p.unitType?.toLowerCase() ?? ""}`}
+                    onPress={() => router.push("(app)/inventory/medicines")}
+                  />
+                ))
             )}
           </View>
         )}
 
-        {/* Tab 2: Expiring Batches */}
+        {/* Tab 2: Expiring Products */}
         {activeAlertTab === "expiring" && (
           <View className="gap-2">
             {expiringList.length === 0 ? (
@@ -444,22 +420,20 @@ export default function OverviewPage() {
                   <PartyPopper size={18} color="#10b981" />
                 </View>
                 <Text className="text-xs text-on-surface-variant font-medium">
-                  No medicine batches expiring in the next 60 days
+                  No products expiring in the next 30 days
                 </Text>
               </View>
             ) : (
               expiringList
                 .slice(0, 5)
-                .map((b) => (
+                .map((p) => (
                   <AlertRow
-                    key={b.id}
+                    key={p.id}
                     icon={Clock3}
                     tone="error"
-                    title={b.medicineName ?? b.batchNumber}
-                    subtitle={`Batch ${b.batchNumber} · Expiry: ${new Date(
-                      b.expiryDate,
-                    ).toLocaleDateString()}`}
-                    trailing={`${b.quantity} units`}
+                    title={p.name}
+                    subtitle={`Expiry: ${new Date(p.expiryDate).toLocaleDateString()}`}
+                    trailing={`${p.quantity} units`}
                   />
                 ))
             )}
