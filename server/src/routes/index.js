@@ -12,6 +12,9 @@ import saleRouter from "./sale.routes.js";
 import paymentRouter from "./payment.routes.js";
 import expenseRouter from "./expense.routes.js";
 import employeeRouter from "./employee.routes.js";
+import wasteRouter from "./waste.routes.js";
+import taxRouter from "./tax.routes.js";
+import reportRouter from "./report.routes.js";
 
 export const apiRouter = Router();
 
@@ -27,5 +30,8 @@ apiRouter.use("/sales", saleRouter);
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/expenses", expenseRouter);
 apiRouter.use("/employees", employeeRouter);
+apiRouter.use("/waste", wasteRouter);
+apiRouter.use("/tax", taxRouter);
+apiRouter.use("/reports", reportRouter);
 
 export default apiRouter;
