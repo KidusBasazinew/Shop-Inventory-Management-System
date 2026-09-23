@@ -32,13 +32,20 @@ const ROLE_STYLES = {
     icon: Receipt,
     label: "Cashier",
   },
+  EMPLOYEE: {
+    color: "#565e74",
+    bg: "bg-secondary-container/60",
+    border: "border-outline-variant/30",
+    icon: Receipt,
+    label: "Employee",
+  },
 };
 
 export default function StaffCard({ staff, isOwner, onPress, onDeactivate }) {
-  const { fullName, phone, role, isActive } = staff;
+  const { name, phone, role, isActive } = staff;
   const roleStyle = ROLE_STYLES[role] ?? ROLE_STYLES.CASHIER;
   const RoleIcon = roleStyle.icon;
-  const initial = fullName ? fullName.charAt(0).toUpperCase() : "S";
+  const initial = name ? name.charAt(0).toUpperCase() : "S";
 
   const canManage = isOwner && role !== "OWNER";
 
@@ -77,7 +84,7 @@ export default function StaffCard({ staff, isOwner, onPress, onDeactivate }) {
                 className="font-bold text-base text-on-surface"
                 numberOfLines={1}
               >
-                {fullName}
+                {name}
               </Text>
               {!isActive ? (
                 <View className="bg-error-container px-2 py-0.5 rounded-full">

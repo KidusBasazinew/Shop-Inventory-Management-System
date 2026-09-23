@@ -1,5 +1,4 @@
 import { useState } from "react";
-/* Temporarily disabled until the staff hooks are restored.
 import {
   View,
   Text,
@@ -13,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { Stack } from "expo-router";
-import { Plus, X, UserX } from "lucide-react-native";
+import { Plus, X } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import {
   useUsers,
@@ -21,11 +20,10 @@ import {
   useUpdateUser,
   useDeactivateUser,
 } from "../../hooks/useUsers";
-*/
 import StaffCard from "../../components/staff/StaffCard";
 
-const STAFF_ROLES = ["MANAGER", "CASHIER"];
-const EMPTY_FORM = { fullName: "", phone: "", password: "", role: "CASHIER" };
+const STAFF_ROLES = ["MANAGER", "CASHIER", "EMPLOYEE"];
+const EMPTY_FORM = { name: "", phone: "", password: "", role: "CASHIER" };
 
 export default function StaffManagement() {
   const { user } = useAuth();
@@ -48,7 +46,7 @@ export default function StaffManagement() {
 
   const openEdit = (staffUser) => {
     setForm({
-      fullName: staffUser.fullName ?? "",
+      name: staffUser.name ?? "",
       phone: staffUser.phone ?? "",
       password: "",
       role: staffUser.role,
@@ -62,10 +60,10 @@ export default function StaffManagement() {
       if (editingId) {
         await updateMutation.mutateAsync({
           id: editingId,
-          payload: { fullName: form.fullName, role: form.role },
+          payload: { name: form.name, role: form.role },
         });
       } else {
-        if (!form.fullName || !form.phone || !form.password) {
+        if (!form.name || !form.phone || !form.password) {
           Alert.alert(
             "Missing fields",
             "Name, phone, and password are required",
@@ -80,7 +78,7 @@ export default function StaffManagement() {
     } catch (e) {
       Alert.alert(
         "Error",
-        e?.response?.data?.message ?? "Failed to save staff member",
+        e?.response?.data?.error ?? "Failed to save staff member",
       );
     }
   };
@@ -92,7 +90,7 @@ export default function StaffManagement() {
     }
     Alert.alert(
       "Deactivate staff",
-      `Deactivate ${staffUser.fullName}? Their access will be revoked immediately.`,
+      `Deactivate ${staffUser.name}? Their access will be revoked immediately.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -104,7 +102,7 @@ export default function StaffManagement() {
             } catch (e) {
               Alert.alert(
                 "Error",
-                e?.response?.data?.message ?? "Failed to deactivate",
+                e?.response?.data?.error ?? "Failed to deactivate",
               );
             }
           },
@@ -117,22 +115,21 @@ export default function StaffManagement() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="#004ac6" />
       </View>
     );
   }
 
   if (isError) {
     return (
-      <View className="flex-1 items-center justify-center px-6 bg-white">
-        <Text className="text-red-500 text-center mb-4">
+      <View className="flex-1 items-center justify-center px-6 bg-background">
+        <Text className="text-error text-center mb-4">
           Failed to load staff
         </Text>
         <Pressable
           onPress={() => refetch()}
-          className="px-4 py-2 rounded-full"
-          style={{ backgroundColor: "#2563eb" }}
+          className="bg-primary px-4 py-2 rounded-full"
         >
           <Text className="text-white font-semibold">Retry</Text>
         </Pressable>
@@ -141,7 +138,7 @@ export default function StaffManagement() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       <Stack.Screen
         options={{ headerShown: true, title: "Staff Management" }}
       />
@@ -149,24 +146,15 @@ export default function StaffManagement() {
       <FlatList
         data={users ?? []}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 20, gap: 10 }}
+        contentContainerStyle={{ padding: 20, gap: 12, paddingBottom: 100 }}
         refreshing={isRefetching}
         onRefresh={refetch}
         renderItem={({ item }) => (
-          <FlatList
-            data={users ?? []}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ padding: 20, gap: 12 }}
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            renderItem={({ item }) => (
-              <StaffCard
-                staff={item}
-                isOwner={isOwner}
-                onPress={() => openEdit(item)}
-                onDeactivate={() => handleDeactivate(item)}
-              />
-            )}
+          <StaffCard
+            staff={item}
+            isOwner={isOwner}
+            onPress={() => openEdit(item)}
+            onDeactivate={() => handleDeactivate(item)}
           />
         )}
       />
@@ -174,15 +162,7 @@ export default function StaffManagement() {
       {isOwner ? (
         <Pressable
           onPress={openCreate}
-          className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center"
-          style={{
-            backgroundColor: "#2563eb",
-            elevation: 4,
-            shadowColor: "#2563eb",
-            shadowOpacity: 0.3,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 4 },
-          }}
+          className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg active:opacity-90"
         >
           <Plus size={26} color="white" />
         </Pressable>
@@ -195,21 +175,20 @@ export default function StaffManagement() {
         >
           <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
             <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-slate-900">
+              <Text className="text-lg font-bold text-on-surface">
                 {editingId ? "Edit Staff" : "New Staff Member"}
               </Text>
               <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#64748b" />
+                <X size={22} color="#434655" />
               </Pressable>
             </View>
 
             <TextInput
               placeholder="Full name"
-              value={form.fullName}
-              onChangeText={(v) => setForm((p) => ({ ...p, fullName: v }))}
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+              value={form.name}
+              onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+              placeholderTextColor="#737686"
+              className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
             />
 
             {!editingId ? (
@@ -219,28 +198,26 @@ export default function StaffManagement() {
                   value={form.phone}
                   onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
                   keyboardType="phone-pad"
-                  placeholderTextColor="#94a3b8"
-                  className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-                  style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+                  placeholderTextColor="#737686"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
                 />
                 <TextInput
                   placeholder="Password"
                   value={form.password}
                   onChangeText={(v) => setForm((p) => ({ ...p, password: v }))}
                   secureTextEntry
-                  placeholderTextColor="#94a3b8"
-                  className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-                  style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+                  placeholderTextColor="#737686"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
                 />
               </>
             ) : (
-              <Text className="text-xs text-slate-500">
+              <Text className="text-xs text-on-surface-variant">
                 Phone: {form.phone} (cannot be changed here)
               </Text>
             )}
 
             <View>
-              <Text className="text-xs font-medium text-slate-500 mb-2">
+              <Text className="text-xs font-medium text-on-surface-variant mb-2">
                 Role
               </Text>
               <View className="flex-row gap-2">
@@ -248,17 +225,14 @@ export default function StaffManagement() {
                   <Pressable
                     key={r}
                     onPress={() => setForm((p) => ({ ...p, role: r }))}
-                    className="flex-1 py-3 rounded-2xl items-center"
-                    style={{
-                      backgroundColor:
-                        form.role === r ? "#2563eb" : "transparent",
-                      borderWidth: 1,
-                      borderColor:
-                        form.role === r ? "#2563eb" : "rgba(0,0,0,0.08)",
-                    }}
+                    className={`flex-1 py-3 rounded-2xl items-center border ${
+                      form.role === r
+                        ? "bg-primary border-primary"
+                        : "border-outline-variant/40"
+                    }`}
                   >
                     <Text
-                      className={`text-sm font-medium ${form.role === r ? "text-white" : "text-slate-500"}`}
+                      className={`text-sm font-medium ${form.role === r ? "text-white" : "text-on-surface-variant"}`}
                     >
                       {r}
                     </Text>
@@ -270,8 +244,8 @@ export default function StaffManagement() {
             <Pressable
               onPress={handleSave}
               disabled={saving}
-              className="rounded-2xl py-4 items-center"
-              style={{ backgroundColor: "#2563eb", opacity: saving ? 0.6 : 1 }}
+              className="bg-primary rounded-2xl py-4 items-center"
+              style={{ opacity: saving ? 0.6 : 1 }}
             >
               <Text className="text-white font-semibold">
                 {saving
