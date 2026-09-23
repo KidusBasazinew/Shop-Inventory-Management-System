@@ -20,6 +20,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 import { usePurchases, useCreatePurchase } from "../../../hooks/usePurchases";
+import { useCreateSupplierPayment } from "../../../hooks/usePayments";
 import { useProducts } from "../../../hooks/useProducts";
 import { useSuppliers } from "../../../hooks/useSuppliers";
 import SearchBar from "../../../components/common/SearchBar";
@@ -38,6 +39,10 @@ export default function PurchasesScreen() {
 
   const [supplierId, setSupplierId] = useState("");
   const [lines, setLines] = useState([{ ...EMPTY_LINE }]);
+
+  const [payingPurchase, setPayingPurchase] = useState(null);
+  const [payAmount, setPayAmount] = useState("");
+  const createSupplierPayment = useCreateSupplierPayment();
 
   const {
     data: purchasesData,
@@ -126,6 +131,38 @@ export default function PurchasesScreen() {
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record purchase",
+      );
+    }
+  };
+
+  const handleRecordPayment = async () => {
+    const value = Number(payAmount);
+    const balance =
+      Number(payingPurchase.totalAmount) -
+      Number(payingPurchase.amountPaid ?? 0);
+    if (!value || value <= 0) {
+      Alert.alert("Invalid amount", "Enter a positive amount");
+      return;
+    }
+    if (value > balance) {
+      Alert.alert(
+        "Too much",
+        `This purchase only has ETB ${balance.toLocaleString()} outstanding`,
+      );
+      return;
+    }
+    try {
+      await createSupplierPayment.mutateAsync({
+        supplierId: payingPurchase.supplierId,
+        amount: value,
+        allocations: [{ targetId: payingPurchase.id, amount: value }],
+      });
+      setPayingPurchase(null);
+      setPayAmount("");
+    } catch (e) {
+      Alert.alert(
+        "Error",
+        e?.response?.data?.error ?? "Failed to record payment",
       );
     }
   };
@@ -222,7 +259,12 @@ export default function PurchasesScreen() {
             description="Log your inward stock purchases to track supplier costs and stock levels."
           />
         }
-        renderItem={({ item }) => <PurchaseCard purchase={item} />}
+        renderItem={({ item }) => (
+          <PurchaseCard
+            purchase={item}
+            onRecordPayment={() => setPayingPurchase(item)}
+          />
+        )}
       />
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
@@ -445,6 +487,52 @@ export default function PurchasesScreen() {
                 ))}
               </View>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      {/* Record supplier payment */}
+      <Modal visible={!!payingPurchase} animationType="fade" transparent>
+        <View className="flex-1 bg-black/40 items-center justify-center px-6">
+          <View className="bg-surface rounded-2xl p-6 w-full gap-4">
+            <Text className="text-lg font-bold text-on-surface">
+              Pay {payingPurchase?.supplier?.name}
+            </Text>
+            <Text className="text-xs text-on-surface-variant">
+              Outstanding: ETB{" "}
+              {payingPurchase
+                ? (
+                    Number(payingPurchase.totalAmount) -
+                    Number(payingPurchase.amountPaid ?? 0)
+                  ).toLocaleString()
+                : 0}
+            </Text>
+            <FormField
+              label="Amount"
+              placeholder="0.00"
+              value={payAmount}
+              onChangeText={setPayAmount}
+              keyboardType="decimal-pad"
+            />
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={() => {
+                  setPayingPurchase(null);
+                  setPayAmount("");
+                }}
+                className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
+              >
+                <Text className="text-on-surface-variant font-medium">
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={handleRecordPayment}
+                disabled={createSupplierPayment.isPending}
+                className="flex-1 bg-emerald-600 rounded-xl py-3 items-center"
+              >
+                <Text className="text-white font-semibold">Confirm</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>

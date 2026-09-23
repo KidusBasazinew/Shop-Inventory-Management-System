@@ -1,10 +1,10 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Truck, Layers, Calendar } from "lucide-react-native";
 import Badge from "../common/Badge";
 
 const STATUS_TONE = { UNPAID: "error", PARTIAL: "warning", PAID: "success" };
 
-export default function PurchaseCard({ purchase }) {
+export default function PurchaseCard({ purchase, onRecordPayment }) {
   const { supplier, date, totalAmount, status, items = [] } = purchase;
   const totalUnits = items.reduce((sum, i) => sum + Number(i.quantity), 0);
 
@@ -74,6 +74,14 @@ export default function PurchaseCard({ purchase }) {
           </Text>
         </View>
       </View>
+      {status !== "PAID" && onRecordPayment ? (
+        <Pressable
+          onPress={onRecordPayment}
+          className="bg-emerald-600 rounded-xl py-2.5 items-center mt-1"
+        >
+          <Text className="text-white font-bold text-xs">Record Payment</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

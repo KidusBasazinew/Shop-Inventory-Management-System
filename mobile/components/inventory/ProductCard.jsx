@@ -78,6 +78,9 @@ export default function ProductCard({ product, onPress, onDeactivate }) {
                 numberOfLines={1}
               >
                 {category}
+                {product.preferredSupplier?.name
+                  ? ` · ${product.preferredSupplier.name}`
+                  : ""}
               </Text>
             ) : null}
           </View>

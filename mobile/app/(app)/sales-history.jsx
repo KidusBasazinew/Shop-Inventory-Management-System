@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   Modal,
+  TextInput,
 } from "react-native";
 import { Stack } from "expo-router";
 import {
@@ -17,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { useSales, useSale } from "../../hooks/useSales";
+import { useCreateCustomerPayment } from "../../hooks/usePayments";
 
 const STATUS_CONFIG = {
   PAID: {
@@ -218,6 +220,43 @@ export default function SalesHistory() {
 function SaleDetailModal({ saleId, onClose }) {
   const { data: sale, isLoading } = useSale(saleId);
   const config = STATUS_CONFIG[sale?.status] ?? STATUS_CONFIG.PAID;
+  const createPayment = useCreateCustomerPayment();
+
+  const [paying, setPaying] = useState(false);
+  const [amount, setAmount] = useState("");
+
+  const balance = sale
+    ? Number(sale.totalAmount) - Number(sale.amountPaid ?? 0)
+    : 0;
+
+  const handleRecordPayment = async () => {
+    const value = Number(amount);
+    if (!value || value <= 0) {
+      Alert.alert("Invalid amount", "Enter a positive amount");
+      return;
+    }
+    if (value > balance) {
+      Alert.alert(
+        "Too much",
+        `This sale only has ETB ${balance.toLocaleString()} outstanding`,
+      );
+      return;
+    }
+    try {
+      await createPayment.mutateAsync({
+        customerId: sale.customerId,
+        amount: value,
+        allocations: [{ targetId: sale.id, amount: value }],
+      });
+      setPaying(false);
+      setAmount("");
+    } catch (e) {
+      Alert.alert(
+        "Error",
+        e?.response?.data?.error ?? "Failed to record payment",
+      );
+    }
+  };
 
   return (
     <Modal visible={!!saleId} animationType="slide" transparent>
@@ -298,14 +337,63 @@ function SaleDetailModal({ saleId, onClose }) {
                       Balance Owed:
                     </Text>
                     <Text className="text-xs font-bold text-rose-600">
-                      ETB{" "}
-                      {(
-                        Number(sale.totalAmount) - Number(sale.amountPaid ?? 0)
-                      ).toLocaleString()}
+                      ETB {balance.toLocaleString()}
                     </Text>
                   </View>
                 ) : null}
               </View>
+
+              {sale.status !== "PAID" ? (
+                paying ? (
+                  <View className="gap-2 bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                    <Text className="text-xs font-bold text-emerald-800">
+                      Record a payment
+                    </Text>
+                    <TextInput
+                      placeholder={`Up to ETB ${balance.toLocaleString()}`}
+                      value={amount}
+                      onChangeText={setAmount}
+                      keyboardType="decimal-pad"
+                      placeholderTextColor="#737686"
+                      className="border border-emerald-300 bg-white rounded-xl px-4 py-3 text-on-surface"
+                    />
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        onPress={() => {
+                          setPaying(false);
+                          setAmount("");
+                        }}
+                        className="flex-1 border border-outline-variant/40 rounded-xl py-2.5 items-center"
+                      >
+                        <Text className="text-on-surface-variant font-semibold text-xs">
+                          Cancel
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={handleRecordPayment}
+                        disabled={createPayment.isPending}
+                        className="flex-1 bg-teal-600 rounded-xl py-2.5 items-center"
+                        style={{ opacity: createPayment.isPending ? 0.6 : 1 }}
+                      >
+                        <Text className="text-white font-semibold text-xs">
+                          {createPayment.isPending
+                            ? "Saving..."
+                            : "Confirm Payment"}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setPaying(true)}
+                    className="bg-teal-600 rounded-xl py-3 items-center"
+                  >
+                    <Text className="text-white font-bold text-xs">
+                      Record Payment
+                    </Text>
+                  </Pressable>
+                )
+              ) : null}
 
               <Text className="text-xs font-bold text-on-surface uppercase tracking-wider mt-1">
                 Purchased Items ({sale.items?.length ?? 0})

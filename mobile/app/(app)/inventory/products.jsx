@@ -28,6 +28,8 @@ import {
   useRemoveStock,
   useAdjustStock,
 } from "../../../hooks/useProducts";
+import { useSuppliers } from "../../../hooks/useSuppliers";
+import { ChevronDown, Check } from "lucide-react-native";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -46,7 +48,8 @@ const EMPTY_FORM = {
   buyingPrice: "",
   sellingPrice: "",
   minQuantityAlert: "10",
-  quantity: "0", // only used on create — the initial stock count
+  quantity: "0",
+  supplierId: "",
 };
 
 const STOCK_ACTIONS = [
@@ -57,10 +60,13 @@ const STOCK_ACTIONS = [
 
 export default function Products() {
   const [search, setSearch] = useState("");
+  const [supplierPickerVisible, setSupplierPickerVisible] = useState(false);
   const { data, isLoading, isError, refetch, isRefetching } = useProducts({
     search,
     limit: 100,
   });
+  const { data: supplierData } = useSuppliers({ limit: 100 });
+  const suppliers = supplierData?.items ?? [];
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deactivateMutation = useDeactivateProduct();
@@ -99,6 +105,7 @@ export default function Products() {
       sellingPrice: String(product.sellingPrice ?? ""),
       minQuantityAlert: String(product.minQuantityAlert ?? 0),
       quantity: String(product.quantity ?? 0),
+      supplierId: product.preferredSupplierId ?? "",
     });
     setExpiryDate(product.expiryDate ? new Date(product.expiryDate) : null);
     setEditingId(product.id);
@@ -127,6 +134,7 @@ export default function Products() {
       expiryDate: expiryDate
         ? expiryDate.toISOString().split("T")[0]
         : undefined,
+      supplierId: form.supplierId || undefined,
     };
 
     try {
@@ -327,6 +335,24 @@ export default function Products() {
                   }
                   keyboardType="numeric"
                 />
+                <View>
+                  <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                    Preferred Supplier
+                  </Text>
+                  <Pressable
+                    onPress={() => setSupplierPickerVisible(true)}
+                    className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                  >
+                    <Text
+                      className={`flex-1 ${form.supplierId ? "text-on-surface" : "text-[#737686]"}`}
+                      numberOfLines={1}
+                    >
+                      {suppliers.find((s) => s.id === form.supplierId)?.name ??
+                        "None selected"}
+                    </Text>
+                    <ChevronDown size={18} color="#737686" />
+                  </Pressable>
+                </View>
                 <FormField
                   label="Buying price"
                   required
@@ -466,6 +492,64 @@ export default function Products() {
                 <Text className="text-white font-semibold">Confirm</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={supplierPickerVisible} animationType="slide" transparent>
+        <View className="flex-1 bg-black/40 justify-end">
+          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[75%]">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-bold text-on-surface">
+                Preferred Supplier
+              </Text>
+              <Pressable onPress={() => setSupplierPickerVisible(false)}>
+                <X size={22} color="#434655" />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View className="gap-2 pb-2">
+                <Pressable
+                  onPress={() => {
+                    setForm((p) => ({ ...p, supplierId: "" }));
+                    setSupplierPickerVisible(false);
+                  }}
+                  className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                    !form.supplierId
+                      ? "border-primary bg-primary/5"
+                      : "border-outline-variant/30 bg-surface-container-low"
+                  }`}
+                >
+                  <Text className="font-semibold text-on-surface-variant italic">
+                    None
+                  </Text>
+                  {!form.supplierId ? (
+                    <Check size={18} color="#004ac6" />
+                  ) : null}
+                </Pressable>
+                {suppliers.map((supplier) => {
+                  const isSelected = supplier.id === form.supplierId;
+                  return (
+                    <Pressable
+                      key={supplier.id}
+                      onPress={() => {
+                        setForm((p) => ({ ...p, supplierId: supplier.id }));
+                        setSupplierPickerVisible(false);
+                      }}
+                      className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-outline-variant/30 bg-surface-container-low"
+                      }`}
+                    >
+                      <Text className="font-semibold text-on-surface">
+                        {supplier.name}
+                      </Text>
+                      {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>

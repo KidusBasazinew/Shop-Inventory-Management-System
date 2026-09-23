@@ -25,8 +25,9 @@ import {
 } from "lucide-react-native";
 import { router } from "expo-router";
 import { useProducts } from "../../../hooks/useProducts";
-import { useCustomers } from "../../../hooks/useCustomers";
+import { useCustomers, useCreateCustomer } from "../../../hooks/useCustomers";
 import { useCreateSale } from "../../../hooks/useSales";
+import { UserPlus } from "lucide-react-native";
 
 const PAYMENT_METHODS = [
   "CASH",
@@ -53,6 +54,14 @@ export default function Sales() {
   const { data: customerData } = useCustomers({ limit: 50 });
   const customers = customerData?.items ?? [];
   const selectedCustomer = customers.find((c) => c.id === customerId);
+
+  const [newCustomerMode, setNewCustomerMode] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({
+    name: "",
+    phone: "",
+    shopName: "",
+  });
+  const createCustomer = useCreateCustomer();
 
   const createSale = useCreateSale();
 
@@ -144,6 +153,25 @@ export default function Sales() {
       Alert.alert(
         "Checkout failed",
         e?.response?.data?.error ?? "Something went wrong",
+      );
+    }
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!newCustomerForm.name) {
+      Alert.alert("Missing name", "Enter the customer's name");
+      return;
+    }
+    try {
+      const customer = await createCustomer.mutateAsync(newCustomerForm);
+      setCustomerId(customer.id);
+      setNewCustomerMode(false);
+      setNewCustomerForm({ name: "", phone: "", shopName: "" });
+      setCustomerPickerVisible(false);
+    } catch (e) {
+      Alert.alert(
+        "Error",
+        e?.response?.data?.error ?? "Failed to add customer",
       );
     }
   };
@@ -522,47 +550,122 @@ export default function Sales() {
       </Modal>
 
       {/* Customer picker */}
+      {/* Customer picker */}
       <Modal visible={customerPickerVisible} animationType="slide" transparent>
         <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[75%]">
+          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[80%]">
             <View className="flex-row justify-between items-center">
               <Text className="text-lg font-bold text-on-surface">
-                Select Customer
+                {newCustomerMode ? "New Customer" : "Select Customer"}
               </Text>
-              <Pressable onPress={() => setCustomerPickerVisible(false)}>
+              <Pressable
+                onPress={() => {
+                  setCustomerPickerVisible(false);
+                  setNewCustomerMode(false);
+                }}
+              >
                 <X size={22} color="#434655" />
               </Pressable>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="gap-2 pb-2">
-                {customers.map((customer) => {
-                  const isSelected = customer.id === customerId;
-                  return (
-                    <Pressable
-                      key={customer.id}
-                      onPress={() => {
-                        setCustomerId(customer.id);
-                        setCustomerPickerVisible(false);
-                      }}
-                      className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
-                    >
-                      <View className="flex-1 pr-3">
-                        <Text className="font-semibold text-on-surface">
-                          {customer.name}
-                        </Text>
-                        <Text className="text-xs text-on-surface-variant mt-0.5">
-                          {customer.phone}{" "}
-                          {customer.balance > 0
-                            ? `• Owes ETB ${customer.balance.toLocaleString()}`
-                            : ""}
-                        </Text>
-                      </View>
-                      {isSelected ? <Check size={18} color="#004ac6" /> : null}
-                    </Pressable>
-                  );
-                })}
+
+            {newCustomerMode ? (
+              <View className="gap-3">
+                <TextInput
+                  placeholder="Customer name *"
+                  value={newCustomerForm.name}
+                  onChangeText={(v) =>
+                    setNewCustomerForm((p) => ({ ...p, name: v }))
+                  }
+                  placeholderTextColor="#737686"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+                />
+                <TextInput
+                  placeholder="Phone"
+                  value={newCustomerForm.phone}
+                  onChangeText={(v) =>
+                    setNewCustomerForm((p) => ({ ...p, phone: v }))
+                  }
+                  keyboardType="phone-pad"
+                  placeholderTextColor="#737686"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+                />
+                <TextInput
+                  placeholder="Shop / business name (optional)"
+                  value={newCustomerForm.shopName}
+                  onChangeText={(v) =>
+                    setNewCustomerForm((p) => ({ ...p, shopName: v }))
+                  }
+                  placeholderTextColor="#737686"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+                />
+
+                <View className="flex-row gap-3 mt-1">
+                  <Pressable
+                    onPress={() => setNewCustomerMode(false)}
+                    className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
+                  >
+                    <Text className="text-on-surface-variant font-semibold text-xs">
+                      Back
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleCreateCustomer}
+                    disabled={createCustomer.isPending}
+                    className="flex-1 bg-primary rounded-xl py-3 items-center"
+                    style={{ opacity: createCustomer.isPending ? 0.6 : 1 }}
+                  >
+                    <Text className="text-white font-semibold text-xs">
+                      {createCustomer.isPending ? "Saving..." : "Add & Select"}
+                    </Text>
+                  </Pressable>
+                </View>
               </View>
-            </ScrollView>
+            ) : (
+              <>
+                <Pressable
+                  onPress={() => setNewCustomerMode(true)}
+                  className="flex-row items-center justify-center gap-2 border border-dashed border-primary/50 rounded-xl py-3"
+                >
+                  <UserPlus size={16} color="#004ac6" />
+                  <Text className="text-primary font-semibold text-sm">
+                    Add New Customer
+                  </Text>
+                </Pressable>
+
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View className="gap-2 pb-2">
+                    {customers.map((customer) => {
+                      const isSelected = customer.id === customerId;
+                      return (
+                        <Pressable
+                          key={customer.id}
+                          onPress={() => {
+                            setCustomerId(customer.id);
+                            setCustomerPickerVisible(false);
+                          }}
+                          className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
+                        >
+                          <View className="flex-1 pr-3">
+                            <Text className="font-semibold text-on-surface">
+                              {customer.name}
+                            </Text>
+                            <Text className="text-xs text-on-surface-variant mt-0.5">
+                              {customer.phone}{" "}
+                              {customer.balance > 0
+                                ? `• Owes ETB ${customer.balance.toLocaleString()}`
+                                : ""}
+                            </Text>
+                          </View>
+                          {isSelected ? (
+                            <Check size={18} color="#004ac6" />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+              </>
+            )}
           </View>
         </View>
       </Modal>

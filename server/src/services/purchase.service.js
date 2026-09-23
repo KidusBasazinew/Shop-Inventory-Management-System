@@ -11,16 +11,29 @@ export async function listPurchases(
     ...(status ? { status } : {}),
   };
 
-  const [items, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.purchase.findMany({
       where,
       orderBy: { date: "desc" },
       skip: (page - 1) * limit,
       take: limit,
-      include: { supplier: { select: { id: true, name: true } }, items: true },
+      include: {
+        supplier: { select: { id: true, name: true } },
+        items: { include: { product: { select: { id: true, name: true } } } },
+      },
     }),
     prisma.purchase.count({ where }),
   ]);
+
+  const items = await Promise.all(
+    rows.map(async (p) => {
+      const agg = await prisma.paymentAllocation.aggregate({
+        where: { purchaseId: p.id },
+        _sum: { amount: true },
+      });
+      return { ...p, amountPaid: Number(agg._sum.amount ?? 0) };
+    }),
+  );
 
   return { items, total, page, limit };
 }

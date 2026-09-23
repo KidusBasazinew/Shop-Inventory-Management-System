@@ -30,6 +30,7 @@ export async function listProducts(shopId, query) {
       orderBy: { name: "asc" },
       skip: (page - 1) * limit,
       take: limit,
+      include: { preferredSupplier: { select: { id: true, name: true } } },
     }),
     prisma.product.count({ where }),
   ]);
@@ -53,11 +54,19 @@ export async function getProduct(shopId, productId) {
 }
 
 export async function createProduct(shopId, data) {
-  const { quantity, ...rest } = data;
+  const { quantity, supplierId, ...rest } = data;
+
+  if (supplierId) {
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: supplierId },
+    });
+    if (!supplier || supplier.shopId !== shopId)
+      throw ApiError.notFound("Supplier not found");
+  }
 
   return prisma.$transaction(async (tx) => {
     const product = await tx.product.create({
-      data: { shopId, quantity, ...rest },
+      data: { shopId, quantity, preferredSupplierId: supplierId, ...rest },
     });
 
     // Record the starting quantity as a stock movement so the product's
@@ -80,7 +89,23 @@ export async function createProduct(shopId, data) {
 
 export async function updateProduct(shopId, productId, data) {
   await getOwnedProduct(shopId, productId);
-  return prisma.product.update({ where: { id: productId }, data });
+  const { supplierId, ...rest } = data;
+
+  if (supplierId) {
+    const supplier = await prisma.supplier.findUnique({
+      where: { id: supplierId },
+    });
+    if (!supplier || supplier.shopId !== shopId)
+      throw ApiError.notFound("Supplier not found");
+  }
+
+  return prisma.product.update({
+    where: { id: productId },
+    data: {
+      ...rest,
+      ...(supplierId !== undefined ? { preferredSupplierId: supplierId } : {}),
+    },
+  });
 }
 
 export async function deactivateProduct(shopId, productId) {

@@ -1,13 +1,34 @@
 import prisma from "../lib/prisma.js";
 import ApiError from "../utils/apiError.js";
 
+async function withBalance(shopId, supplier) {
+  const [purchaseTotal, paidTotal] = await Promise.all([
+    prisma.purchase.aggregate({
+      where: { shopId, supplierId: supplier.id },
+      _sum: { totalAmount: true },
+    }),
+    prisma.paymentAllocation.aggregate({
+      where: { purchase: { shopId, supplierId: supplier.id } },
+      _sum: { amount: true },
+    }),
+  ]);
+  const totalPurchased = Number(purchaseTotal._sum.totalAmount ?? 0);
+  const totalPaid = Number(paidTotal._sum.amount ?? 0);
+  return {
+    ...supplier,
+    totalPurchased,
+    totalPaid,
+    balance: totalPurchased - totalPaid,
+  };
+}
+
 export async function listSuppliers(shopId, { search, page, limit }) {
   const where = {
     shopId,
     ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
   };
 
-  const [items, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.supplier.findMany({
       where,
       orderBy: { name: "asc" },
@@ -17,6 +38,7 @@ export async function listSuppliers(shopId, { search, page, limit }) {
     prisma.supplier.count({ where }),
   ]);
 
+  const items = await Promise.all(rows.map((s) => withBalance(shopId, s)));
   return { items, total, page, limit };
 }
 
@@ -31,27 +53,7 @@ async function getOwnedSupplier(shopId, supplierId) {
 
 export async function getSupplier(shopId, supplierId) {
   const supplier = await getOwnedSupplier(shopId, supplierId);
-
-  const [purchaseTotal, paidTotal] = await Promise.all([
-    prisma.purchase.aggregate({
-      where: { shopId, supplierId },
-      _sum: { totalAmount: true },
-    }),
-    prisma.paymentAllocation.aggregate({
-      where: { purchase: { shopId, supplierId } },
-      _sum: { amount: true },
-    }),
-  ]);
-
-  const totalPurchased = Number(purchaseTotal._sum.totalAmount ?? 0);
-  const totalPaid = Number(paidTotal._sum.amount ?? 0);
-
-  return {
-    ...supplier,
-    totalPurchased,
-    totalPaid,
-    balance: totalPurchased - totalPaid, // amount the shop still owes this supplier
-  };
+  return withBalance(shopId, supplier);
 }
 
 export async function createSupplier(shopId, data) {
