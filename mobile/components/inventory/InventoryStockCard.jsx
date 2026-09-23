@@ -10,16 +10,17 @@ import {
   Layers,
 } from "lucide-react-native";
 
-export default function InventoryStockCard({ medicine, onPress }) {
+export default function InventoryStockCard({ product, onPress }) {
   const {
     name,
-    genericName,
-    barcode,
-    unit,
-    reorderLevel,
-    totalQuantity,
+    category,
+    unitType,
+    minQuantityAlert,
+    quantity,
     isExpiringSoon,
-  } = medicine;
+  } = product;
+  const totalQuantity = quantity;
+  const reorderLevel = minQuantityAlert;
   const isLowStock = totalQuantity <= reorderLevel;
 
   const accentColor = isLowStock
@@ -93,16 +94,16 @@ export default function InventoryStockCard({ medicine, onPress }) {
 
         {/* Bottom bar */}
         <View className="flex-row items-center justify-between pt-2 border-t border-outline-variant/20 mt-0.5">
-          {barcode ? (
-            <View className="flex-row items-center gap-1.5">
-              <Barcode size={14} color="#6d7185" />
-              <Text className="text-xs font-mono text-on-surface-variant">
-                {barcode}
-              </Text>
-            </View>
+          {category ? (
+            <Text
+              className="text-xs font-medium text-on-surface-variant"
+              numberOfLines={1}
+            >
+              {category}
+            </Text>
           ) : (
             <Text className="text-xs italic text-on-surface-variant/60">
-              No barcode
+              Uncategorized
             </Text>
           )}
 

@@ -63,13 +63,6 @@ export default function SupplierCard({ supplier, onPress, onDelete }) {
           </View>
 
           <View className="flex-row items-center gap-1">
-            <Pressable
-              onPress={onDelete}
-              hitSlop={10}
-              className="p-2 rounded-full active:bg-error/10"
-            >
-              <Trash2 size={16} color="#BA1A1A" />
-            </Pressable>
             <ChevronRight size={18} color="#c3c6d7" />
           </View>
         </View>

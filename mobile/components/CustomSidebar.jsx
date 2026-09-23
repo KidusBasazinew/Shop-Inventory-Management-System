@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Receipt,
   History,
+  Package2,
   PiggyBank,
   Bell,
   Settings,
@@ -47,9 +48,9 @@ const INVENTORY_ITEMS = [
   },
   {
     group: "inventory",
-    target: "medicines",
-    label: "Medicines",
-    icon: Stethoscope,
+    target: "products",
+    label: "Products",
+    icon: Package2,
   },
   { group: "inventory", target: "suppliers", label: "Suppliers", icon: Users },
   {
@@ -211,6 +212,7 @@ export function CustomSidebar({ shop, ...props }) {
 
         {/* Nav sections */}
         <View className="px-3 pt-4 gap-5">
+          {/* Overview Section */}
           <Section title="OVERVIEW">
             {OVERVIEW_ITEMS.map((item) => (
               <NavItem
@@ -222,7 +224,37 @@ export function CustomSidebar({ shop, ...props }) {
             ))}
           </Section>
 
-          {/* Inventory and finance navigation are temporarily hidden. */}
+          {/* Inventory Section */}
+          <CollapsibleSection
+            title="INVENTORY"
+            open={openSections.inventory}
+            onToggle={() => toggleSection("inventory")}
+          >
+            {INVENTORY_ITEMS.map((item) => (
+              <NavItem
+                key={`${item.group}-${item.target}`}
+                item={item}
+                isActive={isItemActive(item)}
+                onPress={() => handleNavigate(item)}
+              />
+            ))}
+          </CollapsibleSection>
+
+          {/* Finance Section */}
+          <CollapsibleSection
+            title="FINANCE"
+            open={openSections.finance}
+            onToggle={() => toggleSection("finance")}
+          >
+            {FINANCE_ITEMS.map((item) => (
+              <NavItem
+                key={`${item.group}-${item.target}`}
+                item={item}
+                isActive={isItemActive(item)}
+                onPress={() => handleNavigate(item)}
+              />
+            ))}
+          </CollapsibleSection>
         </View>
       </DrawerContentScrollView>
 

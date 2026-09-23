@@ -30,6 +30,8 @@ export default function AppLayout() {
         }}
       >
         <Drawer.Screen name="overview" options={{ title: "Overview" }} />
+        <Drawer.Screen name="inventory" options={{ title: "Inventory" }} />
+        <Drawer.Screen name="finance" options={{ title: "Finance" }} />
       </Drawer>
     </GestureHandlerRootView>
   );

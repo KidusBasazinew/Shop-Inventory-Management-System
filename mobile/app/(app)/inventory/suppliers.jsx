@@ -1,5 +1,4 @@
 import { useState } from "react";
-/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -12,14 +11,13 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+
 import { X, Truck, Building2, Store } from "lucide-react-native";
 import {
   useSuppliers,
   useCreateSupplier,
   useUpdateSupplier,
-  useDeleteSupplier,
 } from "../../../hooks/useSuppliers";
-*/
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -36,13 +34,12 @@ export default function Suppliers() {
 
   const createMutation = useCreateSupplier();
   const updateMutation = useUpdateSupplier();
-  const deleteMutation = useDeleteSupplier();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  const suppliers = data?.suppliers ?? [];
+  const suppliers = data?.items ?? [];
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -189,11 +186,7 @@ export default function Suppliers() {
           />
         }
         renderItem={({ item }) => (
-          <SupplierCard
-            supplier={item}
-            onPress={() => openEdit(item)}
-            onDelete={() => handleDelete(item.id, item.name)}
-          />
+          <SupplierCard supplier={item} onPress={() => openEdit(item)} />
         )}
       />
 

@@ -307,7 +307,7 @@ export default function OverviewPage() {
             label="Add Product"
             iconColor="#004ac6"
             iconBgClassName="bg-primary/10"
-            onPress={() => router.push("(app)/inventory/medicines")}
+            onPress={() => router.push("(app)/inventory/products")}
           />
           <QuickAction
             icon={BarChart3}
@@ -373,7 +373,7 @@ export default function OverviewPage() {
           </View>
 
           <Pressable
-            onPress={() => router.push("(app)/inventory/medicines")}
+            onPress={() => router.push("(app)/inventory/products")}
             className="flex-row items-center gap-0.5"
           >
             <Text className="text-xs font-medium text-primary">View All</Text>
@@ -404,7 +404,7 @@ export default function OverviewPage() {
                     title={p.name}
                     subtitle={`Reorder threshold: ${p.minQuantityAlert}`}
                     trailing={`${p.quantity} ${p.unitType?.toLowerCase() ?? ""}`}
-                    onPress={() => router.push("(app)/inventory/medicines")}
+                    onPress={() => router.push("(app)/inventory/products")}
                   />
                 ))
             )}

@@ -12,67 +12,44 @@ import {
   X,
   Receipt,
   User,
-  Calendar,
-  CreditCard,
-  Banknote,
-  Smartphone,
-  Building2,
-  ChevronRight,
-  ShoppingBag,
   Clock,
+  ChevronRight,
   AlertCircle,
 } from "lucide-react-native";
-// Temporarily disabled: sales hooks are not available in this checkout.
-// import { useSales, useSale } from "../../hooks/useSales";
+import { useSales, useSale } from "../../hooks/useSales";
 
-// Dedicated Payment Config with matching background and pillar styles
-const PAYMENT_CONFIG = {
-  CASH: {
-    label: "Cash",
+const STATUS_CONFIG = {
+  PAID: {
+    label: "Paid",
     color: "#059669",
     pillarBg: "bg-green-500/20",
     badgeBg: "bg-emerald-500/15",
-    icon: Banknote,
   },
-  TELEBIRR: {
-    label: "Telebirr",
-    color: "#004ac6",
-    pillarBg: "bg-blue-500/20",
-    badgeBg: "bg-blue-500/15",
-    icon: Smartphone,
-  },
-  BANK: {
-    label: "Bank Transfer",
-    color: "#4f378a",
-    pillarBg: "bg-purple-500/20",
-    badgeBg: "bg-purple-500/15",
-    icon: Building2,
-  },
-  CBE_BIRR: {
-    label: "CBE Birr",
+  PARTIAL: {
+    label: "Partial",
     color: "#d97706",
     pillarBg: "bg-orange-500/20",
     badgeBg: "bg-amber-500/15",
-    icon: Smartphone,
   },
-  CREDIT: {
-    label: "Credit",
+  UNPAID: {
+    label: "Unpaid / Credit",
     color: "#ba1a1a",
     pillarBg: "bg-red-500/20",
     badgeBg: "bg-red-500/15",
-    icon: CreditCard,
   },
 };
 
 export default function SalesHistory() {
   const [page, setPage] = useState(1);
   const [selectedSaleId, setSelectedSaleId] = useState(null);
+  const limit = 20;
 
   const { data, isLoading, isError, refetch, isRefetching } = useSales({
     page,
-    limit: 20,
+    limit,
   });
-  const sales = data?.sales ?? [];
+  const sales = data?.items ?? [];
+  const totalPages = data?.total ? Math.ceil(data.total / limit) : 1;
 
   if (isLoading) {
     return (
@@ -135,60 +112,53 @@ export default function SalesHistory() {
               No Sales Registered
             </Text>
             <Text className="text-xs text-on-surface-variant text-center mt-1">
-              Completed pharmacy transactions will appear here.
+              Completed shop transactions will appear here.
             </Text>
           </View>
         }
         renderItem={({ item }) => {
-          const paymentConfig =
-            PAYMENT_CONFIG[item.paymentMethod] ?? PAYMENT_CONFIG.BANK;
-          const PaymentIcon = paymentConfig.icon;
+          const config = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.PAID;
 
           return (
             <Pressable
               onPress={() => setSelectedSaleId(item.id)}
               className="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-xs border border-outline-variant/20 flex-row active:scale-[0.985] transition-all"
             >
-              {/* 1. LEFT PAYMENT ACCENT PILLAR */}
               <View
-                className={`w-14 items-center justify-center ${paymentConfig.pillarBg} border-r border-outline-variant/15 shrink-0`}
+                className={`w-14 items-center justify-center ${config.pillarBg} border-r border-outline-variant/15 shrink-0`}
               >
                 <View className="w-10 h-10 rounded-2xl bg-surface-container-lowest items-center justify-center shadow-xs">
-                  <PaymentIcon size={20} color={paymentConfig.color} />
+                  <Receipt size={20} color={config.color} />
                 </View>
               </View>
 
-              {/* 2. RECEIPT CARD BODY */}
               <View className="flex-1 p-4 pl-3.5 justify-between">
-                {/* Top Row: Invoice No. + Payment Tag */}
                 <View className="flex-row items-center justify-between mb-1">
                   <Text className="font-bold text-sm text-on-surface tracking-tight">
-                    {item.invoiceNumber}
+                    #{item.id.slice(-6).toUpperCase()}
                   </Text>
-                  <View
-                    className={`px-2 py-0.5 rounded-md ${paymentConfig.badgeBg}`}
-                  >
+                  <View className={`px-2 py-0.5 rounded-md ${config.badgeBg}`}>
                     <Text
                       className="text-[10px] font-bold tracking-wider uppercase"
-                      style={{ color: paymentConfig.color }}
+                      style={{ color: config.color }}
                     >
-                      {paymentConfig.label}
+                      {config.label}
                     </Text>
                   </View>
                 </View>
 
-                {/* Seller & Date Metadata */}
                 <View className="gap-0.5 mb-2">
                   <View className="flex-row items-center gap-1">
                     <User size={12} color="#7a7582" />
                     <Text className="text-xs text-on-surface-variant font-medium">
-                      {item.user?.fullName ?? "Staff Member"}
+                      {item.soldBy?.name ?? "Staff Member"}
+                      {item.customer?.name ? ` • ${item.customer.name}` : ""}
                     </Text>
                   </View>
                   <View className="flex-row items-center gap-1">
                     <Clock size={11} color="#9aa0a6" />
                     <Text className="text-[11px] text-outline font-regular">
-                      {new Date(item.createdAt).toLocaleString(undefined, {
+                      {new Date(item.date).toLocaleString(undefined, {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
@@ -198,7 +168,6 @@ export default function SalesHistory() {
                   </View>
                 </View>
 
-                {/* Bottom Row: Amount + Details Arrow */}
                 <View className="flex-row items-center justify-between pt-2 border-t border-outline-variant/10">
                   <Text className="text-xs font-semibold text-secondary">
                     Total Amount
@@ -216,38 +185,28 @@ export default function SalesHistory() {
         }}
       />
 
-      {/* PAGINATION CONTROLS */}
-      {data?.totalPages > 1 ? (
+      {totalPages > 1 ? (
         <View className="flex-row justify-between items-center px-6 py-3 border-t border-outline-variant/20 bg-surface-container-lowest">
           <Pressable
             onPress={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${
-              page <= 1 ? "opacity-40" : "active:bg-surface-container-low"
-            }`}
+            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${page <= 1 ? "opacity-40" : "active:bg-surface-container-low"}`}
           >
             <Text className="text-primary font-bold text-xs">Previous</Text>
           </Pressable>
-
           <Text className="text-on-surface-variant font-semibold text-xs">
-            Page {data.page} of {data.totalPages}
+            Page {page} of {totalPages}
           </Text>
-
           <Pressable
-            onPress={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-            disabled={page >= data.totalPages}
-            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${
-              page >= data.totalPages
-                ? "opacity-40"
-                : "active:bg-surface-container-low"
-            }`}
+            onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${page >= totalPages ? "opacity-40" : "active:bg-surface-container-low"}`}
           >
             <Text className="text-primary font-bold text-xs">Next</Text>
           </Pressable>
         </View>
       ) : null}
 
-      {/* MODAL DETAIL */}
       <SaleDetailModal
         saleId={selectedSaleId}
         onClose={() => setSelectedSaleId(null)}
@@ -258,14 +217,12 @@ export default function SalesHistory() {
 
 function SaleDetailModal({ saleId, onClose }) {
   const { data: sale, isLoading } = useSale(saleId);
-  const paymentConfig =
-    PAYMENT_CONFIG[sale?.paymentMethod] ?? PAYMENT_CONFIG.BANK;
+  const config = STATUS_CONFIG[sale?.status] ?? STATUS_CONFIG.PAID;
 
   return (
     <Modal visible={!!saleId} animationType="slide" transparent>
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%] border-t border-outline-variant/20">
-          {/* Header Row */}
           <View className="flex-row justify-between items-center pb-3 border-b border-outline-variant/20">
             <View className="flex-row items-center gap-2.5">
               <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">
@@ -273,7 +230,7 @@ function SaleDetailModal({ saleId, onClose }) {
               </View>
               <View>
                 <Text className="text-base font-bold text-on-surface">
-                  {sale?.invoiceNumber ?? "Invoice Details"}
+                  #{sale?.id ? sale.id.slice(-6).toUpperCase() : "Sale Details"}
                 </Text>
                 <Text className="text-[11px] font-medium text-secondary">
                   Transaction Receipt
@@ -297,14 +254,21 @@ function SaleDetailModal({ saleId, onClose }) {
             </View>
           ) : (
             <>
-              {/* Receipt Summary Grid */}
               <View className="bg-surface-container-low/80 p-3.5 rounded-2xl gap-2 border border-outline-variant/15">
                 <View className="flex-row items-center justify-between">
                   <Text className="text-xs text-on-surface-variant font-medium">
-                    Issued By:
+                    Sold By:
                   </Text>
                   <Text className="text-xs font-bold text-on-surface">
-                    {sale.user?.fullName ?? "—"}
+                    {sale.soldBy?.name ?? "—"}
+                  </Text>
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-on-surface-variant font-medium">
+                    Customer:
+                  </Text>
+                  <Text className="text-xs font-bold text-on-surface">
+                    {sale.customer?.name ?? "Walk-in"}
                   </Text>
                 </View>
                 <View className="flex-row items-center justify-between">
@@ -312,27 +276,37 @@ function SaleDetailModal({ saleId, onClose }) {
                     Date & Time:
                   </Text>
                   <Text className="text-xs font-medium text-on-surface">
-                    {new Date(sale.createdAt).toLocaleString()}
+                    {new Date(sale.date).toLocaleString()}
                   </Text>
                 </View>
                 <View className="flex-row items-center justify-between">
                   <Text className="text-xs text-on-surface-variant font-medium">
-                    Payment Method:
+                    Status:
                   </Text>
-                  <View
-                    className={`px-2 py-0.5 rounded-md ${paymentConfig.badgeBg}`}
-                  >
+                  <View className={`px-2 py-0.5 rounded-md ${config.badgeBg}`}>
                     <Text
                       className="text-[10px] font-bold uppercase"
-                      style={{ color: paymentConfig.color }}
+                      style={{ color: config.color }}
                     >
-                      {paymentConfig.label}
+                      {config.label}
                     </Text>
                   </View>
                 </View>
+                {sale.status !== "PAID" ? (
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs text-on-surface-variant font-medium">
+                      Balance Owed:
+                    </Text>
+                    <Text className="text-xs font-bold text-rose-600">
+                      ETB{" "}
+                      {(
+                        Number(sale.totalAmount) - Number(sale.amountPaid ?? 0)
+                      ).toLocaleString()}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
-              {/* Itemized Breakdown List */}
               <Text className="text-xs font-bold text-on-surface uppercase tracking-wider mt-1">
                 Purchased Items ({sale.items?.length ?? 0})
               </Text>
@@ -345,7 +319,7 @@ function SaleDetailModal({ saleId, onClose }) {
                   >
                     <View className="flex-1 pr-2">
                       <Text className="font-bold text-on-surface text-xs">
-                        {item.medicine?.name ?? "Medicine Item"}
+                        {item.product?.name ?? "Product"}
                       </Text>
                       <Text className="text-[11px] text-on-surface-variant mt-0.5">
                         {item.quantity} units × ETB{" "}
@@ -359,7 +333,6 @@ function SaleDetailModal({ saleId, onClose }) {
                 ))}
               </View>
 
-              {/* Total Calculation Footer */}
               <View className="flex-row justify-between items-center pt-3 mt-2 border-t border-dashed border-outline-variant/40">
                 <Text className="font-bold text-sm text-on-surface">
                   Grand Total

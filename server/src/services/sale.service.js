@@ -22,7 +22,12 @@ export async function listSales(
       take: limit,
       include: {
         customer: { select: { id: true, name: true } },
-        items: true,
+        soldBy: { select: { id: true, name: true } },
+        items: {
+          include: {
+            product: { select: { id: true, name: true, buyingPrice: true } },
+          },
+        },
       },
     }),
     prisma.sale.count({ where }),

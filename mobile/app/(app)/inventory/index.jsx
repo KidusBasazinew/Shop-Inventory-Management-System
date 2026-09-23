@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-/* Temporarily disabled until the inventory hooks are restored.
 import {
   View,
   Text,
@@ -9,78 +8,65 @@ import {
   FlatList,
   ScrollView,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import { Search, Package, AlertTriangle, Clock } from "lucide-react-native";
 import {
-  Search,
-  Package,
-  AlertTriangle,
-  Clock,
-  Plus,
-} from "lucide-react-native";
-import { useLocalSearchParams } from "expo-router";
-import {
-  useMedicines,
-  useLowStockMedicines,
-} from "../../../hooks/useMedicines";
-import { useExpiringBatches } from "../../../hooks/useBatches";
-*/
+  useProducts,
+  useLowStockProducts,
+  useExpiringProducts,
+} from "../../../hooks/useProducts";
 import InventoryStockCard from "../../../components/inventory/InventoryStockCard";
 
 export default function InventoryScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const { filter } = useLocalSearchParams();
   const [selectedFilter, setSelectedFilter] = useState(
-    filter === "EXPIRING" ? "EXPIRING" : "ALL",
+    filter === "expiringSoon" ? "EXPIRING" : "ALL",
   );
 
-  const { data: medicinesData, isLoading: medsLoading } = useMedicines({
+  const { data: productsData, isLoading: productsLoading } = useProducts({
     search: searchQuery,
     limit: 100,
   });
   const { data: lowStockData, isLoading: lowStockLoading } =
-    useLowStockMedicines();
+    useLowStockProducts();
   const { data: expiringData, isLoading: expiringLoading } =
-    useExpiringBatches(30);
+    useExpiringProducts(30);
 
-  const isLoading = medsLoading || lowStockLoading || expiringLoading;
+  const isLoading = productsLoading || lowStockLoading || expiringLoading;
 
-  // Real stock totals, keyed by medicine id — this is the only place totalQuantity actually exists
-  const stockById = useMemo(() => {
-    const map = new Map();
-    (lowStockData ?? []).forEach((m) => map.set(m.id, m.totalQuantity));
-    return map;
-  }, [lowStockData]);
-
-  const expiringMedicineIds = useMemo(() => {
-    return new Set(
-      (expiringData ?? []).map((b) => b.medicine?.id ?? b.medicineId),
-    );
-  }, [expiringData]);
+  const lowStockIds = useMemo(
+    () => new Set((lowStockData?.items ?? []).map((p) => p.id)),
+    [lowStockData],
+  );
+  const expiringIds = useMemo(
+    () => new Set((expiringData?.items ?? []).map((p) => p.id)),
+    [expiringData],
+  );
 
   const merged = useMemo(() => {
-    return (medicinesData?.medicines ?? []).map((m) => ({
-      ...m,
-      totalQuantity: stockById.has(m.id) ? stockById.get(m.id) : Infinity, // not in low-stock list = comfortably stocked
-      isExpiringSoon: expiringMedicineIds.has(m.id),
+    return (productsData?.items ?? []).map((p) => ({
+      ...p,
+      isExpiringSoon: expiringIds.has(p.id),
     }));
-  }, [medicinesData, stockById, expiringMedicineIds]);
+  }, [productsData, expiringIds]);
 
   const stats = useMemo(
     () => ({
-      total: medicinesData?.total ?? merged.length,
-      lowStock: lowStockData?.length ?? 0,
-      expiring: expiringMedicineIds.size,
+      total: productsData?.total ?? merged.length,
+      lowStock: lowStockIds.size,
+      expiring: expiringIds.size,
     }),
-    [medicinesData, lowStockData, expiringMedicineIds],
+    [productsData, lowStockIds, expiringIds],
   );
 
   const filtered = useMemo(() => {
     if (selectedFilter === "LOW_STOCK")
-      return merged.filter((m) => m.totalQuantity <= m.reorderLevel);
+      return merged.filter((p) => lowStockIds.has(p.id));
     if (selectedFilter === "EXPIRING")
-      return merged.filter((m) => m.isExpiringSoon);
+      return merged.filter((p) => p.isExpiringSoon);
     return merged;
-  }, [merged, selectedFilter]);
+  }, [merged, selectedFilter, lowStockIds]);
 
   if (isLoading) {
     return (
@@ -102,7 +88,7 @@ export default function InventoryScreen() {
               Stock Overview
             </Text>
             <Text className="text-xs text-on-surface-variant">
-              Manage batch levels and expiring medicines
+              Manage stock levels and expiring products
             </Text>
           </View>
         </View>
@@ -110,7 +96,7 @@ export default function InventoryScreen() {
         <View className="flex-row items-center bg-surface-container-high/60 px-3.5 py-2.5 rounded-2xl border border-outline-variant/20 gap-2.5">
           <Search size={18} color="#666" />
           <TextInput
-            placeholder="Search medicine name or barcode..."
+            placeholder="Search product name..."
             placeholderTextColor="#888"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -125,11 +111,7 @@ export default function InventoryScreen() {
         >
           <Pressable
             onPress={() => setSelectedFilter("ALL")}
-            className={`px-4 py-1.5 rounded-full border ${
-              selectedFilter === "ALL"
-                ? "bg-primary border-primary"
-                : "bg-surface-container-low border-outline-variant/20"
-            }`}
+            className={`px-4 py-1.5 rounded-full border ${selectedFilter === "ALL" ? "bg-primary border-primary" : "bg-surface-container-low border-outline-variant/20"}`}
           >
             <Text
               className={`text-xs font-bold ${selectedFilter === "ALL" ? "text-white" : "text-on-surface-variant"}`}
@@ -140,11 +122,7 @@ export default function InventoryScreen() {
 
           <Pressable
             onPress={() => setSelectedFilter("LOW_STOCK")}
-            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-1.5 ${
-              selectedFilter === "LOW_STOCK"
-                ? "bg-amber-500 border-amber-500"
-                : "bg-surface-container-low border-outline-variant/20"
-            }`}
+            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-1.5 ${selectedFilter === "LOW_STOCK" ? "bg-amber-500 border-amber-500" : "bg-surface-container-low border-outline-variant/20"}`}
           >
             <AlertTriangle
               size={12}
@@ -159,11 +137,7 @@ export default function InventoryScreen() {
 
           <Pressable
             onPress={() => setSelectedFilter("EXPIRING")}
-            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-1.5 ${
-              selectedFilter === "EXPIRING"
-                ? "bg-rose-500 border-rose-500"
-                : "bg-surface-container-low border-outline-variant/20"
-            }`}
+            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-1.5 ${selectedFilter === "EXPIRING" ? "bg-rose-500 border-rose-500" : "bg-surface-container-low border-outline-variant/20"}`}
           >
             <Clock
               size={12}
@@ -193,13 +167,8 @@ export default function InventoryScreen() {
         }
         renderItem={({ item }) => (
           <InventoryStockCard
-            medicine={item}
-            onPress={() =>
-              router.push({
-                pathname: "/medicine-batches",
-                params: { medicineId: item.id, medicineName: item.name },
-              })
-            }
+            product={item}
+            onPress={() => router.push("(app)/inventory/products")}
           />
         )}
       />

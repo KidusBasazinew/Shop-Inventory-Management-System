@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-/* Temporarily disabled until the finance hooks are restored.
+
 import {
   View,
   Text,
@@ -27,12 +27,11 @@ import {
 } from "lucide-react-native";
 import {
   useExpenses,
-  useExpenseSummary,
   useCreateExpense,
   useUpdateExpense,
   useDeleteExpense,
 } from "../../../hooks/useExpenses";
-*/
+
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -41,12 +40,10 @@ import FAB from "../../../components/common/FAB";
 
 const CATEGORIES = [
   { id: "RENT", label: "Rent" },
-  { id: "UTILITIES", label: "Utilities" },
+  { id: "ELECTRICITY", label: "Electricity" },
+  { id: "WATER", label: "Water" },
   { id: "SALARY", label: "Salary" },
-  { id: "SUPPLIES", label: "Supplies" },
-  { id: "MAINTENANCE", label: "Maintenance" },
   { id: "TRANSPORT", label: "Transport" },
-  { id: "TAXES", label: "Taxes" },
   { id: "OTHER", label: "Other" },
 ];
 
@@ -67,9 +64,7 @@ export default function ExpensesScreen() {
     category: categoryFilter ?? undefined,
     limit: 100,
   });
-  const expenses = data?.expenses ?? [];
-
-  const { data: summary, refetch: refetchSummary } = useExpenseSummary();
+  const expenses = data?.items ?? [];
 
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
@@ -91,7 +86,7 @@ export default function ExpensesScreen() {
   }, [expenses, searchQuery]);
 
   const handleRefresh = async () => {
-    await Promise.all([refetch(), refetchSummary()]);
+    await refetch();
   };
 
   const openCreate = () => {
@@ -108,7 +103,7 @@ export default function ExpensesScreen() {
       amount: String(expense.amount),
       description: expense.description ?? "",
     });
-    setExpenseDate(new Date(expense.expenseDate));
+    setExpenseDate(new Date(expense.date));
     setModalVisible(true);
   };
 
@@ -122,7 +117,7 @@ export default function ExpensesScreen() {
       category: form.category,
       amount: Number(form.amount),
       description: form.description || undefined,
-      expenseDate: expenseDate.toISOString(),
+      date: expenseDate.toISOString(),
     };
 
     try {
@@ -174,7 +169,7 @@ export default function ExpensesScreen() {
               </Text>
               <Text className="text-xl font-bold text-on-surface">
                 ETB{" "}
-                {(summary?.total ?? 0).toLocaleString(undefined, {
+                {(data?.totalAmount ?? 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -298,7 +293,7 @@ export default function ExpensesScreen() {
                 <View className="flex-row items-center gap-1 mt-1.5">
                   <Calendar size={12} color="#737686" />
                   <Text className="text-xs font-medium text-on-surface-variant">
-                    {new Date(item.expenseDate).toLocaleDateString(undefined, {
+                    {new Date(item.date).toLocaleDateString(undefined, {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
