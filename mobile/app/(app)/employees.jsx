@@ -34,6 +34,7 @@ import DateField from "../../components/common/DateField";
 import EmptyState from "../../components/common/EmptyState";
 import FAB from "../../components/common/FAB";
 import Badge from "../../components/common/Badge";
+import { playSuccess, playError } from "../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", position: "", salary: "" };
 
@@ -99,8 +100,10 @@ export default function EmployeesScreen() {
       } else {
         await createMutation.mutateAsync(payload);
       }
+      playSuccess();
       setModalVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to save employee",
@@ -115,7 +118,9 @@ export default function EmployeesScreen() {
         id: employee.id,
         payload: { status: nextStatus },
       });
+      playSuccess();
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to update status",
@@ -338,8 +343,10 @@ function PayrollModal({ employee, onClose }) {
           date: date.toISOString(),
         },
       });
+      playSuccess();
       setFormVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record payroll payment",

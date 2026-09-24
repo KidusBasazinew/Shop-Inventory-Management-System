@@ -19,6 +19,7 @@ import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
 import EmptyState from "../../../components/common/EmptyState";
 import FAB from "../../../components/common/FAB";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 function monthBounds(monthsAgo = 0) {
   const now = new Date();
@@ -76,9 +77,11 @@ export default function TaxScreen() {
         paidDate: paidDate.toISOString(),
         reference: reference || undefined,
       });
+      playSuccess();
       resetForm();
       setModalVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record tax payment",

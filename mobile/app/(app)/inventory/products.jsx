@@ -37,6 +37,7 @@ import DateField from "../../../components/common/DateField";
 import UnitPicker from "../../../components/medicines/UnitPicker";
 import ProductCard from "../../../components/inventory/ProductCard";
 import FAB from "../../../components/common/FAB";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 const UNIT_TYPES = ["PIECE", "CARTON", "KG", "LITER"];
 
@@ -149,10 +150,12 @@ export default function Products() {
           quantity: Number(form.quantity) || 0,
         });
       }
+      playSuccess();
       setModalVisible(false);
       setForm(EMPTY_FORM);
       setEditingId(null);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to save product",
@@ -172,7 +175,9 @@ export default function Products() {
           onPress: async () => {
             try {
               await deactivateMutation.mutateAsync(id);
+              playSuccess();
             } catch (e) {
+              playError();
               Alert.alert(
                 "Error",
                 e?.response?.data?.error ?? "Failed to deactivate",
@@ -207,11 +212,13 @@ export default function Products() {
           payload: { newQuantity: amount, note: stockNote || undefined },
         });
       }
+      playSuccess();
       setStockTarget(null);
       setStockAmount("");
       setStockNote("");
       setStockAction("add");
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to update stock",

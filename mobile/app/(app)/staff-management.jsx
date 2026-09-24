@@ -21,6 +21,7 @@ import {
   useDeactivateUser,
 } from "../../hooks/useUsers";
 import StaffCard from "../../components/staff/StaffCard";
+import { playSuccess, playError } from "../../lib/feedback";
 
 const STAFF_ROLES = ["MANAGER", "CASHIER", "EMPLOYEE"];
 const EMPTY_FORM = { name: "", phone: "", password: "", role: "CASHIER" };
@@ -72,10 +73,12 @@ export default function StaffManagement() {
         }
         await createMutation.mutateAsync(form);
       }
+      playSuccess();
       setModalVisible(false);
       setForm(EMPTY_FORM);
       setEditingId(null);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to save staff member",
@@ -99,7 +102,9 @@ export default function StaffManagement() {
           onPress: async () => {
             try {
               await deactivateMutation.mutateAsync(staffUser.id);
+              playSuccess();
             } catch (e) {
+              playError();
               Alert.alert(
                 "Error",
                 e?.response?.data?.error ?? "Failed to deactivate",

@@ -28,6 +28,7 @@ import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import PurchaseCard from "../../../components/purchase/PurchaseCard";
 import FAB from "../../../components/common/FAB";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_LINE = { productId: "", quantity: "", unitCost: "" };
 
@@ -125,9 +126,11 @@ export default function PurchasesScreen() {
           unitCost: Number(l.unitCost),
         })),
       });
+      playSuccess();
       resetForm();
       setModalVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record purchase",
@@ -157,9 +160,11 @@ export default function PurchasesScreen() {
         amount: value,
         allocations: [{ targetId: payingPurchase.id, amount: value }],
       });
+      playSuccess();
       setPayingPurchase(null);
       setPayAmount("");
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record payment",

@@ -36,6 +36,7 @@ import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
 import FAB from "../../../components/common/FAB";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 const CATEGORIES = [
   { id: "RENT", label: "Rent" },
@@ -125,8 +126,10 @@ export default function ExpensesScreen() {
       } else {
         await createExpense.mutateAsync(payload);
       }
+      playSuccess();
       setModalVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to save expense",
@@ -145,7 +148,8 @@ export default function ExpensesScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => deleteExpense.mutate(expense.id),
+          onPress: () =>
+            deleteExpense.mutate(expense.id, { onSuccess: playSuccess }),
         },
       ],
     );

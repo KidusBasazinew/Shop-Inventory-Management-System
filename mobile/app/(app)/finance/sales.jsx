@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Animated,
+  Easing,
 } from "react-native";
 import {
   Plus,
@@ -27,7 +29,7 @@ import { router } from "expo-router";
 import { useProducts } from "../../../hooks/useProducts";
 import { useCustomers, useCreateCustomer } from "../../../hooks/useCustomers";
 import { useCreateSale } from "../../../hooks/useSales";
-import { playSuccess, playError } from "../../../lib/feedback";
+import { playSuccess, playError, playTap } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
 
 const PAYMENT_METHODS = [
@@ -49,6 +51,7 @@ export default function Sales() {
   const [partialAmount, setPartialAmount] = useState("");
   const [search, setSearch] = useState("");
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [completedSale, setCompletedSale] = useState(null);
 
   const { data, isLoading: searchLoading } = useProducts({ search, limit: 50 });
   const products = data?.items ?? [];
@@ -86,6 +89,7 @@ export default function Sales() {
         },
       ];
     });
+    playTap();
     setPickerVisible(false);
     setSearch("");
   };
@@ -147,10 +151,7 @@ export default function Sales() {
       setPartialAmount("");
       setSaleType("FULL");
       playSuccess();
-      Alert.alert(
-        "Sale complete",
-        `Total: ETB ${Number(sale.totalAmount).toFixed(2)}`,
-      );
+      setCompletedSale(sale);
     } catch (e) {
       playError();
       Alert.alert(
@@ -171,7 +172,9 @@ export default function Sales() {
       setNewCustomerMode(false);
       setNewCustomerForm({ name: "", phone: "", shopName: "" });
       setCustomerPickerVisible(false);
+      playSuccess();
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to add customer",
@@ -552,6 +555,11 @@ export default function Sales() {
         </View>
       </Modal>
 
+      <SaleSuccessModal
+        sale={completedSale}
+        onClose={() => setCompletedSale(null)}
+      />
+
       {/* Customer picker */}
       {/* Customer picker */}
       <Modal visible={customerPickerVisible} animationType="slide" transparent>
@@ -673,5 +681,133 @@ export default function Sales() {
         </View>
       </Modal>
     </View>
+  );
+}
+
+function SaleSuccessModal({ sale, onClose }) {
+  const drops = useRef(
+    Array.from({ length: 9 }, () => new Animated.Value(0)),
+  ).current;
+
+  useEffect(() => {
+    if (!sale) return undefined;
+
+    drops.forEach((value) => value.setValue(0));
+    const animation = Animated.loop(
+      Animated.stagger(
+        110,
+        drops.map((value, index) =>
+          Animated.timing(value, {
+            toValue: 1,
+            duration: 1500 + (index % 3) * 180,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ),
+      ),
+    );
+    animation.start();
+
+    return () => animation.stop();
+  }, [sale, drops]);
+
+  const moneyPositions = [8, 18, 30, 42, 55, 66, 78, 88, 96];
+
+  return (
+    <Modal visible={!!sale} animationType="fade" transparent>
+      <View className="flex-1 bg-black/55 items-center justify-center px-6">
+        <View className="w-full max-w-sm bg-surface rounded-[32px] overflow-hidden border border-green-200 shadow-xl">
+          {/* Header Banner with Green Background */}
+          <View
+            className="h-40 items-center justify-center overflow-hidden"
+            style={{ backgroundColor: "#16a34a" }}
+          >
+            {/* Falling Money Icons */}
+            {drops.map((value, index) => (
+              <Animated.View
+                key={index}
+                className="absolute w-8 h-5 rounded-md border items-center justify-center"
+                style={{
+                  backgroundColor: "#86efac",
+                  borderColor: "#15803d",
+                  left: `${moneyPositions[index]}%`,
+                  top: -24,
+                  opacity: value.interpolate({
+                    inputRange: [0, 0.15, 0.82, 1],
+                    outputRange: [0, 1, 1, 0],
+                  }),
+                  transform: [
+                    {
+                      translateY: value.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 190],
+                      }),
+                    },
+                    {
+                      rotate: value.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: ["-18deg", "16deg", "-12deg"],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <Text
+                  className="text-[10px] font-black"
+                  style={{ color: "#064e3b" }}
+                >
+                  ETB
+                </Text>
+              </Animated.View>
+            ))}
+
+            {/* Checkmark Circle */}
+            <View
+              className="w-20 h-20 rounded-full border-4 items-center justify-center shadow-lg"
+              style={{ backgroundColor: "#dcfce7", borderColor: "#86efac" }}
+            >
+              <Text
+                className="text-4xl font-black"
+                style={{ color: "#15803d" }}
+              >
+                ✓
+              </Text>
+            </View>
+          </View>
+
+          {/* Modal Content */}
+          <View className="p-6 items-center gap-3">
+            <Text className="text-2xl font-black text-on-surface">
+              Sale Complete
+            </Text>
+            <Text className="text-sm text-on-surface-variant text-center">
+              Your transaction was recorded successfully.
+            </Text>
+
+            <View
+              className="w-full border rounded-2xl px-4 py-3.5 flex-row items-center justify-between mt-2"
+              style={{ backgroundColor: "#f0fdf4", borderColor: "#dcfce7" }}
+            >
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: "#166534" }}
+              >
+                Total received
+              </Text>
+              <Text className="text-lg font-black" style={{ color: "#15803d" }}>
+                ETB {Number(sale?.totalAmount ?? 0).toFixed(2)}
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={onClose}
+              className="w-full bg-primary rounded-2xl py-3.5 items-center mt-1 active:opacity-90"
+            >
+              <Text className="text-white font-bold text-[15px]">Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }

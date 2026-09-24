@@ -1,7 +1,7 @@
 import { View, Text, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
-import { Menu, Bell, Calendar } from "lucide-react-native";
+import { Menu, HelpCircle, Calendar } from "lucide-react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -11,6 +11,7 @@ const ROUTE_TITLES = {
   finance: "Finance",
   notifications: "Notifications",
   settings: "Settings",
+  help: "Help & Support",
   subscription: "Subscription",
 };
 
@@ -51,11 +52,11 @@ export function AppHeader({ navigation, route, shop }) {
           <Text className="text-white text-[17px] font-bold">{title}</Text>
 
           <Pressable
-            onPress={() => navigation.navigate("notifications")}
+            onPress={() => navigation.navigate("help")}
             hitSlop={10}
             className="w-10 h-10 rounded-full bg-white/15 items-center justify-center"
           >
-            <Bell size={18} color="#ffffff" strokeWidth={2.4} />
+            <HelpCircle size={18} color="#ffffff" strokeWidth={2.4} />
           </Pressable>
         </View>
       </View>

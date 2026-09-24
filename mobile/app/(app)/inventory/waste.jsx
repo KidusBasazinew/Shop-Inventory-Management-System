@@ -25,6 +25,7 @@ import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import FAB from "../../../components/common/FAB";
 import Badge from "../../../components/common/Badge";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 const REASONS = ["EXPIRED", "RAT_DAMAGE", "BROKEN", "SPOILED", "OTHER"];
 const REASON_TONE = {
@@ -72,9 +73,11 @@ export default function WasteScreen() {
         quantity: Number(quantity),
         reason,
       });
+      playSuccess();
       resetForm();
       setModalVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record waste",

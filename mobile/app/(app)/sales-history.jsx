@@ -19,6 +19,7 @@ import {
 } from "lucide-react-native";
 import { useSales, useSale } from "../../hooks/useSales";
 import { useCreateCustomerPayment } from "../../hooks/usePayments";
+import { playSuccess, playError } from "../../lib/feedback";
 
 const STATUS_CONFIG = {
   PAID: {
@@ -248,9 +249,11 @@ function SaleDetailModal({ saleId, onClose }) {
         amount: value,
         allocations: [{ targetId: sale.id, amount: value }],
       });
+      playSuccess();
       setPaying(false);
       setAmount("");
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to record payment",

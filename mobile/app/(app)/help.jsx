@@ -1,53 +1,66 @@
 import { useState } from "react";
-import { View, Text, Pressable, ScrollView, Linking } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Linking,
+  Image,
+} from "react-native";
 import {
   Phone,
   Mail,
   MessageCircle,
+  Globe,
   ChevronDown,
-  BookOpen,
-  ExternalLink,
   LifeBuoy,
+  ExternalLink,
 } from "lucide-react-native";
+
+// TODO: replace with the real shop support number (used for both Call and WhatsApp)
+const SUPPORT_PHONE = "+251918704215";
+const SUPPORT_EMAIL = "kixlabs@gmail.com";
+const SUPPORT_WEBSITE = "kixlabs.tech";
 
 const FAQS = [
   {
-    q: "How does FEFO stock deduction work?",
-    a: "When you complete a sale, the system automatically deducts stock from the batch with the soonest expiry date first — not the batch you picked. This keeps expiring stock moving before it has to be written off.",
+    q: "How does stock get deducted when I make a sale?",
+    a: "Completing a sale immediately reduces the quantity on each product sold, and logs a stock movement so you can trace exactly when and why your stock changed.",
   },
   {
-    q: "Can a deactivated medicine be brought back?",
-    a: "Deactivating a medicine only hides it from active inventory and sales — its sale history stays intact. Reactivating currently requires updating it directly; ask an owner if you need this done.",
+    q: "What happens with a partial or credit sale?",
+    a: "Pick a customer and set how much they're paying now — anything less than the full total is tracked as a balance owed. You can settle it later from that sale's details or from the customer's record.",
   },
   {
-    q: "Why can't I delete a supplier?",
-    a: "A supplier can't be removed while it still has batches on record — this protects your purchase history. Reassign or clear those batches first, then the delete will go through.",
+    q: "Can I bring back a deactivated product?",
+    a: "Deactivating a product only hides it from active inventory and new sales — its history stays intact. Ask an owner or manager to reactivate it if needed.",
   },
   {
-    q: "Who can see profit reports?",
-    a: "Profit and daily revenue reports are limited to Owners and Managers. Cashiers can process sales but won't see margin data.",
+    q: "Who can see profit and financial reports?",
+    a: "Profit, tax, and payroll details are limited to Owners and Managers. Cashiers can process sales and log waste but won't see margin or salary data.",
   },
   {
-    q: "What happens when my trial ends?",
-    a: "Once your trial expires, the pharmacy account moves to Expired status and login is blocked until a subscription payment is completed from the Subscription page.",
+    q: "How do low stock and expiry alerts work?",
+    a: "Each product has its own reorder threshold and optional expiry date — the dashboard and Inventory tab flag anything at or below threshold, or expiring within 30 days.",
   },
 ];
 
 const CONTACT_ACTIONS = [
   {
+    icon: MessageCircle,
+    label: "WhatsApp",
+    onPress: () =>
+      Linking.openURL(`https://wa.me/${SUPPORT_PHONE.replace(/[^\d]/g, "")}`),
+  },
+  {
     icon: Phone,
     label: "Call Us",
-    onPress: () => Linking.openURL("tel:+251911000000"),
+    onPress: () => Linking.openURL(`tel:${SUPPORT_PHONE}`),
   },
   {
     icon: Mail,
     label: "Email",
-    onPress: () => Linking.openURL("mailto:support@klabspharmacy.et"),
-  },
-  {
-    icon: MessageCircle,
-    label: "Telegram",
-    onPress: () => Linking.openURL("https://t.me/klabspharmacy"),
+    onPress: () => Linking.openURL(`mailto:${SUPPORT_EMAIL}`),
   },
 ];
 
@@ -56,35 +69,34 @@ export default function HelpScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className="flex-1 bg-background"
       contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 24 }}
     >
-      {/* Header — same soft-circle language as login/onboarding */}
+      {/* Header */}
       <View className="items-center pt-4">
-        <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mb-4">
-          <LifeBuoy size={28} color="#2563eb" strokeWidth={1.75} />
+        <View className="w-16 h-16 rounded-full bg-primary/10 items-center justify-center mb-4">
+          <LifeBuoy size={28} color="#004ac6" strokeWidth={1.75} />
         </View>
-        <Text className="text-xl font-bold text-slate-900">Help & Support</Text>
-        <Text className="text-sm text-slate-500 mt-1 text-center">
+        <Text className="text-xl font-bold text-on-surface">
+          Help & Support
+        </Text>
+        <Text className="text-sm text-on-surface-variant mt-1 text-center">
           We're here whenever you need us
         </Text>
       </View>
 
       {/* Contact row */}
-      <View
-        className="flex-row justify-between px-2 py-4 rounded-2xl"
-        style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-      >
+      <View className="flex-row justify-between px-2 py-4 rounded-2xl border border-outline-variant/20">
         {CONTACT_ACTIONS.map((action) => (
           <Pressable
             key={action.label}
             onPress={action.onPress}
             className="items-center gap-2 flex-1"
           >
-            <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
-              <action.icon size={20} color="#2563eb" strokeWidth={1.75} />
+            <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
+              <action.icon size={20} color="#004ac6" strokeWidth={1.75} />
             </View>
-            <Text className="text-[12px] font-medium text-slate-500 text-center">
+            <Text className="text-[12px] font-medium text-on-surface-variant text-center">
               {action.label}
             </Text>
           </Pressable>
@@ -93,31 +105,24 @@ export default function HelpScreen() {
 
       {/* FAQ */}
       <View>
-        <Text className="text-[13px] font-semibold text-slate-900 mb-3">
+        <Text className="text-[13px] font-semibold text-on-surface mb-3">
           Frequently Asked Questions
         </Text>
 
-        <View
-          className="rounded-2xl overflow-hidden"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-        >
+        <View className="rounded-2xl overflow-hidden border border-outline-variant/20">
           {FAQS.map((item, index) => {
             const isOpen = openIndex === index;
             return (
               <View key={item.q}>
                 <Pressable
                   onPress={() => setOpenIndex(isOpen ? null : index)}
-                  className="flex-row items-center justify-between px-4 py-4"
-                  style={
+                  className={`flex-row items-center justify-between px-4 py-4 ${
                     index !== FAQS.length - 1
-                      ? {
-                          borderBottomWidth: 1,
-                          borderBottomColor: "rgba(0,0,0,0.06)",
-                        }
-                      : undefined
-                  }
+                      ? "border-b border-outline-variant/15"
+                      : ""
+                  }`}
                 >
-                  <Text className="flex-1 text-[14px] font-medium text-slate-900 pr-3">
+                  <Text className="flex-1 text-[14px] font-medium text-on-surface pr-3">
                     {item.q}
                   </Text>
                   <View
@@ -125,23 +130,15 @@ export default function HelpScreen() {
                       transform: [{ rotate: isOpen ? "180deg" : "0deg" }],
                     }}
                   >
-                    <ChevronDown size={18} color="#94a3b8" />
+                    <ChevronDown size={18} color="#9aa0a6" />
                   </View>
                 </Pressable>
 
                 {isOpen ? (
                   <View
-                    className="px-4 pb-4"
-                    style={
-                      index !== FAQS.length - 1
-                        ? {
-                            borderBottomWidth: 1,
-                            borderBottomColor: "rgba(0,0,0,0.06)",
-                          }
-                        : undefined
-                    }
+                    className={`px-4 pb-4 ${index !== FAQS.length - 1 ? "border-b border-outline-variant/15" : ""}`}
                   >
-                    <Text className="text-[13px] text-slate-500 leading-5">
+                    <Text className="text-[13px] text-on-surface-variant leading-5">
                       {item.a}
                     </Text>
                   </View>
@@ -152,29 +149,38 @@ export default function HelpScreen() {
         </View>
       </View>
 
-      {/* Docs link */}
+      {/* Website link */}
       <Pressable
-        onPress={() => Linking.openURL("https://klabspharmacy.et/docs")}
-        className="bg-blue-50 rounded-2xl px-4 py-4 flex-row items-center gap-3"
+        onPress={() => Linking.openURL(`https://${SUPPORT_WEBSITE}`)}
+        className="bg-primary/10 rounded-2xl px-4 py-4 flex-row items-center gap-3"
       >
-        <View className="w-10 h-10 rounded-full bg-white items-center justify-center">
-          <BookOpen size={18} color="#2563eb" strokeWidth={1.75} />
+        <View className="w-10 h-10 rounded-full bg-surface items-center justify-center">
+          <Globe size={18} color="#004ac6" strokeWidth={1.75} />
         </View>
         <View className="flex-1">
-          <Text className="text-[14px] font-semibold text-slate-900">
-            Full Documentation
+          <Text className="text-[14px] font-semibold text-on-surface">
+            {SUPPORT_WEBSITE}
           </Text>
-          <Text className="text-[12px] text-slate-500 mt-0.5">
-            Detailed guides for every feature
+          <Text className="text-[12px] text-on-surface-variant mt-0.5">
+            Visit our website
           </Text>
         </View>
-        <ExternalLink size={16} color="#2563eb" />
+        <ExternalLink size={16} color="#004ac6" />
       </Pressable>
 
-      {/* Footer */}
-      <View className="items-center pt-2">
-        <Text className="text-[12px] text-slate-400">KLABS Pharmacy</Text>
-        <Text className="text-[12px] text-slate-400 mt-0.5">Version 1.0.0</Text>
+      {/* Footer — KixLabs branding */}
+      <View className="items-center pt-2 gap-2">
+        {/* TODO: uncomment once assets/kixlabs-logo.png exists */}
+        <Image
+          source={require("../../assets/kixlabs-logo.png")}
+          style={{ width: 40, height: 40 }}
+          resizeMode="contain"
+        />
+        <Text className="text-[13px] font-bold text-on-surface-variant">
+          KixLabs
+        </Text>
+        <Text className="text-[12px] text-outline">{SUPPORT_EMAIL}</Text>
+        <Text className="text-[12px] text-outline">Version 1.0.0</Text>
       </View>
     </ScrollView>
   );

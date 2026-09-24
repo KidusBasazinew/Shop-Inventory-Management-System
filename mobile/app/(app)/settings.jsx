@@ -31,6 +31,7 @@ import {
 } from "../../lib/feedback";
 import { useAuth } from "../../context/AuthContext";
 import { useShop, useUpdateShop } from "../../hooks/useShop";
+import { playSuccess, playError } from "../../lib/feedback";
 
 export default function Settings() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
@@ -73,8 +74,10 @@ export default function Settings() {
           ? {}
           : { taxRatePercent: form.taxRatePercent }),
       });
+      playSuccess();
       setEditVisible(false);
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.message ?? "Failed to update shop",

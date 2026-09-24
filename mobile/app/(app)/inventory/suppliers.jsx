@@ -23,6 +23,7 @@ import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import SupplierCard from "../../../components/suppliers/SupplierCard";
 import FAB from "../../../components/common/FAB";
+import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", address: "" };
 
@@ -72,9 +73,11 @@ export default function Suppliers() {
       } else {
         await createMutation.mutateAsync(form);
       }
+      playSuccess();
       setModalVisible(false);
       resetForm();
     } catch (e) {
+      playError();
       Alert.alert(
         "Error",
         e?.response?.data?.message ?? "Failed to save supplier",
@@ -91,7 +94,9 @@ export default function Suppliers() {
         onPress: async () => {
           try {
             await deleteMutation.mutateAsync(id);
+            playSuccess();
           } catch (e) {
+            playError();
             Alert.alert(
               "Cannot delete",
               e?.response?.data?.message ?? "Failed to delete",

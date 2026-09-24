@@ -85,7 +85,6 @@ const FINANCE_ITEMS = [
 ];
 
 const FOOTER_ITEMS = [
-  { name: "notifications", label: "Notifications", icon: Bell, dot: true },
   { name: "staff-management", label: "Staff Management", icon: Users },
   { name: "employees", label: "Employees & Payroll", icon: Briefcase },
   { name: "settings", label: "Settings", icon: Settings },
@@ -165,10 +164,13 @@ export function CustomSidebar({ shop, ...props }) {
         >
           {/* Brand */}
           <View className="flex-row items-center gap-2">
-            <View className="w-10 h-10 bg-primary-container rounded-lg items-center justify-center">
-              <Stethoscope size={20} color="#eeefff" strokeWidth={2.2} />
-            </View>
-            <Text className="text-[20px] font-bold text-primary">KLABS</Text>
+            <Image
+              source={require("../assets/kixlabs-logo.png")}
+              style={{ width: 40, height: 40 }}
+              resizeMode="contain"
+            />
+
+            <Text className="text-[20px] font-bold text-primary">KixLabs</Text>
           </View>
 
           {/* Profile */}
