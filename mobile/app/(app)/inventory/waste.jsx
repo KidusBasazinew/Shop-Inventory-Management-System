@@ -23,6 +23,9 @@ import { useWaste, useCreateWaste } from "../../../hooks/useWaste";
 import { useProducts } from "../../../hooks/useProducts";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import Badge from "../../../components/common/Badge";
 import { playSuccess, playError } from "../../../lib/feedback";
@@ -35,10 +38,13 @@ const REASON_TONE = {
   SPOILED: "warning",
   OTHER: "neutral",
 };
+const PAGE_SIZE = 20;
 
 export default function WasteScreen() {
+  const [page, setPage] = useState(1);
   const { data, isLoading, isError, refetch, isRefetching } = useWaste({
-    limit: 50,
+    page,
+    limit: PAGE_SIZE,
   });
   const { data: productsData } = useProducts({ limit: 100 });
   const products = productsData?.items ?? [];
@@ -167,6 +173,12 @@ export default function WasteScreen() {
             </View>
           </View>
         )}
+      />
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(data?.total, PAGE_SIZE)}
+        onPageChange={setPage}
       />
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />

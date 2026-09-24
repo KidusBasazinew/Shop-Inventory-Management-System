@@ -32,17 +32,23 @@ import {
 import FormField from "../../components/common/FormField";
 import DateField from "../../components/common/DateField";
 import EmptyState from "../../components/common/EmptyState";
+import Pagination, { usePageCount } from "../../components/common/Pagination";
 import FAB from "../../components/common/FAB";
 import Badge from "../../components/common/Badge";
 import { playSuccess, playError } from "../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", position: "", salary: "" };
+const PAGE_SIZE = 20;
 
 export default function EmployeesScreen() {
   const { user } = useAuth();
   const canManage = user?.role === "OWNER" || user?.role === "MANAGER";
 
-  const { data, isLoading, isError, refetch, isRefetching } = useEmployees();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isError, refetch, isRefetching } = useEmployees({
+    page,
+    limit: PAGE_SIZE,
+  });
   const createMutation = useCreateEmployee();
   const updateMutation = useUpdateEmployee();
 
@@ -236,6 +242,12 @@ export default function EmployeesScreen() {
             </View>
           </View>
         )}
+      />
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(data?.total, PAGE_SIZE)}
+        onPageChange={setPage}
       />
 
       <FAB icon={Plus} onPress={openCreate} />

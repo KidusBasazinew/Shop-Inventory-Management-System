@@ -18,6 +18,9 @@ import {
 import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
 import EmptyState from "../../../components/common/EmptyState";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
 
@@ -36,12 +39,14 @@ function monthBounds(monthsAgo = 0) {
 }
 
 export default function TaxScreen() {
+  const [page, setPage] = useState(1);
   const { from, to } = useMemo(() => monthBounds(0), []);
   const { data: report, isLoading: reportLoading } = useVatReport({
     from: from.toISOString(),
     to: to.toISOString(),
   });
   const { data: paymentsData, isLoading: paymentsLoading } = useTaxPayments({
+    page,
     limit: 20,
   });
   const createPayment = useCreateTaxPayment();
@@ -187,6 +192,12 @@ export default function TaxScreen() {
           </View>
         )}
       </ScrollView>
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(paymentsData?.total, 20)}
+        onPageChange={setPage}
+      />
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
 

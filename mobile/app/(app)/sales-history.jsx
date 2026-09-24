@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react-native";
 import { useSales, useSale } from "../../hooks/useSales";
+import Pagination, { usePageCount } from "../../components/common/Pagination";
 import { useCreateCustomerPayment } from "../../hooks/usePayments";
 import { playSuccess, playError } from "../../lib/feedback";
 
@@ -52,7 +53,7 @@ export default function SalesHistory() {
     limit,
   });
   const sales = data?.items ?? [];
-  const totalPages = data?.total ? Math.ceil(data.total / limit) : 1;
+  const totalPages = usePageCount(data?.total, limit);
 
   if (isLoading) {
     return (
@@ -188,28 +189,7 @@ export default function SalesHistory() {
         }}
       />
 
-      {totalPages > 1 ? (
-        <View className="flex-row justify-between items-center px-6 py-3 border-t border-outline-variant/20 bg-surface-container-lowest">
-          <Pressable
-            onPress={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${page <= 1 ? "opacity-40" : "active:bg-surface-container-low"}`}
-          >
-            <Text className="text-primary font-bold text-xs">Previous</Text>
-          </Pressable>
-          <Text className="text-on-surface-variant font-semibold text-xs">
-            Page {page} of {totalPages}
-          </Text>
-          <Pressable
-            onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-            className={`px-4 py-2 rounded-xl border border-outline-variant/30 ${page >= totalPages ? "opacity-40" : "active:bg-surface-container-low"}`}
-          >
-            <Text className="text-primary font-bold text-xs">Next</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       <SaleDetailModal
         saleId={selectedSaleId}
         onClose={() => setSelectedSaleId(null)}

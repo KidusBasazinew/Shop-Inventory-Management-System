@@ -35,6 +35,9 @@ import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
 
@@ -50,10 +53,12 @@ const CATEGORIES = [
 const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
 const EMPTY_FORM = { category: "", amount: "", description: "" };
+const PAGE_SIZE = 20;
 
 export default function ExpensesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState(null);
+  const [page, setPage] = useState(1);
   const [modalVisible, setModalVisible] = useState(false);
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -62,7 +67,8 @@ export default function ExpensesScreen() {
 
   const { data, isLoading, refetch, isRefetching } = useExpenses({
     category: categoryFilter ?? undefined,
-    limit: 100,
+    page,
+    limit: PAGE_SIZE,
   });
   const expenses = data?.items ?? [];
 
@@ -197,7 +203,10 @@ export default function ExpensesScreen() {
           contentContainerStyle={{ gap: 6, paddingRight: 8 }}
         >
           <Pressable
-            onPress={() => setCategoryFilter(null)}
+            onPress={() => {
+              setCategoryFilter(null);
+              setPage(1);
+            }}
             className={`px-3.5 py-1.5 rounded-full border active:opacity-70 ${
               categoryFilter === null
                 ? "bg-primary border-primary"
@@ -220,7 +229,10 @@ export default function ExpensesScreen() {
             return (
               <Pressable
                 key={c.id}
-                onPress={() => setCategoryFilter(c.id)}
+                onPress={() => {
+                  setCategoryFilter(c.id);
+                  setPage(1);
+                }}
                 className={`px-3.5 py-1.5 rounded-full border active:opacity-70 ${
                   isSelected
                     ? "bg-primary border-primary"
@@ -335,6 +347,12 @@ export default function ExpensesScreen() {
           )}
         />
       )}
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(data?.total, PAGE_SIZE)}
+        onPageChange={setPage}
+      />
 
       <FAB icon={Plus} onPress={openCreate} />
 

@@ -18,7 +18,7 @@ export function CustomTabBar({ state, descriptors, navigation, icons }) {
   const insets = useSafeAreaInsets();
   const tabCount = state.routes.length;
 
-  // ✅ subtract the container's horizontal padding before dividing
+  //subtract the container's horizontal padding before dividing
   const barWidth = SCREEN_WIDTH - CONTAINER_PADDING * 2;
   const tabWidth = barWidth / tabCount;
 

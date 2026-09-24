@@ -27,11 +27,14 @@ import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import PurchaseCard from "../../../components/purchase/PurchaseCard";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_LINE = { productId: "", quantity: "", unitCost: "" };
-
+const PAGE_SIZE = 20;
 export default function PurchasesScreen() {
   const [search, setSearch] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,13 +48,17 @@ export default function PurchasesScreen() {
   const [payAmount, setPayAmount] = useState("");
   const createSupplierPayment = useCreateSupplierPayment();
 
+  const [page, setPage] = useState(1);
   const {
     data: purchasesData,
     isLoading,
     isError,
     refetch,
     isRefetching,
-  } = usePurchases({ limit: 50 });
+  } = usePurchases({
+    page,
+    limit: PAGE_SIZE,
+  });
   const { data: productsData } = useProducts({ limit: 100 });
   const { data: supplierData } = useSuppliers({ limit: 50 });
   const createMutation = useCreatePurchase();
@@ -270,6 +277,12 @@ export default function PurchasesScreen() {
             onRecordPayment={() => setPayingPurchase(item)}
           />
         )}
+      />
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(purchasesData?.total, PAGE_SIZE)}
+        onPageChange={setPage}
       />
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />

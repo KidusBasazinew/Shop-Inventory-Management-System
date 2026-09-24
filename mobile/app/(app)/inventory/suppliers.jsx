@@ -22,15 +22,21 @@ import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
 import SupplierCard from "../../../components/suppliers/SupplierCard";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", address: "" };
-
+const PAGE_SIZE = 20;
 export default function Suppliers() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const { data, isLoading, isError, refetch, isRefetching } = useSuppliers({
     search,
+    page,
+    limit: PAGE_SIZE,
   });
 
   const createMutation = useCreateSupplier();
@@ -162,7 +168,10 @@ export default function Suppliers() {
 
         <SearchBar
           value={search}
-          onChangeText={setSearch}
+          onChangeText={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
           placeholder="Search suppliers or locations..."
         />
       </View>
@@ -194,7 +203,11 @@ export default function Suppliers() {
           <SupplierCard supplier={item} onPress={() => openEdit(item)} />
         )}
       />
-
+      <Pagination
+        page={page}
+        totalPages={usePageCount(data?.total, PAGE_SIZE)}
+        onPageChange={setPage}
+      />
       <FAB icon={Truck} onPress={openCreate} />
 
       {/* Create / Edit Supplier Modal */}

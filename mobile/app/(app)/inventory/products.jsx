@@ -36,6 +36,9 @@ import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
 import UnitPicker from "../../../components/medicines/UnitPicker";
 import ProductCard from "../../../components/inventory/ProductCard";
+import Pagination, {
+  usePageCount,
+} from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
 
@@ -59,12 +62,16 @@ const STOCK_ACTIONS = [
   { key: "adjust", label: "Set Exact Count", icon: RotateCcw },
 ];
 
+const PAGE_SIZE = 20;
+
 export default function Products() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [supplierPickerVisible, setSupplierPickerVisible] = useState(false);
   const { data, isLoading, isError, refetch, isRefetching } = useProducts({
     search,
-    limit: 100,
+    page,
+    limit: PAGE_SIZE,
   });
   const { data: supplierData } = useSuppliers({ limit: 100 });
   const suppliers = supplierData?.items ?? [];
@@ -257,7 +264,10 @@ export default function Products() {
       <View className="px-4 pt-4 pb-3">
         <SearchBar
           value={search}
-          onChangeText={setSearch}
+          onChangeText={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
           placeholder="Search products..."
         />
       </View>
@@ -292,6 +302,12 @@ export default function Products() {
             onDeactivate={() => handleDeactivate(item.id, item.name)}
           />
         )}
+      />
+
+      <Pagination
+        page={page}
+        totalPages={usePageCount(data?.total, PAGE_SIZE)}
+        onPageChange={setPage}
       />
 
       <FAB icon={Plus} onPress={openCreate} />
