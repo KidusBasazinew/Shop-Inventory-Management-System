@@ -4,10 +4,10 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link, router } from "expo-router";
 import {
   Phone,

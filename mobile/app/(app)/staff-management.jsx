@@ -8,9 +8,9 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Stack } from "expo-router";
 import { Plus, X } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";

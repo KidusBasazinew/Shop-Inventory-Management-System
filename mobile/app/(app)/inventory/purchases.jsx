@@ -8,9 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   ShoppingBag,
   X,

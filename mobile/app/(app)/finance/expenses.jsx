@@ -10,10 +10,9 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
-  KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Stack } from "expo-router";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   Wallet,
   Plus,

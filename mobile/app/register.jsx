@@ -4,11 +4,11 @@ import {
   Text,
   TextInput,
   Pressable,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Link, router } from "expo-router";
 import {
   Store,

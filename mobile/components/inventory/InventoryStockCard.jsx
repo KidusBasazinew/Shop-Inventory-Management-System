@@ -13,6 +13,7 @@ import {
 export default function InventoryStockCard({ product, onPress }) {
   const {
     name,
+    genericName,
     category,
     unitType,
     minQuantityAlert,
@@ -45,7 +46,7 @@ export default function InventoryStockCard({ product, onPress }) {
           <View className="flex-row items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-md">
             <Layers size={13} color="#004ac6" />
             <Text className="text-xs font-bold text-primary tracking-wider uppercase">
-              {unit}
+              {unitType}
             </Text>
           </View>
 

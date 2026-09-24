@@ -7,10 +7,10 @@ import {
   Modal,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 
 import { X, Truck, Building2, Store } from "lucide-react-native";
 import {

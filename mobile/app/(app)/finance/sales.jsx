@@ -27,6 +27,7 @@ import { router } from "expo-router";
 import { useProducts } from "../../../hooks/useProducts";
 import { useCustomers, useCreateCustomer } from "../../../hooks/useCustomers";
 import { useCreateSale } from "../../../hooks/useSales";
+import { playSuccess, playError } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
 
 const PAYMENT_METHODS = [
@@ -145,11 +146,13 @@ export default function Sales() {
       setCustomerId("");
       setPartialAmount("");
       setSaleType("FULL");
+      playSuccess();
       Alert.alert(
         "Sale complete",
         `Total: ETB ${Number(sale.totalAmount).toFixed(2)}`,
       );
     } catch (e) {
+      playError();
       Alert.alert(
         "Checkout failed",
         e?.response?.data?.error ?? "Something went wrong",

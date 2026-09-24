@@ -16,6 +16,8 @@ import {
   Receipt,
   History,
   Package2,
+  Trash2,
+  Briefcase,
   PiggyBank,
   Bell,
   Settings,
@@ -59,6 +61,7 @@ const INVENTORY_ITEMS = [
     label: "Purchase Orders",
     icon: ShoppingCart,
   },
+  { group: "inventory", target: "waste", label: "Waste", icon: Trash2 },
   {
     group: "inventory",
     target: "expiring",
@@ -78,10 +81,13 @@ const FINANCE_ITEMS = [
     label: "Profit & Loss",
     icon: PiggyBank,
   },
+  { group: "finance", target: "tax", label: "Tax", icon: Receipt },
 ];
 
 const FOOTER_ITEMS = [
   { name: "notifications", label: "Notifications", icon: Bell, dot: true },
+  { name: "staff-management", label: "Staff Management", icon: Users },
+  { name: "employees", label: "Employees & Payroll", icon: Briefcase },
   { name: "settings", label: "Settings", icon: Settings },
   { name: "help", label: "Help & Support", icon: HelpCircle },
 ];
@@ -263,7 +269,14 @@ export function CustomSidebar({ shop, ...props }) {
         className="px-3 border-t border-outline-variant/30 pt-2 gap-1"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        {/* Secondary pages are temporarily hidden. */}
+        {FOOTER_ITEMS.map((item) => (
+          <NavItem
+            key={item.name}
+            item={item}
+            isActive={isItemActive(item)}
+            onPress={() => handleNavigate(item)}
+          />
+        ))}
 
         <Pressable
           onPress={handleLogout}
