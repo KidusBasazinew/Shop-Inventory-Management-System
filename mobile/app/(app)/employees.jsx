@@ -436,7 +436,11 @@ function PayrollModal({ employee, onClose }) {
                 No payroll history yet
               </Text>
             ) : (
-              <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+              <BottomSheetScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 24 }}
+              >
                 <View className="gap-2 pb-2">
                   {payments.map((p) => (
                     <View

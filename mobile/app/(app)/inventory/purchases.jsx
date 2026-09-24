@@ -297,7 +297,11 @@ export default function PurchasesScreen() {
             </Pressable>
           </View>
 
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-4 pb-2">
               <View>
                 <Text className="text-xs font-medium text-on-surface-variant mb-2">
@@ -418,7 +422,11 @@ export default function PurchasesScreen() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-2 pb-2">
               {suppliers.map((supplier) => {
                 const isSelected = supplier.id === supplierId;
@@ -466,7 +474,11 @@ export default function PurchasesScreen() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-2 pb-2">
               {products.map((product) => (
                 <Pressable

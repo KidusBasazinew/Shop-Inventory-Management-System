@@ -357,7 +357,7 @@ export default function ExpensesScreen() {
 
       {/* Main Form Drawer Modal */}
       <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+        <View className="p-6 gap-4" style={{ flex: 1 }}>
           <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
             <View className="flex-row items-center gap-2">
               <Receipt size={20} color="#004ac6" />
@@ -373,7 +373,11 @@ export default function ExpensesScreen() {
             </Pressable>
           </View>
 
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-4 py-2">
               <View>
                 <Text className="text-xs font-semibold text-on-surface-variant mb-1.5">
@@ -461,7 +465,11 @@ export default function ExpensesScreen() {
               <X size={20} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-2 py-2">
               {CATEGORIES.map((c) => {
                 const isSelected = c.id === form.category;

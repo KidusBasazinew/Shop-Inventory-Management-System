@@ -217,7 +217,11 @@ export default function Suppliers() {
             </Pressable>
           </View>
 
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-4 pb-2">
               <FormField
                 label="Supplier / Agency Name"

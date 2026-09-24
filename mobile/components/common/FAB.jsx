@@ -16,6 +16,7 @@ export default function FAB({
       onPress={onPress}
       className="absolute items-center justify-center rounded-full shadow-lg bg-primary"
       style={{
+        position: "absolute",
         bottom,
         right,
         width: size,

@@ -17,14 +17,24 @@ const SheetModal = forwardRef(function SheetModal(
   ref,
 ) {
   const bottomSheetRef = useRef(null);
+  const hasPresentedRef = useRef(false);
   const snapPoints = useMemo(
-    () => customSnapPoints ?? ["90%"],
+    () => customSnapPoints ?? ["60%", "90%"],
     [customSnapPoints],
   );
 
   useEffect(() => {
-    if (visible) bottomSheetRef.current?.present();
-    else bottomSheetRef.current?.dismiss();
+    if (!visible) {
+      if (hasPresentedRef.current) bottomSheetRef.current?.dismiss();
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      hasPresentedRef.current = true;
+      bottomSheetRef.current?.present();
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [visible]);
 
   useImperativeHandle(ref, () => bottomSheetRef.current);
@@ -42,14 +52,21 @@ const SheetModal = forwardRef(function SheetModal(
     [],
   );
 
+  const handleDismiss = useCallback(() => {
+    hasPresentedRef.current = false;
+    onClose?.();
+  }, [onClose]);
+
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
+      index={0}
+      stackBehavior="push"
       enableDynamicSizing={false}
-      onDismiss={onClose}
+      onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
-      keyboardBehavior="interactive"
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       backgroundStyle={{

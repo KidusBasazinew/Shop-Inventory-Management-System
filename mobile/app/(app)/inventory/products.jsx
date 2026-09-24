@@ -312,7 +312,11 @@ export default function Products() {
 
       {/* Create / Edit modal */}
       <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+        <BottomSheetScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator
+          contentContainerStyle={{ padding: 24, gap: 16, paddingBottom: 40 }}
+        >
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               {editingId ? "Edit Product" : "New Product"}
@@ -322,112 +326,106 @@ export default function Products() {
             </Pressable>
           </View>
 
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
-            <View className="gap-4 pb-2">
-              <FormField
-                label="Name"
-                required
-                placeholder="e.g. Cooking Oil 1L"
-                value={form.name}
-                onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-              />
-              <FormField
-                label="Category"
-                placeholder="e.g. Cooking Oil"
-                value={form.category}
-                onChangeText={(v) => setForm((p) => ({ ...p, category: v }))}
-              />
-              <UnitPicker
-                units={UNIT_TYPES}
-                value={form.unitType}
-                onChange={(u) => setForm((p) => ({ ...p, unitType: u }))}
-                label="Unit type"
-              />
-              <FormField
-                label="Units per package"
-                placeholder="e.g. 24 (1 carton = 24 pieces)"
-                value={form.unitsPerPackage}
-                onChangeText={(v) =>
-                  setForm((p) => ({ ...p, unitsPerPackage: v }))
-                }
-                keyboardType="numeric"
-              />
-              <View>
-                <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                  Preferred Supplier
+          <View className="gap-4 pb-2">
+            <FormField
+              label="Name"
+              required
+              placeholder="e.g. Cooking Oil 1L"
+              value={form.name}
+              onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+            />
+            <FormField
+              label="Category"
+              placeholder="e.g. Cooking Oil"
+              value={form.category}
+              onChangeText={(v) => setForm((p) => ({ ...p, category: v }))}
+            />
+            <UnitPicker
+              units={UNIT_TYPES}
+              value={form.unitType}
+              onChange={(u) => setForm((p) => ({ ...p, unitType: u }))}
+              label="Unit type"
+            />
+            <FormField
+              label="Units per package"
+              placeholder="e.g. 24 (1 carton = 24 pieces)"
+              value={form.unitsPerPackage}
+              onChangeText={(v) =>
+                setForm((p) => ({ ...p, unitsPerPackage: v }))
+              }
+              keyboardType="numeric"
+            />
+            <View>
+              <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                Preferred Supplier
+              </Text>
+              <Pressable
+                onPress={() => setSupplierPickerVisible(true)}
+                className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+              >
+                <Text
+                  className={`flex-1 ${form.supplierId ? "text-on-surface" : "text-[#737686]"}`}
+                  numberOfLines={1}
+                >
+                  {suppliers.find((s) => s.id === form.supplierId)?.name ??
+                    "None selected"}
                 </Text>
-                <Pressable
-                  onPress={() => setSupplierPickerVisible(true)}
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
-                >
-                  <Text
-                    className={`flex-1 ${form.supplierId ? "text-on-surface" : "text-[#737686]"}`}
-                    numberOfLines={1}
-                  >
-                    {suppliers.find((s) => s.id === form.supplierId)?.name ??
-                      "None selected"}
-                  </Text>
-                  <ChevronDown size={18} color="#737686" />
-                </Pressable>
-              </View>
+                <ChevronDown size={18} color="#737686" />
+              </Pressable>
+            </View>
+            <FormField
+              label="Buying price"
+              required
+              placeholder="0.00"
+              value={form.buyingPrice}
+              onChangeText={(v) => setForm((p) => ({ ...p, buyingPrice: v }))}
+              keyboardType="decimal-pad"
+            />
+            <FormField
+              label="Selling price"
+              required
+              placeholder="0.00"
+              value={form.sellingPrice}
+              onChangeText={(v) => setForm((p) => ({ ...p, sellingPrice: v }))}
+              keyboardType="decimal-pad"
+            />
+            <FormField
+              label="Low stock alert threshold"
+              placeholder="10"
+              value={form.minQuantityAlert}
+              onChangeText={(v) =>
+                setForm((p) => ({ ...p, minQuantityAlert: v }))
+              }
+              keyboardType="numeric"
+            />
+            {!editingId ? (
               <FormField
-                label="Buying price"
-                required
-                placeholder="0.00"
-                value={form.buyingPrice}
-                onChangeText={(v) => setForm((p) => ({ ...p, buyingPrice: v }))}
-                keyboardType="decimal-pad"
-              />
-              <FormField
-                label="Selling price"
-                required
-                placeholder="0.00"
-                value={form.sellingPrice}
-                onChangeText={(v) =>
-                  setForm((p) => ({ ...p, sellingPrice: v }))
-                }
-                keyboardType="decimal-pad"
-              />
-              <FormField
-                label="Low stock alert threshold"
-                placeholder="10"
-                value={form.minQuantityAlert}
-                onChangeText={(v) =>
-                  setForm((p) => ({ ...p, minQuantityAlert: v }))
-                }
+                label="Starting quantity"
+                placeholder="0"
+                value={form.quantity}
+                onChangeText={(v) => setForm((p) => ({ ...p, quantity: v }))}
                 keyboardType="numeric"
               />
-              {!editingId ? (
-                <FormField
-                  label="Starting quantity"
-                  placeholder="0"
-                  value={form.quantity}
-                  onChangeText={(v) => setForm((p) => ({ ...p, quantity: v }))}
-                  keyboardType="numeric"
-                />
-              ) : null}
-              <DateField
-                label="Expiry date (optional)"
-                value={expiryDate}
-                onChange={setExpiryDate}
-              />
+            ) : null}
+            <DateField
+              label="Expiry date (optional)"
+              value={expiryDate}
+              onChange={setExpiryDate}
+            />
 
-              {editingId ? (
-                <Pressable
-                  onPress={() => {
-                    const product = products.find((p) => p.id === editingId);
-                    setModalVisible(false);
-                    setStockTarget(product);
-                  }}
-                  className="border border-primary rounded-xl py-3 items-center"
-                >
-                  <Text className="text-primary font-semibold">
-                    Manage Stock
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </BottomSheetScrollView>
+            {editingId ? (
+              <Pressable
+                onPress={() => {
+                  const product = products.find((p) => p.id === editingId);
+                  setModalVisible(false);
+                  setStockTarget(product);
+                }}
+                className="border border-primary rounded-xl py-3 items-center"
+              >
+                <Text className="text-primary font-semibold">Manage Stock</Text>
+              </Pressable>
+            ) : null}
+          </View>
 
           <Pressable
             onPress={handleSave}
@@ -443,7 +441,7 @@ export default function Products() {
                   : "Save Product"}
             </Text>
           </Pressable>
-        </View>
+        </BottomSheetScrollView>
       </SheetModal>
 
       {/* Stock adjustment modal */}
@@ -518,7 +516,11 @@ export default function Products() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-2 pb-2">
               <Pressable
                 onPress={() => {

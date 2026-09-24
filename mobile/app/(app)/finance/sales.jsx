@@ -249,6 +249,7 @@ export default function Sales() {
       <Pressable
         onPress={() => setPickerVisible(true)}
         className="absolute bottom-60 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg active:opacity-90"
+        style={{ position: "absolute", zIndex: 999, elevation: 8 }}
       >
         <Plus size={26} color="white" />
       </Pressable>
@@ -319,7 +320,7 @@ export default function Sales() {
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
       >
-        <View className="p-6 gap-4">
+        <View className="p-6 gap-4" style={{ flex: 1 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">Add Item</Text>
             <Pressable onPress={() => setPickerVisible(false)}>
@@ -343,6 +344,7 @@ export default function Sales() {
           ) : (
             <FlatList
               data={products}
+              style={{ flex: 1 }}
               keyExtractor={(item) => item.id}
               ListEmptyComponent={
                 <Text className="text-center text-on-surface-variant py-6">
@@ -419,13 +421,16 @@ export default function Sales() {
         visible={checkoutVisible}
         onClose={() => setCheckoutVisible(false)}
       >
-        <View className="p-6 gap-4">
+        <View className="p-6 gap-4" style={{ flex: 1 }}>
           <Text className="text-lg font-bold text-on-surface">
             Confirm Sale
           </Text>
 
           <View className="bg-surface-container-low p-3.5 rounded-2xl gap-2 max-h-40">
-            <BottomSheetScrollView>
+            <BottomSheetScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
               <View className="gap-2">
                 {cart.map((item) => (
                   <View
@@ -573,7 +578,7 @@ export default function Sales() {
           setNewCustomerMode(false);
         }}
       >
-        <View className="p-6 gap-4">
+        <View className="p-6 gap-4" style={{ flex: 1 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               {newCustomerMode ? "New Customer" : "Select Customer"}
@@ -652,7 +657,11 @@ export default function Sales() {
                 </Text>
               </Pressable>
 
-              <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+              <BottomSheetScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: 24 }}
+              >
                 <View className="gap-2 pb-2">
                   {customers.map((customer) => {
                     const isSelected = customer.id === customerId;

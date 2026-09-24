@@ -269,7 +269,11 @@ export default function WasteScreen() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
+          >
             <View className="gap-2 pb-2">
               {products.map((product) => {
                 const isSelected = product.id === productId;
