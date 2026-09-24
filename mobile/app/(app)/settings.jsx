@@ -1,13 +1,6 @@
 import { useState } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  ScrollView,
-  TextInput,
-  Modal,
-  Alert,
-} from "react-native";
+import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import {
   User,
@@ -32,6 +25,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useShop, useUpdateShop } from "../../hooks/useShop";
 import { playSuccess, playError } from "../../lib/feedback";
+import SheetModal from "../../components/common/SheetModal";
 
 export default function Settings() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
@@ -229,79 +223,73 @@ export default function Settings() {
       </View>
 
       {/* Edit shop modal */}
-      <Modal visible={editVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 gap-4">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-slate-900">
-                Edit Shop
-              </Text>
-              <Pressable onPress={() => setEditVisible(false)}>
-                <X size={22} color="#64748b" />
-              </Pressable>
-            </View>
-
-            <TextInput
-              placeholder="Shop name"
-              value={form.name}
-              onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-            />
-            <TextInput
-              placeholder="Location"
-              value={form.location}
-              onChangeText={(v) => setForm((p) => ({ ...p, location: v }))}
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-            />
-            <TextInput
-              placeholder="Shop phone"
-              value={form.phone}
-              onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
-              keyboardType="phone-pad"
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-            />
-            <TextInput
-              placeholder="Owner name"
-              value={form.ownerName}
-              onChangeText={(v) => setForm((p) => ({ ...p, ownerName: v }))}
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-            />
-            <TextInput
-              placeholder="Tax rate (%)"
-              value={form.taxRatePercent}
-              onChangeText={(v) =>
-                setForm((p) => ({ ...p, taxRatePercent: v }))
-              }
-              keyboardType="decimal-pad"
-              placeholderTextColor="#94a3b8"
-              className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-              style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-            />
-
-            <Pressable
-              onPress={handleSave}
-              disabled={updateShop.isPending}
-              className="rounded-2xl py-4 items-center"
-              style={{
-                backgroundColor: "#2563eb",
-                opacity: updateShop.isPending ? 0.6 : 1,
-              }}
-            >
-              <Text className="text-white font-semibold text-[15px]">
-                {updateShop.isPending ? "Saving..." : "Save Changes"}
-              </Text>
+      <SheetModal visible={editVisible} onClose={() => setEditVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-slate-900">Edit Shop</Text>
+            <Pressable onPress={() => setEditVisible(false)}>
+              <X size={22} color="#64748b" />
             </Pressable>
           </View>
+
+          <BottomSheetTextInput
+            placeholder="Shop name"
+            value={form.name}
+            onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+            placeholderTextColor="#94a3b8"
+            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
+            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+          />
+          <BottomSheetTextInput
+            placeholder="Location"
+            value={form.location}
+            onChangeText={(v) => setForm((p) => ({ ...p, location: v }))}
+            placeholderTextColor="#94a3b8"
+            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
+            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+          />
+          <BottomSheetTextInput
+            placeholder="Shop phone"
+            value={form.phone}
+            onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
+            keyboardType="phone-pad"
+            placeholderTextColor="#94a3b8"
+            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
+            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+          />
+          <BottomSheetTextInput
+            placeholder="Owner name"
+            value={form.ownerName}
+            onChangeText={(v) => setForm((p) => ({ ...p, ownerName: v }))}
+            placeholderTextColor="#94a3b8"
+            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
+            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+          />
+          <BottomSheetTextInput
+            placeholder="Tax rate (%)"
+            value={form.taxRatePercent}
+            onChangeText={(v) => setForm((p) => ({ ...p, taxRatePercent: v }))}
+            keyboardType="decimal-pad"
+            placeholderTextColor="#94a3b8"
+            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
+            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+          />
+
+          <Pressable
+            onPress={handleSave}
+            disabled={updateShop.isPending}
+            className="rounded-2xl py-4 items-center"
+            style={{
+              backgroundColor: "#2563eb",
+              opacity: updateShop.isPending ? 0.6 : 1,
+            }}
+          >
+            <Text className="text-white font-semibold text-[15px]">
+              {updateShop.isPending ? "Saving..." : "Save Changes"}
+            </Text>
+          </Pressable>
         </View>
-      </Modal>
+      </SheetModal>
     </ScrollView>
   );
 }

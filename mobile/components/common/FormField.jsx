@@ -1,4 +1,5 @@
-import { View, Text, TextInput } from "react-native";
+import { View, Text } from "react-native";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 
 export default function FormField({ label, required, ...inputProps }) {
   return (
@@ -9,7 +10,7 @@ export default function FormField({ label, required, ...inputProps }) {
           {required ? <Text className="text-error"> *</Text> : null}
         </Text>
       ) : null}
-      <TextInput
+      <BottomSheetTextInput
         placeholderTextColor="#737686"
         className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
         {...inputProps}

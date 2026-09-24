@@ -4,20 +4,11 @@ import {
   Text,
   FlatList,
   Pressable,
-  Modal,
   ActivityIndicator,
   Alert,
-  Platform,
-  ScrollView,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-
-import { X, Truck, Building2, Store } from "lucide-react-native";
-import {
-  useSuppliers,
-  useCreateSupplier,
-  useUpdateSupplier,
-} from "../../../hooks/useSuppliers";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { useSuppliers, useUpdateSupplier } from "../../../hooks/useSuppliers";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -26,6 +17,7 @@ import Pagination, {
   usePageCount,
 } from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
+import SheetModal from "../../../components/common/SheetModal";
 import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", address: "" };
@@ -211,67 +203,62 @@ export default function Suppliers() {
       <FAB icon={Truck} onPress={openCreate} />
 
       {/* Create / Edit Supplier Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-black/40 justify-end"
-        >
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-            <View className="flex-row justify-between items-center">
-              <View className="flex-row items-center gap-2">
-                <Building2 size={20} color="#004ac6" />
-                <Text className="text-lg font-bold text-on-surface">
-                  {editingId ? "Edit Vendor Profile" : "New Wholesale Supplier"}
-                </Text>
-              </View>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="gap-4 pb-2">
-                <FormField
-                  label="Supplier / Agency Name"
-                  required
-                  placeholder="e.g. EPHARM Pharmaceuticals Agency"
-                  value={form.name}
-                  onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-                />
-                <FormField
-                  label="Contact Phone"
-                  required
-                  placeholder="e.g. 0115501235"
-                  value={form.phone}
-                  onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
-                  keyboardType="phone-pad"
-                />
-                <FormField
-                  label="Physical Depot / Address"
-                  placeholder="e.g. Akaki Kality, Addis Ababa"
-                  value={form.address}
-                  onChangeText={(v) => setForm((p) => ({ ...p, address: v }))}
-                />
-              </View>
-            </ScrollView>
-
-            <Pressable
-              onPress={handleSave}
-              disabled={saving}
-              className="bg-primary rounded-xl py-4 items-center shadow-xs"
-              style={{ opacity: saving ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-semibold">
-                {saving
-                  ? "Saving..."
-                  : editingId
-                    ? "Update Supplier"
-                    : "Save Supplier Profile"}
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center gap-2">
+              <Building2 size={20} color="#004ac6" />
+              <Text className="text-lg font-bold text-on-surface">
+                {editingId ? "Edit Vendor Profile" : "New Wholesale Supplier"}
               </Text>
+            </View>
+            <Pressable onPress={() => setModalVisible(false)}>
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            <View className="gap-4 pb-2">
+              <FormField
+                label="Supplier / Agency Name"
+                required
+                placeholder="e.g. EPHARM Pharmaceuticals Agency"
+                value={form.name}
+                onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+              />
+              <FormField
+                label="Contact Phone"
+                required
+                placeholder="e.g. 0115501235"
+                value={form.phone}
+                onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
+                keyboardType="phone-pad"
+              />
+              <FormField
+                label="Physical Depot / Address"
+                placeholder="e.g. Akaki Kality, Addis Ababa"
+                value={form.address}
+                onChangeText={(v) => setForm((p) => ({ ...p, address: v }))}
+              />
+            </View>
+          </BottomSheetScrollView>
+
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            className="bg-primary rounded-xl py-4 items-center shadow-xs"
+            style={{ opacity: saving ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-semibold">
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Update Supplier"
+                  : "Save Supplier Profile"}
+            </Text>
+          </Pressable>
+        </View>
+      </SheetModal>
     </View>
   );
 }

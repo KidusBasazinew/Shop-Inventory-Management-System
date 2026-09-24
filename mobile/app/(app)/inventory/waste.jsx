@@ -4,13 +4,10 @@ import {
   Text,
   FlatList,
   Pressable,
-  Modal,
   ActivityIndicator,
   Alert,
-  ScrollView,
-  Platform,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import {
   Plus,
   X,
@@ -28,6 +25,7 @@ import Pagination, {
 } from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import Badge from "../../../components/common/Badge";
+import SheetModal from "../../../components/common/SheetModal";
 import { playSuccess, playError } from "../../../lib/feedback";
 
 const REASONS = ["EXPIRED", "RAT_DAMAGE", "BROKEN", "SPOILED", "OTHER"];
@@ -183,129 +181,123 @@ export default function WasteScreen() {
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-black/40 justify-end"
-        >
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                Log Waste
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <View>
-              <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                Product
-              </Text>
-              <Pressable
-                onPress={() => setProductPickerVisible(true)}
-                className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
-              >
-                <Text
-                  className={`flex-1 ${selectedProduct ? "text-on-surface" : "text-[#737686]"}`}
-                  numberOfLines={1}
-                >
-                  {selectedProduct?.name ?? "Select a product"}
-                </Text>
-                <ChevronDown size={18} color="#737686" />
-              </Pressable>
-              {selectedProduct ? (
-                <Text className="text-[11px] text-on-surface-variant mt-1.5">
-                  {selectedProduct.quantity} currently in stock
-                </Text>
-              ) : null}
-            </View>
-
-            <FormField
-              label="Quantity lost"
-              placeholder="e.g. 5"
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="numeric"
-            />
-
-            <View>
-              <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                Reason
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {REASONS.map((r) => (
-                  <Pressable
-                    key={r}
-                    onPress={() => setReason(r)}
-                    className={`px-3 py-2 rounded-xl border ${reason === r ? "bg-primary border-primary" : "border-outline-variant/40"}`}
-                  >
-                    <Text
-                      className={`text-xs font-semibold ${reason === r ? "text-white" : "text-on-surface-variant"}`}
-                    >
-                      {r.replace("_", " ")}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={createWaste.isPending}
-              className="bg-primary rounded-xl py-4 items-center"
-              style={{ opacity: createWaste.isPending ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-semibold">
-                {createWaste.isPending ? "Saving..." : "Record Waste"}
-              </Text>
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">Log Waste</Text>
+            <Pressable onPress={() => setModalVisible(false)}>
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          <View>
+            <Text className="text-xs font-medium text-on-surface-variant mb-2">
+              Product
+            </Text>
+            <Pressable
+              onPress={() => setProductPickerVisible(true)}
+              className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+            >
+              <Text
+                className={`flex-1 ${selectedProduct ? "text-on-surface" : "text-[#737686]"}`}
+                numberOfLines={1}
+              >
+                {selectedProduct?.name ?? "Select a product"}
+              </Text>
+              <ChevronDown size={18} color="#737686" />
+            </Pressable>
+            {selectedProduct ? (
+              <Text className="text-[11px] text-on-surface-variant mt-1.5">
+                {selectedProduct.quantity} currently in stock
+              </Text>
+            ) : null}
+          </View>
+
+          <FormField
+            label="Quantity lost"
+            placeholder="e.g. 5"
+            value={quantity}
+            onChangeText={setQuantity}
+            keyboardType="numeric"
+          />
+
+          <View>
+            <Text className="text-xs font-medium text-on-surface-variant mb-2">
+              Reason
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {REASONS.map((r) => (
+                <Pressable
+                  key={r}
+                  onPress={() => setReason(r)}
+                  className={`px-3 py-2 rounded-xl border ${reason === r ? "bg-primary border-primary" : "border-outline-variant/40"}`}
+                >
+                  <Text
+                    className={`text-xs font-semibold ${reason === r ? "text-white" : "text-on-surface-variant"}`}
+                  >
+                    {r.replace("_", " ")}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <Pressable
+            onPress={handleSubmit}
+            disabled={createWaste.isPending}
+            className="bg-primary rounded-xl py-4 items-center"
+            style={{ opacity: createWaste.isPending ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-semibold">
+              {createWaste.isPending ? "Saving..." : "Record Waste"}
+            </Text>
+          </Pressable>
+        </View>
+      </SheetModal>
 
       {/* Product picker */}
-      <Modal visible={productPickerVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[75%]">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                Select Product
-              </Text>
-              <Pressable onPress={() => setProductPickerVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="gap-2 pb-2">
-                {products.map((product) => {
-                  const isSelected = product.id === productId;
-                  return (
-                    <Pressable
-                      key={product.id}
-                      onPress={() => {
-                        setProductId(product.id);
-                        setProductPickerVisible(false);
-                      }}
-                      className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
-                    >
-                      <View className="flex-1 pr-3">
-                        <Text className="font-semibold text-on-surface">
-                          {product.name}
-                        </Text>
-                        <Text className="text-xs text-on-surface-variant mt-0.5">
-                          {product.quantity} in stock
-                        </Text>
-                      </View>
-                      {isSelected ? <Check size={18} color="#004ac6" /> : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </ScrollView>
+      <SheetModal
+        visible={productPickerVisible}
+        onClose={() => setProductPickerVisible(false)}
+      >
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">
+              Select Product
+            </Text>
+            <Pressable onPress={() => setProductPickerVisible(false)}>
+              <X size={22} color="#434655" />
+            </Pressable>
           </View>
+          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            <View className="gap-2 pb-2">
+              {products.map((product) => {
+                const isSelected = product.id === productId;
+                return (
+                  <Pressable
+                    key={product.id}
+                    onPress={() => {
+                      setProductId(product.id);
+                      setProductPickerVisible(false);
+                    }}
+                    className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
+                  >
+                    <View className="flex-1 pr-3">
+                      <Text className="font-semibold text-on-surface">
+                        {product.name}
+                      </Text>
+                      <Text className="text-xs text-on-surface-variant mt-0.5">
+                        {product.quantity} in stock
+                      </Text>
+                    </View>
+                    {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </BottomSheetScrollView>
         </View>
-      </Modal>
+      </SheetModal>
     </View>
   );
 }

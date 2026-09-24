@@ -5,9 +5,8 @@ import {
   FlatList,
   Pressable,
   ActivityIndicator,
-  Modal,
-  TextInput,
 } from "react-native";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { Stack } from "expo-router";
 import {
   X,
@@ -21,6 +20,7 @@ import { useSales, useSale } from "../../hooks/useSales";
 import Pagination, { usePageCount } from "../../components/common/Pagination";
 import { useCreateCustomerPayment } from "../../hooks/usePayments";
 import { playSuccess, playError } from "../../lib/feedback";
+import SheetModal from "../../components/common/SheetModal";
 
 const STATUS_CONFIG = {
   PAID: {
@@ -242,180 +242,178 @@ function SaleDetailModal({ saleId, onClose }) {
   };
 
   return (
-    <Modal visible={!!saleId} animationType="slide" transparent>
-      <View className="flex-1 bg-black/50 justify-end">
-        <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%] border-t border-outline-variant/20">
-          <View className="flex-row justify-between items-center pb-3 border-b border-outline-variant/20">
-            <View className="flex-row items-center gap-2.5">
-              <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">
-                <Receipt size={20} color="#4f378a" />
-              </View>
-              <View>
-                <Text className="text-base font-bold text-on-surface">
-                  #{sale?.id ? sale.id.slice(-6).toUpperCase() : "Sale Details"}
-                </Text>
-                <Text className="text-[11px] font-medium text-secondary">
-                  Transaction Receipt
-                </Text>
-              </View>
+    <SheetModal visible={!!saleId} onClose={onClose}>
+      <View className="p-6 gap-4 border-t border-outline-variant/20">
+        <View className="flex-row justify-between items-center pb-3 border-b border-outline-variant/20">
+          <View className="flex-row items-center gap-2.5">
+            <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">
+              <Receipt size={20} color="#4f378a" />
             </View>
-            <Pressable
-              onPress={onClose}
-              className="w-8 h-8 rounded-full bg-surface-container-high items-center justify-center"
-            >
-              <X size={18} color="#434655" />
-            </Pressable>
+            <View>
+              <Text className="text-base font-bold text-on-surface">
+                #{sale?.id ? sale.id.slice(-6).toUpperCase() : "Sale Details"}
+              </Text>
+              <Text className="text-[11px] font-medium text-secondary">
+                Transaction Receipt
+              </Text>
+            </View>
           </View>
+          <Pressable
+            onPress={onClose}
+            className="w-8 h-8 rounded-full bg-surface-container-high items-center justify-center"
+          >
+            <X size={18} color="#434655" />
+          </Pressable>
+        </View>
 
-          {isLoading || !sale ? (
-            <View className="py-12 items-center justify-center">
-              <ActivityIndicator color="#4f378a" />
-              <Text className="text-xs text-secondary mt-2">
-                Retrieving receipt breakdown...
+        {isLoading || !sale ? (
+          <View className="py-12 items-center justify-center">
+            <ActivityIndicator color="#4f378a" />
+            <Text className="text-xs text-secondary mt-2">
+              Retrieving receipt breakdown...
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View className="bg-surface-container-low/80 p-3.5 rounded-2xl gap-2 border border-outline-variant/15">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-on-surface-variant font-medium">
+                  Sold By:
+                </Text>
+                <Text className="text-xs font-bold text-on-surface">
+                  {sale.soldBy?.name ?? "—"}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-on-surface-variant font-medium">
+                  Customer:
+                </Text>
+                <Text className="text-xs font-bold text-on-surface">
+                  {sale.customer?.name ?? "Walk-in"}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-on-surface-variant font-medium">
+                  Date & Time:
+                </Text>
+                <Text className="text-xs font-medium text-on-surface">
+                  {new Date(sale.date).toLocaleString()}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-on-surface-variant font-medium">
+                  Status:
+                </Text>
+                <View className={`px-2 py-0.5 rounded-md ${config.badgeBg}`}>
+                  <Text
+                    className="text-[10px] font-bold uppercase"
+                    style={{ color: config.color }}
+                  >
+                    {config.label}
+                  </Text>
+                </View>
+              </View>
+              {sale.status !== "PAID" ? (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-on-surface-variant font-medium">
+                    Balance Owed:
+                  </Text>
+                  <Text className="text-xs font-bold text-rose-600">
+                    ETB {balance.toLocaleString()}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            {sale.status !== "PAID" ? (
+              paying ? (
+                <View className="gap-2 bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                  <Text className="text-xs font-bold text-emerald-800">
+                    Record a payment
+                  </Text>
+                  <BottomSheetTextInput
+                    placeholder={`Up to ETB ${balance.toLocaleString()}`}
+                    value={amount}
+                    onChangeText={setAmount}
+                    keyboardType="decimal-pad"
+                    placeholderTextColor="#737686"
+                    className="border border-emerald-300 bg-white rounded-xl px-4 py-3 text-on-surface"
+                  />
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => {
+                        setPaying(false);
+                        setAmount("");
+                      }}
+                      className="flex-1 border border-outline-variant/40 rounded-xl py-2.5 items-center"
+                    >
+                      <Text className="text-on-surface-variant font-semibold text-xs">
+                        Cancel
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleRecordPayment}
+                      disabled={createPayment.isPending}
+                      className="flex-1 bg-teal-600 rounded-xl py-2.5 items-center"
+                      style={{ opacity: createPayment.isPending ? 0.6 : 1 }}
+                    >
+                      <Text className="text-white font-semibold text-xs">
+                        {createPayment.isPending
+                          ? "Saving..."
+                          : "Confirm Payment"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => setPaying(true)}
+                  className="bg-teal-600 rounded-xl py-3 items-center"
+                >
+                  <Text className="text-white font-bold text-xs">
+                    Record Payment
+                  </Text>
+                </Pressable>
+              )
+            ) : null}
+
+            <Text className="text-xs font-bold text-on-surface uppercase tracking-wider mt-1">
+              Purchased Items ({sale.items?.length ?? 0})
+            </Text>
+
+            <View className="gap-2">
+              {sale.items?.map((item) => (
+                <View
+                  key={item.id}
+                  className="flex-row justify-between items-center py-2.5 border-b border-outline-variant/15"
+                >
+                  <View className="flex-1 pr-2">
+                    <Text className="font-bold text-on-surface text-xs">
+                      {item.product?.name ?? "Product"}
+                    </Text>
+                    <Text className="text-[11px] text-on-surface-variant mt-0.5">
+                      {item.quantity} units × ETB{" "}
+                      {Number(item.unitPrice).toLocaleString()}
+                    </Text>
+                  </View>
+                  <Text className="font-bold text-sm text-on-surface">
+                    ETB {Number(item.subtotal).toLocaleString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View className="flex-row justify-between items-center pt-3 mt-2 border-t border-dashed border-outline-variant/40">
+              <Text className="font-bold text-sm text-on-surface">
+                Grand Total
+              </Text>
+              <Text className="font-extrabold text-xl text-primary">
+                ETB {Number(sale.totalAmount).toLocaleString()}
               </Text>
             </View>
-          ) : (
-            <>
-              <View className="bg-surface-container-low/80 p-3.5 rounded-2xl gap-2 border border-outline-variant/15">
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-on-surface-variant font-medium">
-                    Sold By:
-                  </Text>
-                  <Text className="text-xs font-bold text-on-surface">
-                    {sale.soldBy?.name ?? "—"}
-                  </Text>
-                </View>
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-on-surface-variant font-medium">
-                    Customer:
-                  </Text>
-                  <Text className="text-xs font-bold text-on-surface">
-                    {sale.customer?.name ?? "Walk-in"}
-                  </Text>
-                </View>
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-on-surface-variant font-medium">
-                    Date & Time:
-                  </Text>
-                  <Text className="text-xs font-medium text-on-surface">
-                    {new Date(sale.date).toLocaleString()}
-                  </Text>
-                </View>
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-xs text-on-surface-variant font-medium">
-                    Status:
-                  </Text>
-                  <View className={`px-2 py-0.5 rounded-md ${config.badgeBg}`}>
-                    <Text
-                      className="text-[10px] font-bold uppercase"
-                      style={{ color: config.color }}
-                    >
-                      {config.label}
-                    </Text>
-                  </View>
-                </View>
-                {sale.status !== "PAID" ? (
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-xs text-on-surface-variant font-medium">
-                      Balance Owed:
-                    </Text>
-                    <Text className="text-xs font-bold text-rose-600">
-                      ETB {balance.toLocaleString()}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-
-              {sale.status !== "PAID" ? (
-                paying ? (
-                  <View className="gap-2 bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
-                    <Text className="text-xs font-bold text-emerald-800">
-                      Record a payment
-                    </Text>
-                    <TextInput
-                      placeholder={`Up to ETB ${balance.toLocaleString()}`}
-                      value={amount}
-                      onChangeText={setAmount}
-                      keyboardType="decimal-pad"
-                      placeholderTextColor="#737686"
-                      className="border border-emerald-300 bg-white rounded-xl px-4 py-3 text-on-surface"
-                    />
-                    <View className="flex-row gap-2">
-                      <Pressable
-                        onPress={() => {
-                          setPaying(false);
-                          setAmount("");
-                        }}
-                        className="flex-1 border border-outline-variant/40 rounded-xl py-2.5 items-center"
-                      >
-                        <Text className="text-on-surface-variant font-semibold text-xs">
-                          Cancel
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={handleRecordPayment}
-                        disabled={createPayment.isPending}
-                        className="flex-1 bg-teal-600 rounded-xl py-2.5 items-center"
-                        style={{ opacity: createPayment.isPending ? 0.6 : 1 }}
-                      >
-                        <Text className="text-white font-semibold text-xs">
-                          {createPayment.isPending
-                            ? "Saving..."
-                            : "Confirm Payment"}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={() => setPaying(true)}
-                    className="bg-teal-600 rounded-xl py-3 items-center"
-                  >
-                    <Text className="text-white font-bold text-xs">
-                      Record Payment
-                    </Text>
-                  </Pressable>
-                )
-              ) : null}
-
-              <Text className="text-xs font-bold text-on-surface uppercase tracking-wider mt-1">
-                Purchased Items ({sale.items?.length ?? 0})
-              </Text>
-
-              <View className="gap-2">
-                {sale.items?.map((item) => (
-                  <View
-                    key={item.id}
-                    className="flex-row justify-between items-center py-2.5 border-b border-outline-variant/15"
-                  >
-                    <View className="flex-1 pr-2">
-                      <Text className="font-bold text-on-surface text-xs">
-                        {item.product?.name ?? "Product"}
-                      </Text>
-                      <Text className="text-[11px] text-on-surface-variant mt-0.5">
-                        {item.quantity} units × ETB{" "}
-                        {Number(item.unitPrice).toLocaleString()}
-                      </Text>
-                    </View>
-                    <Text className="font-bold text-sm text-on-surface">
-                      ETB {Number(item.subtotal).toLocaleString()}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-
-              <View className="flex-row justify-between items-center pt-3 mt-2 border-t border-dashed border-outline-variant/40">
-                <Text className="font-bold text-sm text-on-surface">
-                  Grand Total
-                </Text>
-                <Text className="font-extrabold text-xl text-primary">
-                  ETB {Number(sale.totalAmount).toLocaleString()}
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
+          </>
+        )}
       </View>
-    </Modal>
+    </SheetModal>
   );
 }

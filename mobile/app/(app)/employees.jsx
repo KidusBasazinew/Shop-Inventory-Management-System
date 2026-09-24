@@ -4,14 +4,10 @@ import {
   Text,
   FlatList,
   Pressable,
-  TextInput,
-  Modal,
   ActivityIndicator,
   Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { Stack, router } from "expo-router";
 import {
   Plus,
@@ -35,6 +31,7 @@ import EmptyState from "../../components/common/EmptyState";
 import Pagination, { usePageCount } from "../../components/common/Pagination";
 import FAB from "../../components/common/FAB";
 import Badge from "../../components/common/Badge";
+import SheetModal from "../../components/common/SheetModal";
 import { playSuccess, playError } from "../../lib/feedback";
 
 const EMPTY_FORM = { name: "", phone: "", position: "", salary: "" };
@@ -253,63 +250,58 @@ export default function EmployeesScreen() {
       <FAB icon={Plus} onPress={openCreate} />
 
       {/* Create / edit employee */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-black/40 justify-end"
-        >
-          <View className="bg-surface rounded-t-3xl p-6 gap-4">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                {editingId ? "Edit Employee" : "New Employee"}
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <FormField
-              label="Name"
-              required
-              value={form.name}
-              onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-              placeholder="Full name"
-            />
-            <FormField
-              label="Phone"
-              value={form.phone}
-              onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
-              placeholder="0911223344"
-              keyboardType="phone-pad"
-            />
-            <FormField
-              label="Position"
-              value={form.position}
-              onChangeText={(v) => setForm((p) => ({ ...p, position: v }))}
-              placeholder="e.g. Cashier"
-            />
-            <FormField
-              label="Salary"
-              required
-              value={form.salary}
-              onChangeText={(v) => setForm((p) => ({ ...p, salary: v }))}
-              placeholder="0.00"
-              keyboardType="decimal-pad"
-            />
-
-            <Pressable
-              onPress={handleSave}
-              disabled={saving}
-              className="bg-primary rounded-xl py-4 items-center"
-              style={{ opacity: saving ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-semibold">
-                {saving ? "Saving..." : "Save"}
-              </Text>
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">
+              {editingId ? "Edit Employee" : "New Employee"}
+            </Text>
+            <Pressable onPress={() => setModalVisible(false)}>
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          <FormField
+            label="Name"
+            required
+            value={form.name}
+            onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+            placeholder="Full name"
+          />
+          <FormField
+            label="Phone"
+            value={form.phone}
+            onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
+            placeholder="0911223344"
+            keyboardType="phone-pad"
+          />
+          <FormField
+            label="Position"
+            value={form.position}
+            onChangeText={(v) => setForm((p) => ({ ...p, position: v }))}
+            placeholder="e.g. Cashier"
+          />
+          <FormField
+            label="Salary"
+            required
+            value={form.salary}
+            onChangeText={(v) => setForm((p) => ({ ...p, salary: v }))}
+            placeholder="0.00"
+            keyboardType="decimal-pad"
+          />
+
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            className="bg-primary rounded-xl py-4 items-center"
+            style={{ opacity: saving ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-semibold">
+              {saving ? "Saving..." : "Save"}
+            </Text>
+          </Pressable>
+        </View>
+      </SheetModal>
 
       <PayrollModal
         employee={payrollTarget}
@@ -367,113 +359,111 @@ function PayrollModal({ employee, onClose }) {
   };
 
   return (
-    <Modal visible={!!employee} animationType="slide" transparent>
-      <View className="flex-1 bg-black/40 justify-end">
-        <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-on-surface">
-              {employee?.name} — Payroll
-            </Text>
-            <Pressable onPress={onClose}>
-              <X size={22} color="#434655" />
-            </Pressable>
-          </View>
+    <SheetModal visible={!!employee} onClose={onClose}>
+      <View className="p-6 gap-4">
+        <View className="flex-row justify-between items-center">
+          <Text className="text-lg font-bold text-on-surface">
+            {employee?.name} — Payroll
+          </Text>
+          <Pressable onPress={onClose}>
+            <X size={22} color="#434655" />
+          </Pressable>
+        </View>
 
-          {formVisible ? (
-            <View className="gap-3">
-              <FormField
-                label="Base salary"
-                value={String(employee?.salary ?? "")}
-                editable={false}
-              />
-              <FormField
-                label="Bonus"
-                value={bonus}
-                onChangeText={setBonus}
-                keyboardType="decimal-pad"
-              />
-              <FormField
-                label="Deduction"
-                value={deduction}
-                onChangeText={setDeduction}
-                keyboardType="decimal-pad"
-              />
-              <FormField
-                label="Amount paid"
-                required
-                value={amountPaid}
-                onChangeText={setAmountPaid}
-                keyboardType="decimal-pad"
-              />
-              <DateField label="Date" value={date} onChange={setDate} />
+        {formVisible ? (
+          <View className="gap-3">
+            <FormField
+              label="Base salary"
+              value={String(employee?.salary ?? "")}
+              editable={false}
+            />
+            <FormField
+              label="Bonus"
+              value={bonus}
+              onChangeText={setBonus}
+              keyboardType="decimal-pad"
+            />
+            <FormField
+              label="Deduction"
+              value={deduction}
+              onChangeText={setDeduction}
+              keyboardType="decimal-pad"
+            />
+            <FormField
+              label="Amount paid"
+              required
+              value={amountPaid}
+              onChangeText={setAmountPaid}
+              keyboardType="decimal-pad"
+            />
+            <DateField label="Date" value={date} onChange={setDate} />
 
-              <View className="flex-row gap-3 mt-1">
-                <Pressable
-                  onPress={() => setFormVisible(false)}
-                  className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
-                >
-                  <Text className="text-on-surface-variant font-semibold text-xs">
-                    Cancel
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleSubmit}
-                  disabled={createPayroll.isPending}
-                  className="flex-1 bg-primary rounded-xl py-3 items-center"
-                >
-                  <Text className="text-white font-semibold text-xs">
-                    {createPayroll.isPending ? "Saving..." : "Confirm"}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <>
+            <View className="flex-row gap-3 mt-1">
               <Pressable
-                onPress={openForm}
-                className="bg-primary rounded-xl py-3 items-center"
+                onPress={() => setFormVisible(false)}
+                className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
               >
-                <Text className="text-white font-bold text-xs">
-                  Record Payroll Payment
+                <Text className="text-on-surface-variant font-semibold text-xs">
+                  Cancel
                 </Text>
               </Pressable>
-
-              {isLoading ? (
-                <ActivityIndicator color="#004ac6" />
-              ) : payments.length === 0 ? (
-                <Text className="text-center text-on-surface-variant text-xs py-6">
-                  No payroll history yet
+              <Pressable
+                onPress={handleSubmit}
+                disabled={createPayroll.isPending}
+                className="flex-1 bg-primary rounded-xl py-3 items-center"
+              >
+                <Text className="text-white font-semibold text-xs">
+                  {createPayroll.isPending ? "Saving..." : "Confirm"}
                 </Text>
-              ) : (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <View className="gap-2 pb-2">
-                    {payments.map((p) => (
-                      <View
-                        key={p.id}
-                        className="p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-low"
-                      >
-                        <View className="flex-row justify-between">
-                          <Text className="text-xs font-semibold text-on-surface">
-                            {new Date(p.date).toLocaleDateString()}
-                          </Text>
-                          <Text className="text-sm font-extrabold text-primary">
-                            ETB {Number(p.amountPaid).toLocaleString()}
-                          </Text>
-                        </View>
-                        <Text className="text-[11px] text-on-surface-variant mt-1">
-                          Base {Number(p.salary).toLocaleString()} + Bonus{" "}
-                          {Number(p.bonus).toLocaleString()} − Deduction{" "}
-                          {Number(p.deduction).toLocaleString()}
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Pressable
+              onPress={openForm}
+              className="bg-primary rounded-xl py-3 items-center"
+            >
+              <Text className="text-white font-bold text-xs">
+                Record Payroll Payment
+              </Text>
+            </Pressable>
+
+            {isLoading ? (
+              <ActivityIndicator color="#004ac6" />
+            ) : payments.length === 0 ? (
+              <Text className="text-center text-on-surface-variant text-xs py-6">
+                No payroll history yet
+              </Text>
+            ) : (
+              <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+                <View className="gap-2 pb-2">
+                  {payments.map((p) => (
+                    <View
+                      key={p.id}
+                      className="p-3.5 rounded-xl border border-outline-variant/20 bg-surface-container-low"
+                    >
+                      <View className="flex-row justify-between">
+                        <Text className="text-xs font-semibold text-on-surface">
+                          {new Date(p.date).toLocaleDateString()}
+                        </Text>
+                        <Text className="text-sm font-extrabold text-primary">
+                          ETB {Number(p.amountPaid).toLocaleString()}
                         </Text>
                       </View>
-                    ))}
-                  </View>
-                </ScrollView>
-              )}
-            </>
-          )}
-        </View>
+                      <Text className="text-[11px] text-on-surface-variant mt-1">
+                        Base {Number(p.salary).toLocaleString()} + Bonus{" "}
+                        {Number(p.bonus).toLocaleString()} − Deduction{" "}
+                        {Number(p.deduction).toLocaleString()}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </BottomSheetScrollView>
+            )}
+          </>
+        )}
       </View>
-    </Modal>
+    </SheetModal>
   );
 }

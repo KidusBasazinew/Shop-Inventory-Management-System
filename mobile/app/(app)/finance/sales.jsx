@@ -4,14 +4,16 @@ import {
   Text,
   FlatList,
   Pressable,
-  TextInput,
-  Modal,
   ActivityIndicator,
   Alert,
   ScrollView,
   Animated,
   Easing,
 } from "react-native";
+import {
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+} from "@gorhom/bottom-sheet";
 import {
   Plus,
   Minus,
@@ -31,6 +33,7 @@ import { useCustomers, useCreateCustomer } from "../../../hooks/useCustomers";
 import { useCreateSale } from "../../../hooks/useSales";
 import { playSuccess, playError, playTap } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
+import SheetModal from "../../../components/common/SheetModal";
 
 const PAYMENT_METHODS = [
   "CASH",
@@ -312,248 +315,249 @@ export default function Sales() {
       )}
 
       {/* Product picker */}
-      <Modal visible={pickerVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                Add Item
-              </Text>
-              <Pressable onPress={() => setPickerVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <View className="flex-row items-center gap-2 border border-outline-variant/40 rounded-xl px-3 bg-surface-container-low">
-              <Search size={16} color="#737686" />
-              <TextInput
-                placeholder="Search product..."
-                value={search}
-                onChangeText={setSearch}
-                autoFocus
-                className="flex-1 py-3 text-[15px] text-on-surface"
-              />
-            </View>
-
-            {searchLoading ? (
-              <ActivityIndicator color="#004ac6" />
-            ) : (
-              <FlatList
-                data={products}
-                keyExtractor={(item) => item.id}
-                ListEmptyComponent={
-                  <Text className="text-center text-on-surface-variant py-6">
-                    {search ? "No matches" : "Start typing to search"}
-                  </Text>
-                }
-                renderItem={({ item }) => (
-                  <Pressable
-                    onPress={() => addToCart(item)}
-                    disabled={Number(item.quantity) <= 0}
-                    className="py-3 border-b border-outline-variant/20 flex-row justify-between items-center"
-                    style={{ opacity: Number(item.quantity) <= 0 ? 0.4 : 1 }}
-                  >
-                    <View className="flex-1 pr-2">
-                      <Text className="font-medium text-on-surface">
-                        {item.name}
-                      </Text>
-                      <Text className="text-xs text-on-surface-variant">
-                        {item.unitType} • ETB{" "}
-                        {Number(item.sellingPrice).toFixed(2)} • {item.quantity}{" "}
-                        in stock
-                      </Text>
-                    </View>
-                    <Plus size={18} color="#004ac6" />
-                  </Pressable>
-                )}
-              />
-            )}
+      <SheetModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+      >
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">Add Item</Text>
+            <Pressable onPress={() => setPickerVisible(false)}>
+              <X size={22} color="#434655" />
+            </Pressable>
           </View>
+
+          <View className="flex-row items-center gap-2 border border-outline-variant/40 rounded-xl px-3 bg-surface-container-low">
+            <Search size={16} color="#737686" />
+            <BottomSheetTextInput
+              placeholder="Search product..."
+              value={search}
+              onChangeText={setSearch}
+              autoFocus
+              className="flex-1 py-3 text-[15px] text-on-surface"
+            />
+          </View>
+
+          {searchLoading ? (
+            <ActivityIndicator color="#004ac6" />
+          ) : (
+            <FlatList
+              data={products}
+              keyExtractor={(item) => item.id}
+              ListEmptyComponent={
+                <Text className="text-center text-on-surface-variant py-6">
+                  {search ? "No matches" : "Start typing to search"}
+                </Text>
+              }
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => addToCart(item)}
+                  disabled={Number(item.quantity) <= 0}
+                  className="py-3 border-b border-outline-variant/20 flex-row justify-between items-center"
+                  style={{ opacity: Number(item.quantity) <= 0 ? 0.4 : 1 }}
+                >
+                  <View className="flex-1 pr-2">
+                    <Text className="font-medium text-on-surface">
+                      {item.name}
+                    </Text>
+                    <Text className="text-xs text-on-surface-variant">
+                      {item.unitType} • ETB{" "}
+                      {Number(item.sellingPrice).toFixed(2)} • {item.quantity}{" "}
+                      in stock
+                    </Text>
+                  </View>
+                  <Plus size={18} color="#004ac6" />
+                </Pressable>
+              )}
+            />
+          )}
         </View>
-      </Modal>
+      </SheetModal>
 
       {/* Delete confirmation */}
-      <Modal visible={!!itemToDelete} animationType="fade" transparent>
-        <View className="flex-1 bg-black/50 items-center justify-center px-6">
-          <View className="bg-surface rounded-3xl p-5 w-full max-w-sm gap-4 items-center">
-            <View className="w-12 h-12 rounded-full bg-red-500/10 items-center justify-center">
-              <AlertTriangle size={24} color="#BA1A1A" />
-            </View>
-            <View className="items-center">
-              <Text className="text-base font-bold text-on-surface text-center">
-                Remove Item?
+      <SheetModal
+        visible={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+      >
+        <View className="p-5 gap-4 items-center">
+          <View className="w-12 h-12 rounded-full bg-red-500/10 items-center justify-center">
+            <AlertTriangle size={24} color="#BA1A1A" />
+          </View>
+          <View className="items-center">
+            <Text className="text-base font-bold text-on-surface text-center">
+              Remove Item?
+            </Text>
+            <Text className="text-xs text-on-surface-variant text-center mt-1">
+              Remove{" "}
+              <Text className="font-bold text-on-surface">
+                {itemToDelete?.name}
+              </Text>{" "}
+              from the cart?
+            </Text>
+          </View>
+          <View className="flex-row gap-3 w-full mt-2">
+            <Pressable
+              onPress={() => setItemToDelete(null)}
+              className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
+            >
+              <Text className="text-on-surface-variant font-semibold text-xs">
+                Cancel
               </Text>
-              <Text className="text-xs text-on-surface-variant text-center mt-1">
-                Remove{" "}
-                <Text className="font-bold text-on-surface">
-                  {itemToDelete?.name}
-                </Text>{" "}
-                from the cart?
-              </Text>
-            </View>
-            <View className="flex-row gap-3 w-full mt-2">
-              <Pressable
-                onPress={() => setItemToDelete(null)}
-                className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
-              >
-                <Text className="text-on-surface-variant font-semibold text-xs">
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={confirmRemoveFromCart}
-                className="flex-1 bg-red-600 rounded-xl py-3 items-center"
-              >
-                <Text className="text-white font-semibold text-xs">Delete</Text>
-              </Pressable>
-            </View>
+            </Pressable>
+            <Pressable
+              onPress={confirmRemoveFromCart}
+              className="flex-1 bg-red-600 rounded-xl py-3 items-center"
+            >
+              <Text className="text-white font-semibold text-xs">Delete</Text>
+            </Pressable>
           </View>
         </View>
-      </Modal>
+      </SheetModal>
 
       {/* Checkout modal */}
-      <Modal visible={checkoutVisible} animationType="fade" transparent>
-        <View className="flex-1 bg-black/50 items-center justify-center px-6">
-          <View className="bg-surface rounded-3xl p-6 w-full max-w-md gap-4">
-            <Text className="text-lg font-bold text-on-surface">
-              Confirm Sale
-            </Text>
+      <SheetModal
+        visible={checkoutVisible}
+        onClose={() => setCheckoutVisible(false)}
+      >
+        <View className="p-6 gap-4">
+          <Text className="text-lg font-bold text-on-surface">
+            Confirm Sale
+          </Text>
 
-            <View className="bg-surface-container-low p-3.5 rounded-2xl gap-2 max-h-40">
-              <ScrollView nestedScrollEnabled>
-                <View className="gap-2">
-                  {cart.map((item) => (
-                    <View
-                      key={item.productId}
-                      className="flex-row justify-between items-center"
-                    >
-                      <Text className="text-on-surface text-xs flex-1 font-medium">
-                        {item.name} × {item.quantity}
-                      </Text>
-                      <Text className="text-on-surface font-bold text-xs">
-                        {(item.quantity * item.sellingPrice).toFixed(2)} Birr
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </ScrollView>
-              <View className="flex-row justify-between items-center pt-2 border-t border-outline-variant/20">
-                <Text className="text-xs font-bold text-on-surface-variant">
-                  Total:
-                </Text>
-                <Text className="text-sm font-extrabold text-primary">
-                  ETB {grandTotal.toFixed(2)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Sale type: full payment vs credit/partial */}
-            <View>
-              <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                Sale Type
-              </Text>
-              <View className="flex-row gap-2">
-                <Pressable
-                  onPress={() => setSaleType("FULL")}
-                  className={`flex-1 px-3 py-2.5 rounded-xl border items-center ${saleType === "FULL" ? "bg-primary border-primary" : "border-outline-variant/40"}`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${saleType === "FULL" ? "text-white" : "text-on-surface-variant"}`}
+          <View className="bg-surface-container-low p-3.5 rounded-2xl gap-2 max-h-40">
+            <BottomSheetScrollView>
+              <View className="gap-2">
+                {cart.map((item) => (
+                  <View
+                    key={item.productId}
+                    className="flex-row justify-between items-center"
                   >
-                    Full Payment
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setSaleType("CREDIT")}
-                  className={`flex-1 px-3 py-2.5 rounded-xl border items-center ${saleType === "CREDIT" ? "bg-primary border-primary" : "border-outline-variant/40"}`}
-                >
-                  <Text
-                    className={`text-xs font-semibold ${saleType === "CREDIT" ? "text-white" : "text-on-surface-variant"}`}
-                  >
-                    Partial / Credit
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {saleType === "CREDIT" ? (
-              <View className="gap-3">
-                <View>
-                  <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                    Customer (required)
-                  </Text>
-                  <Pressable
-                    onPress={() => setCustomerPickerVisible(true)}
-                    className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
-                  >
-                    <Text
-                      className={`flex-1 ${selectedCustomer ? "text-on-surface" : "text-[#737686]"}`}
-                      numberOfLines={1}
-                    >
-                      {selectedCustomer?.name ?? "Select a customer"}
+                    <Text className="text-on-surface text-xs flex-1 font-medium">
+                      {item.name} × {item.quantity}
                     </Text>
-                    <ChevronDown size={18} color="#737686" />
-                  </Pressable>
-                </View>
-                <View>
-                  <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                    Amount paid now (leave 0 for full credit)
-                  </Text>
-                  <TextInput
-                    placeholder="0.00"
-                    value={partialAmount}
-                    onChangeText={setPartialAmount}
-                    keyboardType="decimal-pad"
-                    className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
-                  />
-                </View>
+                    <Text className="text-on-surface font-bold text-xs">
+                      {(item.quantity * item.sellingPrice).toFixed(2)} Birr
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ) : (
-              <View>
-                <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                  Payment Method
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {PAYMENT_METHODS.map((m) => (
-                    <Pressable
-                      key={m}
-                      onPress={() => setPaymentMethod(m)}
-                      className={`px-3 py-2 rounded-xl border ${paymentMethod === m ? "bg-primary border-primary" : "border-outline-variant/40 bg-surface"}`}
-                    >
-                      <Text
-                        className={`text-xs font-semibold ${paymentMethod === m ? "text-white" : "text-on-surface-variant"}`}
-                      >
-                        {m.replace("_", " ")}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
+            </BottomSheetScrollView>
+            <View className="flex-row justify-between items-center pt-2 border-t border-outline-variant/20">
+              <Text className="text-xs font-bold text-on-surface-variant">
+                Total:
+              </Text>
+              <Text className="text-sm font-extrabold text-primary">
+                ETB {grandTotal.toFixed(2)}
+              </Text>
+            </View>
+          </View>
 
-            <View className="flex-row gap-3 mt-2">
+          {/* Sale type: full payment vs credit/partial */}
+          <View>
+            <Text className="text-xs font-medium text-on-surface-variant mb-2">
+              Sale Type
+            </Text>
+            <View className="flex-row gap-2">
               <Pressable
-                onPress={() => setCheckoutVisible(false)}
-                className="flex-1 border border-outline-variant/40 rounded-xl py-3.5 items-center"
+                onPress={() => setSaleType("FULL")}
+                className={`flex-1 px-3 py-2.5 rounded-xl border items-center ${saleType === "FULL" ? "bg-primary border-primary" : "border-outline-variant/40"}`}
               >
-                <Text className="text-on-surface-variant font-semibold text-xs">
-                  Cancel
+                <Text
+                  className={`text-xs font-semibold ${saleType === "FULL" ? "text-white" : "text-on-surface-variant"}`}
+                >
+                  Full Payment
                 </Text>
               </Pressable>
               <Pressable
-                onPress={handleCheckout}
-                disabled={createSale.isPending}
-                className="flex-1 bg-primary rounded-xl py-3.5 items-center"
-                style={{ opacity: createSale.isPending ? 0.6 : 1 }}
+                onPress={() => setSaleType("CREDIT")}
+                className={`flex-1 px-3 py-2.5 rounded-xl border items-center ${saleType === "CREDIT" ? "bg-primary border-primary" : "border-outline-variant/40"}`}
               >
-                <Text className="text-white font-bold text-xs">
-                  {createSale.isPending ? "Processing..." : "Confirm Sale"}
+                <Text
+                  className={`text-xs font-semibold ${saleType === "CREDIT" ? "text-white" : "text-on-surface-variant"}`}
+                >
+                  Partial / Credit
                 </Text>
               </Pressable>
             </View>
           </View>
+
+          {saleType === "CREDIT" ? (
+            <View className="gap-3">
+              <View>
+                <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                  Customer (required)
+                </Text>
+                <Pressable
+                  onPress={() => setCustomerPickerVisible(true)}
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <Text
+                    className={`flex-1 ${selectedCustomer ? "text-on-surface" : "text-[#737686]"}`}
+                    numberOfLines={1}
+                  >
+                    {selectedCustomer?.name ?? "Select a customer"}
+                  </Text>
+                  <ChevronDown size={18} color="#737686" />
+                </Pressable>
+              </View>
+              <View>
+                <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                  Amount paid now (leave 0 for full credit)
+                </Text>
+                <BottomSheetTextInput
+                  placeholder="0.00"
+                  value={partialAmount}
+                  onChangeText={setPartialAmount}
+                  keyboardType="decimal-pad"
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+                />
+              </View>
+            </View>
+          ) : (
+            <View>
+              <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                Payment Method
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {PAYMENT_METHODS.map((m) => (
+                  <Pressable
+                    key={m}
+                    onPress={() => setPaymentMethod(m)}
+                    className={`px-3 py-2 rounded-xl border ${paymentMethod === m ? "bg-primary border-primary" : "border-outline-variant/40 bg-surface"}`}
+                  >
+                    <Text
+                      className={`text-xs font-semibold ${paymentMethod === m ? "text-white" : "text-on-surface-variant"}`}
+                    >
+                      {m.replace("_", " ")}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View className="flex-row gap-3 mt-2">
+            <Pressable
+              onPress={() => setCheckoutVisible(false)}
+              className="flex-1 border border-outline-variant/40 rounded-xl py-3.5 items-center"
+            >
+              <Text className="text-on-surface-variant font-semibold text-xs">
+                Cancel
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleCheckout}
+              disabled={createSale.isPending}
+              className="flex-1 bg-primary rounded-xl py-3.5 items-center"
+              style={{ opacity: createSale.isPending ? 0.6 : 1 }}
+            >
+              <Text className="text-white font-bold text-xs">
+                {createSale.isPending ? "Processing..." : "Confirm Sale"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </Modal>
+      </SheetModal>
 
       <SaleSuccessModal
         sale={completedSale}
@@ -562,124 +566,128 @@ export default function Sales() {
 
       {/* Customer picker */}
       {/* Customer picker */}
-      <Modal visible={customerPickerVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[80%]">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                {newCustomerMode ? "New Customer" : "Select Customer"}
-              </Text>
-              <Pressable
-                onPress={() => {
-                  setCustomerPickerVisible(false);
-                  setNewCustomerMode(false);
-                }}
-              >
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
+      <SheetModal
+        visible={customerPickerVisible}
+        onClose={() => {
+          setCustomerPickerVisible(false);
+          setNewCustomerMode(false);
+        }}
+      >
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">
+              {newCustomerMode ? "New Customer" : "Select Customer"}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setCustomerPickerVisible(false);
+                setNewCustomerMode(false);
+              }}
+            >
+              <X size={22} color="#434655" />
+            </Pressable>
+          </View>
 
-            {newCustomerMode ? (
-              <View className="gap-3">
-                <TextInput
-                  placeholder="Customer name *"
-                  value={newCustomerForm.name}
-                  onChangeText={(v) =>
-                    setNewCustomerForm((p) => ({ ...p, name: v }))
-                  }
-                  placeholderTextColor="#737686"
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
-                />
-                <TextInput
-                  placeholder="Phone"
-                  value={newCustomerForm.phone}
-                  onChangeText={(v) =>
-                    setNewCustomerForm((p) => ({ ...p, phone: v }))
-                  }
-                  keyboardType="phone-pad"
-                  placeholderTextColor="#737686"
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
-                />
-                <TextInput
-                  placeholder="Shop / business name (optional)"
-                  value={newCustomerForm.shopName}
-                  onChangeText={(v) =>
-                    setNewCustomerForm((p) => ({ ...p, shopName: v }))
-                  }
-                  placeholderTextColor="#737686"
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
-                />
+          {newCustomerMode ? (
+            <View className="gap-3">
+              <BottomSheetTextInput
+                placeholder="Customer name *"
+                value={newCustomerForm.name}
+                onChangeText={(v) =>
+                  setNewCustomerForm((p) => ({ ...p, name: v }))
+                }
+                placeholderTextColor="#737686"
+                className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+              />
+              <BottomSheetTextInput
+                placeholder="Phone"
+                value={newCustomerForm.phone}
+                onChangeText={(v) =>
+                  setNewCustomerForm((p) => ({ ...p, phone: v }))
+                }
+                keyboardType="phone-pad"
+                placeholderTextColor="#737686"
+                className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+              />
+              <BottomSheetTextInput
+                placeholder="Shop / business name (optional)"
+                value={newCustomerForm.shopName}
+                onChangeText={(v) =>
+                  setNewCustomerForm((p) => ({ ...p, shopName: v }))
+                }
+                placeholderTextColor="#737686"
+                className="border border-outline-variant/40 rounded-xl px-4 py-3 text-on-surface"
+              />
 
-                <View className="flex-row gap-3 mt-1">
-                  <Pressable
-                    onPress={() => setNewCustomerMode(false)}
-                    className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
-                  >
-                    <Text className="text-on-surface-variant font-semibold text-xs">
-                      Back
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleCreateCustomer}
-                    disabled={createCustomer.isPending}
-                    className="flex-1 bg-primary rounded-xl py-3 items-center"
-                    style={{ opacity: createCustomer.isPending ? 0.6 : 1 }}
-                  >
-                    <Text className="text-white font-semibold text-xs">
-                      {createCustomer.isPending ? "Saving..." : "Add & Select"}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            ) : (
-              <>
+              <View className="flex-row gap-3 mt-1">
                 <Pressable
-                  onPress={() => setNewCustomerMode(true)}
-                  className="flex-row items-center justify-center gap-2 border border-dashed border-primary/50 rounded-xl py-3"
+                  onPress={() => setNewCustomerMode(false)}
+                  className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
                 >
-                  <UserPlus size={16} color="#004ac6" />
-                  <Text className="text-primary font-semibold text-sm">
-                    Add New Customer
+                  <Text className="text-on-surface-variant font-semibold text-xs">
+                    Back
                   </Text>
                 </Pressable>
+                <Pressable
+                  onPress={handleCreateCustomer}
+                  disabled={createCustomer.isPending}
+                  className="flex-1 bg-primary rounded-xl py-3 items-center"
+                  style={{ opacity: createCustomer.isPending ? 0.6 : 1 }}
+                >
+                  <Text className="text-white font-semibold text-xs">
+                    {createCustomer.isPending ? "Saving..." : "Add & Select"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Pressable
+                onPress={() => setNewCustomerMode(true)}
+                className="flex-row items-center justify-center gap-2 border border-dashed border-primary/50 rounded-xl py-3"
+              >
+                <UserPlus size={16} color="#004ac6" />
+                <Text className="text-primary font-semibold text-sm">
+                  Add New Customer
+                </Text>
+              </Pressable>
 
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <View className="gap-2 pb-2">
-                    {customers.map((customer) => {
-                      const isSelected = customer.id === customerId;
-                      return (
-                        <Pressable
-                          key={customer.id}
-                          onPress={() => {
-                            setCustomerId(customer.id);
-                            setCustomerPickerVisible(false);
-                          }}
-                          className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
-                        >
-                          <View className="flex-1 pr-3">
-                            <Text className="font-semibold text-on-surface">
-                              {customer.name}
-                            </Text>
-                            <Text className="text-xs text-on-surface-variant mt-0.5">
-                              {customer.phone}{" "}
-                              {customer.balance > 0
-                                ? `• Owes ETB ${customer.balance.toLocaleString()}`
-                                : ""}
-                            </Text>
-                          </View>
-                          {isSelected ? (
-                            <Check size={18} color="#004ac6" />
-                          ) : null}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </ScrollView>
-              </>
-            )}
-          </View>
+              <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+                <View className="gap-2 pb-2">
+                  {customers.map((customer) => {
+                    const isSelected = customer.id === customerId;
+                    return (
+                      <Pressable
+                        key={customer.id}
+                        onPress={() => {
+                          setCustomerId(customer.id);
+                          setCustomerPickerVisible(false);
+                        }}
+                        className={`p-4 rounded-xl border flex-row items-center justify-between ${isSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface-container-low"}`}
+                      >
+                        <View className="flex-1 pr-3">
+                          <Text className="font-semibold text-on-surface">
+                            {customer.name}
+                          </Text>
+                          <Text className="text-xs text-on-surface-variant mt-0.5">
+                            {customer.phone}{" "}
+                            {customer.balance > 0
+                              ? `• Owes ETB ${customer.balance.toLocaleString()}`
+                              : ""}
+                          </Text>
+                        </View>
+                        {isSelected ? (
+                          <Check size={18} color="#004ac6" />
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </BottomSheetScrollView>
+            </>
+          )}
         </View>
-      </Modal>
+      </SheetModal>
     </View>
   );
 }
@@ -714,100 +722,95 @@ function SaleSuccessModal({ sale, onClose }) {
   const moneyPositions = [8, 18, 30, 42, 55, 66, 78, 88, 96];
 
   return (
-    <Modal visible={!!sale} animationType="fade" transparent>
-      <View className="flex-1 bg-black/55 items-center justify-center px-6">
-        <View className="w-full max-w-sm bg-surface rounded-[32px] overflow-hidden border border-green-200 shadow-xl">
-          {/* Header Banner with Green Background */}
+    <SheetModal visible={!!sale} onClose={onClose}>
+      <View className="w-full max-w-sm overflow-hidden border border-green-200 shadow-xl">
+        {/* Header Banner with Green Background */}
+        <View
+          className="h-40 items-center justify-center overflow-hidden"
+          style={{ backgroundColor: "#16a34a" }}
+        >
+          {/* Falling Money Icons */}
+          {drops.map((value, index) => (
+            <Animated.View
+              key={index}
+              className="absolute w-8 h-5 rounded-md border items-center justify-center"
+              style={{
+                backgroundColor: "#86efac",
+                borderColor: "#15803d",
+                left: `${moneyPositions[index]}%`,
+                top: -24,
+                opacity: value.interpolate({
+                  inputRange: [0, 0.15, 0.82, 1],
+                  outputRange: [0, 1, 1, 0],
+                }),
+                transform: [
+                  {
+                    translateY: value.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 190],
+                    }),
+                  },
+                  {
+                    rotate: value.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: ["-18deg", "16deg", "-12deg"],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <Text
+                className="text-[10px] font-black"
+                style={{ color: "#064e3b" }}
+              >
+                ETB
+              </Text>
+            </Animated.View>
+          ))}
+
+          {/* Checkmark Circle */}
           <View
-            className="h-40 items-center justify-center overflow-hidden"
-            style={{ backgroundColor: "#16a34a" }}
+            className="w-20 h-20 rounded-full border-4 items-center justify-center shadow-lg"
+            style={{ backgroundColor: "#dcfce7", borderColor: "#86efac" }}
           >
-            {/* Falling Money Icons */}
-            {drops.map((value, index) => (
-              <Animated.View
-                key={index}
-                className="absolute w-8 h-5 rounded-md border items-center justify-center"
-                style={{
-                  backgroundColor: "#86efac",
-                  borderColor: "#15803d",
-                  left: `${moneyPositions[index]}%`,
-                  top: -24,
-                  opacity: value.interpolate({
-                    inputRange: [0, 0.15, 0.82, 1],
-                    outputRange: [0, 1, 1, 0],
-                  }),
-                  transform: [
-                    {
-                      translateY: value.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, 190],
-                      }),
-                    },
-                    {
-                      rotate: value.interpolate({
-                        inputRange: [0, 0.5, 1],
-                        outputRange: ["-18deg", "16deg", "-12deg"],
-                      }),
-                    },
-                  ],
-                }}
-              >
-                <Text
-                  className="text-[10px] font-black"
-                  style={{ color: "#064e3b" }}
-                >
-                  ETB
-                </Text>
-              </Animated.View>
-            ))}
-
-            {/* Checkmark Circle */}
-            <View
-              className="w-20 h-20 rounded-full border-4 items-center justify-center shadow-lg"
-              style={{ backgroundColor: "#dcfce7", borderColor: "#86efac" }}
-            >
-              <Text
-                className="text-4xl font-black"
-                style={{ color: "#15803d" }}
-              >
-                ✓
-              </Text>
-            </View>
-          </View>
-
-          {/* Modal Content */}
-          <View className="p-6 items-center gap-3">
-            <Text className="text-2xl font-black text-on-surface">
-              Sale Complete
+            <Text className="text-4xl font-black" style={{ color: "#15803d" }}>
+              ✓
             </Text>
-            <Text className="text-sm text-on-surface-variant text-center">
-              Your transaction was recorded successfully.
-            </Text>
-
-            <View
-              className="w-full border rounded-2xl px-4 py-3.5 flex-row items-center justify-between mt-2"
-              style={{ backgroundColor: "#f0fdf4", borderColor: "#dcfce7" }}
-            >
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: "#166534" }}
-              >
-                Total received
-              </Text>
-              <Text className="text-lg font-black" style={{ color: "#15803d" }}>
-                ETB {Number(sale?.totalAmount ?? 0).toFixed(2)}
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={onClose}
-              className="w-full bg-primary rounded-2xl py-3.5 items-center mt-1 active:opacity-90"
-            >
-              <Text className="text-white font-bold text-[15px]">Done</Text>
-            </Pressable>
           </View>
         </View>
+
+        {/* Modal Content */}
+        <View className="p-6 items-center gap-3">
+          <Text className="text-2xl font-black text-on-surface">
+            Sale Complete
+          </Text>
+          <Text className="text-sm text-on-surface-variant text-center">
+            Your transaction was recorded successfully.
+          </Text>
+
+          <View
+            className="w-full border rounded-2xl px-4 py-3.5 flex-row items-center justify-between mt-2"
+            style={{ backgroundColor: "#f0fdf4", borderColor: "#dcfce7" }}
+          >
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: "#166534" }}
+            >
+              Total received
+            </Text>
+            <Text className="text-lg font-black" style={{ color: "#15803d" }}>
+              ETB {Number(sale?.totalAmount ?? 0).toFixed(2)}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={onClose}
+            className="w-full bg-primary rounded-2xl py-3.5 items-center mt-1 active:opacity-90"
+          >
+            <Text className="text-white font-bold text-[15px]">Done</Text>
+          </Pressable>
+        </View>
       </View>
-    </Modal>
+    </SheetModal>
   );
 }

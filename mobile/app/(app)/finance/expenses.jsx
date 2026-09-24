@@ -5,14 +5,12 @@ import {
   Text,
   FlatList,
   Pressable,
-  Modal,
   ActivityIndicator,
   Alert,
   ScrollView,
   RefreshControl,
-  Platform,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import {
   Wallet,
   Plus,
@@ -40,6 +38,7 @@ import Pagination, {
 } from "../../../components/common/Pagination";
 import FAB from "../../../components/common/FAB";
 import { playSuccess, playError } from "../../../lib/feedback";
+import SheetModal from "../../../components/common/SheetModal";
 
 const CATEGORIES = [
   { id: "RENT", label: "Rent" },
@@ -357,151 +356,145 @@ export default function ExpensesScreen() {
       <FAB icon={Plus} onPress={openCreate} />
 
       {/* Main Form Drawer Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-black/40 justify-end"
-        >
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-            <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
-              <View className="flex-row items-center gap-2">
-                <Receipt size={20} color="#004ac6" />
-                <Text className="text-lg font-bold text-on-surface">
-                  {editingId ? "Edit Expense Entry" : "Log New Expense"}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setModalVisible(false)}
-                className="p-1 rounded-full bg-surface-container-low active:opacity-70"
-              >
-                <X size={20} color="#434655" />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="gap-4 py-2">
-                <View>
-                  <Text className="text-xs font-semibold text-on-surface-variant mb-1.5">
-                    Category <Text className="text-error">*</Text>
-                  </Text>
-                  <Pressable
-                    onPress={() => setCategoryPickerVisible(true)}
-                    className="border border-outline-variant/40 rounded-xl px-4 py-3.5 flex-row items-center justify-between bg-surface-container-low active:opacity-70"
-                  >
-                    <View className="flex-row items-center gap-2">
-                      <Tag size={16} color="#737686" />
-                      <Text
-                        className={
-                          selectedCategory
-                            ? "text-on-surface font-semibold"
-                            : "text-[#737686]"
-                        }
-                      >
-                        {selectedCategory
-                          ? selectedCategory.label
-                          : "Select category..."}
-                      </Text>
-                    </View>
-                    <ChevronDown size={18} color="#737686" />
-                  </Pressable>
-                </View>
-
-                <FormField
-                  label="Amount (ETB)"
-                  required
-                  placeholder="0.00"
-                  value={form.amount}
-                  onChangeText={(v) => setForm((p) => ({ ...p, amount: v }))}
-                  keyboardType="decimal-pad"
-                />
-
-                <DateField
-                  label="Date Incurred"
-                  value={expenseDate}
-                  onChange={setExpenseDate}
-                />
-
-                <FormField
-                  label="Description (optional)"
-                  placeholder="e.g. Monthly electricity bill or office supplies"
-                  value={form.description}
-                  onChangeText={(v) =>
-                    setForm((p) => ({ ...p, description: v }))
-                  }
-                  multiline
-                  numberOfLines={3}
-                />
-              </View>
-            </ScrollView>
-
-            <Pressable
-              onPress={handleSave}
-              disabled={isSaving}
-              className="bg-primary rounded-xl py-4 items-center active:opacity-90 mt-2"
-              style={{ opacity: isSaving ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-bold text-base">
-                {isSaving
-                  ? "Saving Entry..."
-                  : editingId
-                    ? "Save Changes"
-                    : "Log Expense"}
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
+            <View className="flex-row items-center gap-2">
+              <Receipt size={20} color="#004ac6" />
+              <Text className="text-lg font-bold text-on-surface">
+                {editingId ? "Edit Expense Entry" : "Log New Expense"}
               </Text>
+            </View>
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              className="p-1 rounded-full bg-surface-container-low active:opacity-70"
+            >
+              <X size={20} color="#434655" />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            <View className="gap-4 py-2">
+              <View>
+                <Text className="text-xs font-semibold text-on-surface-variant mb-1.5">
+                  Category <Text className="text-error">*</Text>
+                </Text>
+                <Pressable
+                  onPress={() => setCategoryPickerVisible(true)}
+                  className="border border-outline-variant/40 rounded-xl px-4 py-3.5 flex-row items-center justify-between bg-surface-container-low active:opacity-70"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Tag size={16} color="#737686" />
+                    <Text
+                      className={
+                        selectedCategory
+                          ? "text-on-surface font-semibold"
+                          : "text-[#737686]"
+                      }
+                    >
+                      {selectedCategory
+                        ? selectedCategory.label
+                        : "Select category..."}
+                    </Text>
+                  </View>
+                  <ChevronDown size={18} color="#737686" />
+                </Pressable>
+              </View>
+
+              <FormField
+                label="Amount (ETB)"
+                required
+                placeholder="0.00"
+                value={form.amount}
+                onChangeText={(v) => setForm((p) => ({ ...p, amount: v }))}
+                keyboardType="decimal-pad"
+              />
+
+              <DateField
+                label="Date Incurred"
+                value={expenseDate}
+                onChange={setExpenseDate}
+              />
+
+              <FormField
+                label="Description (optional)"
+                placeholder="e.g. Monthly electricity bill or office supplies"
+                value={form.description}
+                onChangeText={(v) => setForm((p) => ({ ...p, description: v }))}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          </BottomSheetScrollView>
+
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            className="bg-primary rounded-xl py-4 items-center active:opacity-90 mt-2"
+            style={{ opacity: isSaving ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-bold text-base">
+              {isSaving
+                ? "Saving Entry..."
+                : editingId
+                  ? "Save Changes"
+                  : "Log Expense"}
+            </Text>
+          </Pressable>
+        </View>
+      </SheetModal>
 
       {/* Category Picker Modal */}
-      <Modal visible={categoryPickerVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[70%] border-t border-outline-variant/20">
-            <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
-              <Text className="text-lg font-bold text-on-surface">
-                Select Category
-              </Text>
-              <Pressable
-                onPress={() => setCategoryPickerVisible(false)}
-                className="p-1 rounded-full bg-surface-container-low active:opacity-70"
-              >
-                <X size={20} color="#434655" />
-              </Pressable>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View className="gap-2 py-2">
-                {CATEGORIES.map((c) => {
-                  const isSelected = c.id === form.category;
-                  return (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => {
-                        setForm((p) => ({ ...p, category: c.id }));
-                        setCategoryPickerVisible(false);
-                      }}
-                      className={`p-4 rounded-xl border flex-row items-center justify-between active:opacity-70 ${
-                        isSelected
-                          ? "border-primary bg-primary/10"
-                          : "border-outline-variant/30 bg-surface-container-low"
+      <SheetModal
+        visible={categoryPickerVisible}
+        onClose={() => setCategoryPickerVisible(false)}
+      >
+        <View className="p-6 gap-4 border-t border-outline-variant/20">
+          <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
+            <Text className="text-lg font-bold text-on-surface">
+              Select Category
+            </Text>
+            <Pressable
+              onPress={() => setCategoryPickerVisible(false)}
+              className="p-1 rounded-full bg-surface-container-low active:opacity-70"
+            >
+              <X size={20} color="#434655" />
+            </Pressable>
+          </View>
+          <BottomSheetScrollView showsVerticalScrollIndicator={false}>
+            <View className="gap-2 py-2">
+              {CATEGORIES.map((c) => {
+                const isSelected = c.id === form.category;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => {
+                      setForm((p) => ({ ...p, category: c.id }));
+                      setCategoryPickerVisible(false);
+                    }}
+                    className={`p-4 rounded-xl border flex-row items-center justify-between active:opacity-70 ${
+                      isSelected
+                        ? "border-primary bg-primary/10"
+                        : "border-outline-variant/30 bg-surface-container-low"
+                    }`}
+                  >
+                    <Text
+                      className={`font-semibold text-base ${
+                        isSelected ? "text-primary" : "text-on-surface"
                       }`}
                     >
-                      <Text
-                        className={`font-semibold text-base ${
-                          isSelected ? "text-primary" : "text-on-surface"
-                        }`}
-                      >
-                        {c.label}
-                      </Text>
-                      {isSelected ? (
-                        <View className="w-2.5 h-2.5 rounded-full bg-primary" />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </ScrollView>
-          </View>
+                      {c.label}
+                    </Text>
+                    {isSelected ? (
+                      <View className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </BottomSheetScrollView>
         </View>
-      </Modal>
+      </SheetModal>
     </View>
   );
 }

@@ -4,13 +4,10 @@ import {
   Text,
   FlatList,
   Pressable,
-  TextInput,
-  Modal,
   ActivityIndicator,
   Alert,
-  Platform,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { Stack } from "expo-router";
 import { Plus, X } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
@@ -21,6 +18,7 @@ import {
   useDeactivateUser,
 } from "../../hooks/useUsers";
 import StaffCard from "../../components/staff/StaffCard";
+import SheetModal from "../../components/common/SheetModal";
 import { playSuccess, playError } from "../../lib/feedback";
 
 const STAFF_ROLES = ["MANAGER", "CASHIER", "EMPLOYEE"];
@@ -173,96 +171,91 @@ export default function StaffManagement() {
         </Pressable>
       ) : null}
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 bg-black/40 justify-end"
-        >
-          <View className="bg-surface rounded-t-3xl p-6 gap-4 max-h-[85%]">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                {editingId ? "Edit Staff" : "New Staff Member"}
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <TextInput
-              placeholder="Full name"
-              value={form.name}
-              onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-              placeholderTextColor="#737686"
-              className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
-            />
-
-            {!editingId ? (
-              <>
-                <TextInput
-                  placeholder="Phone (e.g. 0911223344)"
-                  value={form.phone}
-                  onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
-                  keyboardType="phone-pad"
-                  placeholderTextColor="#737686"
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
-                />
-                <TextInput
-                  placeholder="Password"
-                  value={form.password}
-                  onChangeText={(v) => setForm((p) => ({ ...p, password: v }))}
-                  secureTextEntry
-                  placeholderTextColor="#737686"
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
-                />
-              </>
-            ) : (
-              <Text className="text-xs text-on-surface-variant">
-                Phone: {form.phone} (cannot be changed here)
-              </Text>
-            )}
-
-            <View>
-              <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                Role
-              </Text>
-              <View className="flex-row gap-2">
-                {STAFF_ROLES.map((r) => (
-                  <Pressable
-                    key={r}
-                    onPress={() => setForm((p) => ({ ...p, role: r }))}
-                    className={`flex-1 py-3 rounded-2xl items-center border ${
-                      form.role === r
-                        ? "bg-primary border-primary"
-                        : "border-outline-variant/40"
-                    }`}
-                  >
-                    <Text
-                      className={`text-sm font-medium ${form.role === r ? "text-white" : "text-on-surface-variant"}`}
-                    >
-                      {r}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <Pressable
-              onPress={handleSave}
-              disabled={saving}
-              className="bg-primary rounded-2xl py-4 items-center"
-              style={{ opacity: saving ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-semibold">
-                {saving
-                  ? "Saving..."
-                  : editingId
-                    ? "Update Staff"
-                    : "Create Staff"}
-              </Text>
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">
+              {editingId ? "Edit Staff" : "New Staff Member"}
+            </Text>
+            <Pressable onPress={() => setModalVisible(false)}>
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
+
+          <BottomSheetTextInput
+            placeholder="Full name"
+            value={form.name}
+            onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
+          />
+
+          {!editingId ? (
+            <>
+              <BottomSheetTextInput
+                placeholder="Phone (e.g. 0911223344)"
+                value={form.phone}
+                onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
+                keyboardType="phone-pad"
+                placeholderTextColor="#737686"
+                className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
+              />
+              <BottomSheetTextInput
+                placeholder="Password"
+                value={form.password}
+                onChangeText={(v) => setForm((p) => ({ ...p, password: v }))}
+                secureTextEntry
+                placeholderTextColor="#737686"
+                className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
+              />
+            </>
+          ) : (
+            <Text className="text-xs text-on-surface-variant">
+              Phone: {form.phone} (cannot be changed here)
+            </Text>
+          )}
+
+          <View>
+            <Text className="text-xs font-medium text-on-surface-variant mb-2">
+              Role
+            </Text>
+            <View className="flex-row gap-2">
+              {STAFF_ROLES.map((r) => (
+                <Pressable
+                  key={r}
+                  onPress={() => setForm((p) => ({ ...p, role: r }))}
+                  className={`flex-1 py-3 rounded-2xl items-center border ${
+                    form.role === r
+                      ? "bg-primary border-primary"
+                      : "border-outline-variant/40"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${form.role === r ? "text-white" : "text-on-surface-variant"}`}
+                  >
+                    {r}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <Pressable
+            onPress={handleSave}
+            disabled={saving}
+            className="bg-primary rounded-2xl py-4 items-center"
+            style={{ opacity: saving ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-semibold">
+              {saving
+                ? "Saving..."
+                : editingId
+                  ? "Update Staff"
+                  : "Create Staff"}
+            </Text>
+          </Pressable>
+        </View>
+      </SheetModal>
     </View>
   );
 }

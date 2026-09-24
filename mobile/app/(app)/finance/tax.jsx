@@ -4,12 +4,11 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Modal,
   ActivityIndicator,
   Alert,
-  TextInput,
 } from "react-native";
 import { Percent, Receipt, Plus, X } from "lucide-react-native";
+import SheetModal from "../../../components/common/SheetModal";
 import {
   useVatReport,
   useTaxPayments,
@@ -201,56 +200,54 @@ export default function TaxScreen() {
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-surface rounded-t-3xl p-6 gap-4">
-            <View className="flex-row justify-between items-center">
-              <Text className="text-lg font-bold text-on-surface">
-                Record Tax Payment
-              </Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <X size={22} color="#434655" />
-              </Pressable>
-            </View>
-
-            <FormField
-              label="Amount"
-              placeholder="0.00"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-            />
-            <FormField
-              label="Period"
-              placeholder="e.g. 2026-09"
-              value={period}
-              onChangeText={setPeriod}
-            />
-            <DateField
-              label="Paid date"
-              value={paidDate}
-              onChange={setPaidDate}
-            />
-            <FormField
-              label="Reference (optional)"
-              placeholder="Receipt / transaction ref"
-              value={reference}
-              onChangeText={setReference}
-            />
-
-            <Pressable
-              onPress={handleSubmit}
-              disabled={createPayment.isPending}
-              className="bg-primary rounded-xl py-4 items-center"
-              style={{ opacity: createPayment.isPending ? 0.6 : 1 }}
-            >
-              <Text className="text-white font-semibold">
-                {createPayment.isPending ? "Saving..." : "Save Payment"}
-              </Text>
+      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <View className="p-6 gap-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-lg font-bold text-on-surface">
+              Record Tax Payment
+            </Text>
+            <Pressable onPress={() => setModalVisible(false)}>
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
+
+          <FormField
+            label="Amount"
+            placeholder="0.00"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="decimal-pad"
+          />
+          <FormField
+            label="Period"
+            placeholder="e.g. 2026-09"
+            value={period}
+            onChangeText={setPeriod}
+          />
+          <DateField
+            label="Paid date"
+            value={paidDate}
+            onChange={setPaidDate}
+          />
+          <FormField
+            label="Reference (optional)"
+            placeholder="Receipt / transaction ref"
+            value={reference}
+            onChangeText={setReference}
+          />
+
+          <Pressable
+            onPress={handleSubmit}
+            disabled={createPayment.isPending}
+            className="bg-primary rounded-xl py-4 items-center"
+            style={{ opacity: createPayment.isPending ? 0.6 : 1 }}
+          >
+            <Text className="text-white font-semibold">
+              {createPayment.isPending ? "Saving..." : "Save Payment"}
+            </Text>
+          </Pressable>
         </View>
-      </Modal>
+      </SheetModal>
     </View>
   );
 }
