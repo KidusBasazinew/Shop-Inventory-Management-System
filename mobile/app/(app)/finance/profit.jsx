@@ -9,10 +9,13 @@ export default function FinanceProfit() {
     totalRevenue,
     cogsAmount,
     operationalExpenses,
+    wasteValue,
+    taxPaid,
     grossProfit,
     netProfit,
     profitMargin,
     isLoading,
+    isError,
   } = useFinanceSummary();
 
   const marginNum = Number(profitMargin);
@@ -35,6 +38,17 @@ export default function FinanceProfit() {
         <ActivityIndicator size="large" color="#004ac6" />
         <Text className="text-xs text-on-surface-variant mt-3 font-semibold">
           Generating Financial Audit...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 items-center justify-center px-6 bg-background">
+        <Text className="text-error text-center">
+          Couldn't load one or more figures for this report. Pull to retry or
+          check your connection.
         </Text>
       </View>
     );
@@ -140,6 +154,30 @@ export default function FinanceProfit() {
           <Text className="text-sm font-bold text-rose-500">
             -ETB{" "}
             {operationalExpenses.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </Text>
+        </View>
+
+        <View className="flex-row justify-between items-center py-1 border-t border-outline-variant/10">
+          <Text className="text-xs font-semibold text-on-surface-variant">
+            Waste & Spoilage
+          </Text>
+          <Text className="text-sm font-bold text-rose-500">
+            -ETB{" "}
+            {wasteValue.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+            })}
+          </Text>
+        </View>
+
+        <View className="flex-row justify-between items-center py-1 border-t border-outline-variant/10">
+          <Text className="text-xs font-semibold text-on-surface-variant">
+            Tax Paid
+          </Text>
+          <Text className="text-sm font-bold text-rose-500">
+            -ETB{" "}
+            {taxPaid.toLocaleString(undefined, {
               minimumFractionDigits: 2,
             })}
           </Text>

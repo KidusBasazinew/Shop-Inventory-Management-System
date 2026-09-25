@@ -3,10 +3,11 @@ import { taxService } from "../services/tax.service";
 
 const TAX_KEY = ["tax-payments"];
 
-export function useTaxPayments(params) {
+export function useTaxPayments(params, options = {}) {
   return useQuery({
     queryKey: [...TAX_KEY, params],
     queryFn: () => taxService.listPayments(params),
+    enabled: options.enabled ?? true,
   });
 }
 

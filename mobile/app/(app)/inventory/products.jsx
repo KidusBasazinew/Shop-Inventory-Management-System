@@ -16,6 +16,7 @@ import {
   RotateCcw,
   ChevronDown,
   Check,
+  UserPlus,
 } from "lucide-react-native";
 import {
   useProducts,
@@ -26,7 +27,7 @@ import {
   useRemoveStock,
   useAdjustStock,
 } from "../../../hooks/useProducts";
-import { useSuppliers } from "../../../hooks/useSuppliers";
+import { useSuppliers, useCreateSupplier } from "../../../hooks/useSuppliers";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -66,6 +67,12 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [supplierPickerVisible, setSupplierPickerVisible] = useState(false);
+  const [newSupplierMode, setNewSupplierMode] = useState(false);
+  const [newSupplierForm, setNewSupplierForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
   const { data, isLoading, isError, refetch, isRefetching } = useProducts({
     search,
     page,
@@ -73,6 +80,7 @@ export default function Products() {
   });
   const { data: supplierData } = useSuppliers({ limit: 100 });
   const suppliers = supplierData?.items ?? [];
+  const createSupplier = useCreateSupplier();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deactivateMutation = useDeactivateProduct();
@@ -164,6 +172,27 @@ export default function Products() {
       Alert.alert(
         "Error",
         e?.response?.data?.error ?? "Failed to save product",
+      );
+    }
+  };
+
+  const handleCreateSupplier = async () => {
+    if (!newSupplierForm.name) {
+      Alert.alert("Missing name", "Enter the supplier's name");
+      return;
+    }
+    try {
+      const supplier = await createSupplier.mutateAsync(newSupplierForm);
+      setForm((p) => ({ ...p, supplierId: supplier.id }));
+      setNewSupplierMode(false);
+      setNewSupplierForm({ name: "", phone: "", address: "" });
+      setSupplierPickerVisible(false);
+      playSuccess();
+    } catch (e) {
+      playError();
+      Alert.alert(
+        "Error",
+        e?.response?.data?.error ?? "Failed to add supplier",
       );
     }
   };
@@ -513,61 +542,135 @@ export default function Products() {
       {/* Preferred Supplier Picker Modal */}
       <SheetModal
         visible={supplierPickerVisible}
-        onClose={() => setSupplierPickerVisible(false)}
-        snapPoints={["50%", "85%"]}
-        initialIndex={0}
+        onClose={() => {
+          setSupplierPickerVisible(false);
+          setNewSupplierMode(false);
+        }}
+        snapPoints={["55%", "90%"]}
+        initialIndex={1}
       >
         <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
-              Preferred Supplier
+              {newSupplierMode ? "New Supplier" : "Preferred Supplier"}
             </Text>
-            <Pressable onPress={() => setSupplierPickerVisible(false)}>
+            <Pressable
+              onPress={() => {
+                setSupplierPickerVisible(false);
+                setNewSupplierMode(false);
+              }}
+            >
               <X size={22} color="#434655" />
             </Pressable>
           </View>
 
-          <View className="gap-2">
-            <Pressable
-              onPress={() => {
-                setForm((p) => ({ ...p, supplierId: "" }));
-                setSupplierPickerVisible(false);
-              }}
-              className={`p-4 rounded-xl border flex-row items-center justify-between ${
-                !form.supplierId
-                  ? "border-primary bg-primary/5"
-                  : "border-outline-variant/30 bg-surface-container-low"
-              }`}
-            >
-              <Text className="font-semibold text-on-surface-variant italic">
-                None
-              </Text>
-              {!form.supplierId ? <Check size={18} color="#004ac6" /> : null}
-            </Pressable>
+          {newSupplierMode ? (
+            <View className="gap-3">
+              <FormField
+                label="Supplier name"
+                required
+                placeholder="e.g. ABC Trading"
+                value={newSupplierForm.name}
+                onChangeText={(v) =>
+                  setNewSupplierForm((p) => ({ ...p, name: v }))
+                }
+              />
+              <FormField
+                label="Phone"
+                placeholder="0911223344"
+                value={newSupplierForm.phone}
+                onChangeText={(v) =>
+                  setNewSupplierForm((p) => ({ ...p, phone: v }))
+                }
+                keyboardType="phone-pad"
+              />
+              <FormField
+                label="Address"
+                placeholder="Optional"
+                value={newSupplierForm.address}
+                onChangeText={(v) =>
+                  setNewSupplierForm((p) => ({ ...p, address: v }))
+                }
+              />
 
-            {suppliers.map((supplier) => {
-              const isSelected = supplier.id === form.supplierId;
-              return (
+              <View className="flex-row gap-3 mt-1">
                 <Pressable
-                  key={supplier.id}
+                  onPress={() => setNewSupplierMode(false)}
+                  className="flex-1 border border-outline-variant/40 rounded-xl py-3 items-center"
+                >
+                  <Text className="text-on-surface-variant font-semibold text-xs">
+                    Back
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleCreateSupplier}
+                  disabled={createSupplier.isPending}
+                  className="flex-1 bg-primary rounded-xl py-3 items-center"
+                  style={{ opacity: createSupplier.isPending ? 0.6 : 1 }}
+                >
+                  <Text className="text-white font-semibold text-xs">
+                    {createSupplier.isPending ? "Saving..." : "Add & Select"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Pressable
+                onPress={() => setNewSupplierMode(true)}
+                className="flex-row items-center justify-center gap-2 border border-dashed border-primary/50 rounded-xl py-3"
+              >
+                <UserPlus size={16} color="#004ac6" />
+                <Text className="text-primary font-semibold text-sm">
+                  Add New Supplier
+                </Text>
+              </Pressable>
+
+              <View className="gap-2">
+                <Pressable
                   onPress={() => {
-                    setForm((p) => ({ ...p, supplierId: supplier.id }));
+                    setForm((p) => ({ ...p, supplierId: "" }));
                     setSupplierPickerVisible(false);
                   }}
                   className={`p-4 rounded-xl border flex-row items-center justify-between ${
-                    isSelected
+                    !form.supplierId
                       ? "border-primary bg-primary/5"
                       : "border-outline-variant/30 bg-surface-container-low"
                   }`}
                 >
-                  <Text className="font-semibold text-on-surface">
-                    {supplier.name}
+                  <Text className="font-semibold text-on-surface-variant italic">
+                    None
                   </Text>
-                  {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                  {!form.supplierId ? (
+                    <Check size={18} color="#004ac6" />
+                  ) : null}
                 </Pressable>
-              );
-            })}
-          </View>
+
+                {suppliers.map((supplier) => {
+                  const isSelected = supplier.id === form.supplierId;
+                  return (
+                    <Pressable
+                      key={supplier.id}
+                      onPress={() => {
+                        setForm((p) => ({ ...p, supplierId: supplier.id }));
+                        setSupplierPickerVisible(false);
+                      }}
+                      className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-outline-variant/30 bg-surface-container-low"
+                      }`}
+                    >
+                      <Text className="font-semibold text-on-surface">
+                        {supplier.name}
+                      </Text>
+                      {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          )}
         </View>
       </SheetModal>
     </View>
