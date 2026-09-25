@@ -250,8 +250,13 @@ export default function EmployeesScreen() {
       <FAB icon={Plus} onPress={openCreate} />
 
       {/* Create / edit employee */}
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["55%", "90%"]}
+        initialIndex={1}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               {editingId ? "Edit Employee" : "New Employee"}
@@ -359,8 +364,14 @@ function PayrollModal({ employee, onClose }) {
   };
 
   return (
-    <SheetModal visible={!!employee} onClose={onClose}>
-      <View className="p-6 gap-4">
+    <SheetModal
+      visible={!!employee}
+      onClose={onClose}
+      snapPoints={["55%", "90%"]}
+      initialIndex={1}
+      scrollable={false}
+    >
+      <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
         <View className="flex-row justify-between items-center">
           <Text className="text-lg font-bold text-on-surface">
             {employee?.name} — Payroll

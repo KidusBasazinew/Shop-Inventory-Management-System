@@ -9,17 +9,26 @@ import {
 import {
   BottomSheetModal,
   BottomSheetView,
+  BottomSheetScrollView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 
 const SheetModal = forwardRef(function SheetModal(
-  { visible, onClose, children, snapPoints: customSnapPoints },
+  {
+    visible,
+    onClose,
+    children,
+    snapPoints: customSnapPoints,
+    initialIndex = 1,
+    scrollable = true,
+  },
   ref,
 ) {
   const bottomSheetRef = useRef(null);
   const hasPresentedRef = useRef(false);
+
   const snapPoints = useMemo(
-    () => customSnapPoints ?? ["60%", "90%"],
+    () => customSnapPoints ?? ["50%", "94%"],
     [customSnapPoints],
   );
 
@@ -61,7 +70,7 @@ const SheetModal = forwardRef(function SheetModal(
     <BottomSheetModal
       ref={bottomSheetRef}
       snapPoints={snapPoints}
-      index={0}
+      index={initialIndex}
       stackBehavior="push"
       enableDynamicSizing={false}
       onDismiss={handleDismiss}
@@ -76,7 +85,18 @@ const SheetModal = forwardRef(function SheetModal(
       }}
       handleIndicatorStyle={{ backgroundColor: "#c3c6d7" }}
     >
-      <BottomSheetView style={{ flex: 1 }}>{children}</BottomSheetView>
+      {scrollable ? (
+        <BottomSheetScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+        >
+          {children}
+        </BottomSheetScrollView>
+      ) : (
+        <BottomSheetView style={{ flex: 1 }}>{children}</BottomSheetView>
+      )}
     </BottomSheetModal>
   );
 });

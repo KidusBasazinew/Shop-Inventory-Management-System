@@ -200,8 +200,13 @@ export default function TaxScreen() {
 
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
 
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["50%", "80%"]}
+        initialIndex={1}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               Record Tax Payment

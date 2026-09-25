@@ -242,8 +242,16 @@ function SaleDetailModal({ saleId, onClose }) {
   };
 
   return (
-    <SheetModal visible={!!saleId} onClose={onClose}>
-      <View className="p-6 gap-4 border-t border-outline-variant/20">
+    <SheetModal
+      visible={!!saleId}
+      onClose={onClose}
+      snapPoints={["60%", "94%"]}
+      initialIndex={1}
+    >
+      <View
+        style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}
+        className="border-t border-outline-variant/20"
+      >
         <View className="flex-row justify-between items-center pb-3 border-b border-outline-variant/20">
           <View className="flex-row items-center gap-2.5">
             <View className="w-9 h-9 rounded-2xl bg-primary/10 items-center justify-center">

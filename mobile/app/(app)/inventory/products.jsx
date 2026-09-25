@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import {
   Plus,
   X,
@@ -15,6 +14,8 @@ import {
   PackagePlus,
   PackageMinus,
   RotateCcw,
+  ChevronDown,
+  Check,
 } from "lucide-react-native";
 import {
   useProducts,
@@ -26,7 +27,6 @@ import {
   useAdjustStock,
 } from "../../../hooks/useProducts";
 import { useSuppliers } from "../../../hooks/useSuppliers";
-import { ChevronDown, Check } from "lucide-react-native";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -310,13 +310,14 @@ export default function Products() {
 
       <FAB icon={Plus} onPress={openCreate} />
 
-      {/* Create / Edit modal */}
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <BottomSheetScrollView
-          style={{ flex: 1 }}
-          showsVerticalScrollIndicator
-          contentContainerStyle={{ padding: 24, gap: 16, paddingBottom: 40 }}
-        >
+      {/* Create / Edit Product Modal */}
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["60%", "94%"]}
+        initialIndex={1}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 100 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               {editingId ? "Edit Product" : "New Product"}
@@ -420,7 +421,7 @@ export default function Products() {
                   setModalVisible(false);
                   setStockTarget(product);
                 }}
-                className="border border-primary rounded-xl py-3 items-center"
+                className="border border-primary rounded-xl py-3 items-center mt-2"
               >
                 <Text className="text-primary font-semibold">Manage Stock</Text>
               </Pressable>
@@ -430,7 +431,7 @@ export default function Products() {
           <Pressable
             onPress={handleSave}
             disabled={saving}
-            className="bg-primary rounded-xl py-4 items-center"
+            className="bg-primary rounded-xl py-4 items-center mt-2"
             style={{ opacity: saving ? 0.6 : 1 }}
           >
             <Text className="text-white font-semibold">
@@ -441,12 +442,17 @@ export default function Products() {
                   : "Save Product"}
             </Text>
           </Pressable>
-        </BottomSheetScrollView>
+        </View>
       </SheetModal>
 
-      {/* Stock adjustment modal */}
-      <SheetModal visible={!!stockTarget} onClose={() => setStockTarget(null)}>
-        <View className="p-6 gap-4">
+      {/* Stock Adjustment Modal */}
+      <SheetModal
+        visible={!!stockTarget}
+        onClose={() => setStockTarget(null)}
+        snapPoints={["50%", "80%"]}
+        initialIndex={0}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <Text className="text-lg font-bold text-on-surface">
             Manage Stock — {stockTarget?.name}
           </Text>
@@ -476,7 +482,7 @@ export default function Products() {
             onChangeText={setStockNote}
           />
 
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-3 pt-2">
             <Pressable
               onPress={() => {
                 setStockTarget(null);
@@ -503,11 +509,15 @@ export default function Products() {
           </View>
         </View>
       </SheetModal>
+
+      {/* Preferred Supplier Picker Modal */}
       <SheetModal
         visible={supplierPickerVisible}
         onClose={() => setSupplierPickerVisible(false)}
+        snapPoints={["50%", "85%"]}
+        initialIndex={0}
       >
-        <View className="p-6 gap-4">
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               Preferred Supplier
@@ -516,52 +526,48 @@ export default function Products() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 24 }}
-          >
-            <View className="gap-2 pb-2">
-              <Pressable
-                onPress={() => {
-                  setForm((p) => ({ ...p, supplierId: "" }));
-                  setSupplierPickerVisible(false);
-                }}
-                className={`p-4 rounded-xl border flex-row items-center justify-between ${
-                  !form.supplierId
-                    ? "border-primary bg-primary/5"
-                    : "border-outline-variant/30 bg-surface-container-low"
-                }`}
-              >
-                <Text className="font-semibold text-on-surface-variant italic">
-                  None
-                </Text>
-                {!form.supplierId ? <Check size={18} color="#004ac6" /> : null}
-              </Pressable>
-              {suppliers.map((supplier) => {
-                const isSelected = supplier.id === form.supplierId;
-                return (
-                  <Pressable
-                    key={supplier.id}
-                    onPress={() => {
-                      setForm((p) => ({ ...p, supplierId: supplier.id }));
-                      setSupplierPickerVisible(false);
-                    }}
-                    className={`p-4 rounded-xl border flex-row items-center justify-between ${
-                      isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-outline-variant/30 bg-surface-container-low"
-                    }`}
-                  >
-                    <Text className="font-semibold text-on-surface">
-                      {supplier.name}
-                    </Text>
-                    {isSelected ? <Check size={18} color="#004ac6" /> : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </BottomSheetScrollView>
+
+          <View className="gap-2">
+            <Pressable
+              onPress={() => {
+                setForm((p) => ({ ...p, supplierId: "" }));
+                setSupplierPickerVisible(false);
+              }}
+              className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                !form.supplierId
+                  ? "border-primary bg-primary/5"
+                  : "border-outline-variant/30 bg-surface-container-low"
+              }`}
+            >
+              <Text className="font-semibold text-on-surface-variant italic">
+                None
+              </Text>
+              {!form.supplierId ? <Check size={18} color="#004ac6" /> : null}
+            </Pressable>
+
+            {suppliers.map((supplier) => {
+              const isSelected = supplier.id === form.supplierId;
+              return (
+                <Pressable
+                  key={supplier.id}
+                  onPress={() => {
+                    setForm((p) => ({ ...p, supplierId: supplier.id }));
+                    setSupplierPickerVisible(false);
+                  }}
+                  className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-outline-variant/30 bg-surface-container-low"
+                  }`}
+                >
+                  <Text className="font-semibold text-on-surface">
+                    {supplier.name}
+                  </Text>
+                  {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </SheetModal>
     </View>

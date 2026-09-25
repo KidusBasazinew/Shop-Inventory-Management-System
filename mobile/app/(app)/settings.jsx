@@ -13,7 +13,6 @@ import {
   Volume2,
   Vibrate,
 } from "lucide-react-native";
-import { useState as useStateReact } from "react"; // avoid clashing if you rename later — or just reuse existing useState import
 import Switch from "../../components/common/Switch";
 import {
   isSoundEnabled,
@@ -21,10 +20,11 @@ import {
   setSoundEnabled,
   setHapticsEnabled,
   playTap,
+  playSuccess,
+  playError,
 } from "../../lib/feedback";
 import { useAuth } from "../../context/AuthContext";
 import { useShop, useUpdateShop } from "../../hooks/useShop";
-import { playSuccess, playError } from "../../lib/feedback";
 import SheetModal from "../../components/common/SheetModal";
 
 export default function Settings() {
@@ -52,7 +52,8 @@ export default function Settings() {
       location: shop?.location ?? "",
       phone: shop?.phone ?? "",
       ownerName: shop?.ownerName ?? "",
-      taxRatePercent: shop?.taxRatePercent?.toString() ?? "",
+      taxRatePercent:
+        shop?.taxRatePercent != null ? String(shop.taxRatePercent) : "0",
     });
     setEditVisible(true);
   };
@@ -64,18 +65,13 @@ export default function Settings() {
         location: form.location,
         phone: form.phone,
         ownerName: form.ownerName,
-        ...(form.taxRatePercent === ""
-          ? {}
-          : { taxRatePercent: form.taxRatePercent }),
+        taxRatePercent: Number(form.taxRatePercent) || 0,
       });
       playSuccess();
       setEditVisible(false);
     } catch (e) {
       playError();
-      Alert.alert(
-        "Error",
-        e?.response?.data?.message ?? "Failed to update shop",
-      );
+      Alert.alert("Error", e?.response?.data?.error ?? "Failed to update shop");
     }
   };
 
@@ -92,30 +88,27 @@ export default function Settings() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className="flex-1 bg-background"
       contentContainerStyle={{ padding: 20, gap: 24 }}
     >
       {/* Account */}
       <View>
-        <Text className="text-[13px] font-semibold text-slate-900 mb-3">
+        <Text className="text-[13px] font-semibold text-on-surface mb-3">
           Account
         </Text>
-        <View
-          className="rounded-2xl p-4 flex-row items-center gap-3"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-        >
-          <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
-            <User size={20} color="#2563eb" strokeWidth={1.75} />
+        <View className="rounded-2xl p-4 flex-row items-center gap-3 border border-outline-variant/20">
+          <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
+            <User size={20} color="#004ac6" strokeWidth={1.75} />
           </View>
           <View className="flex-1">
-            <Text className="text-[15px] font-semibold text-slate-900">
-              {user?.fullName ?? "—"}
+            <Text className="text-[15px] font-semibold text-on-surface">
+              {user?.name ?? "—"}
             </Text>
-            <Text className="text-[13px] text-slate-500 mt-0.5">
+            <Text className="text-[13px] text-on-surface-variant mt-0.5">
               {user?.phone ?? "—"}
             </Text>
           </View>
-          <View className="bg-blue-50 px-2.5 py-1 rounded-full">
+          <View className="bg-primary/10 px-2.5 py-1 rounded-full">
             <Text className="text-[11px] font-bold text-primary">
               {user?.role}
             </Text>
@@ -125,30 +118,30 @@ export default function Settings() {
 
       {/* Shop */}
       <View>
-        <Text className="text-[13px] font-semibold text-slate-900 mb-3">
+        <Text className="text-[13px] font-semibold text-on-surface mb-3">
           Shop
         </Text>
-        <View
-          className="rounded-2xl p-4"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-        >
+        <View className="rounded-2xl p-4 border border-outline-variant/20">
           <View className="flex-row items-start justify-between">
             <View className="flex-row items-center gap-3 flex-1">
-              <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center">
-                <Store size={20} color="#2563eb" strokeWidth={1.75} />
+              <View className="w-12 h-12 rounded-full bg-primary/10 items-center justify-center">
+                <Store size={20} color="#004ac6" strokeWidth={1.75} />
               </View>
               <View className="flex-1">
-                <Text className="text-[15px] font-semibold text-slate-900">
+                <Text className="text-[15px] font-semibold text-on-surface">
                   {shop?.name ?? "—"}
                 </Text>
-                <Text className="text-[13px] text-slate-500 mt-0.5">
+                <Text className="text-[13px] text-on-surface-variant mt-0.5">
                   {shop?.location ?? "No location set"}
+                </Text>
+                <Text className="text-[12px] text-on-surface-variant mt-0.5">
+                  VAT rate: {shop?.taxRatePercent ?? 0}%
                 </Text>
               </View>
             </View>
             {isOwner ? (
               <Pressable onPress={openEdit} hitSlop={10} className="p-1">
-                <Pencil size={16} color="#94a3b8" />
+                <Pencil size={16} color="#9aa0a6" />
               </Pressable>
             ) : null}
           </View>
@@ -195,13 +188,10 @@ export default function Settings() {
 
       {/* Menu rows */}
       <View>
-        <Text className="text-[13px] font-semibold text-slate-900 mb-3">
+        <Text className="text-[13px] font-semibold text-on-surface mb-3">
           Manage
         </Text>
-        <View
-          className="rounded-2xl overflow-hidden"
-          style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
-        >
+        <View className="rounded-2xl overflow-hidden border border-outline-variant/20">
           {canManageStaff ? (
             <MenuRow
               icon={Users}
@@ -223,12 +213,17 @@ export default function Settings() {
       </View>
 
       {/* Edit shop modal */}
-      <SheetModal visible={editVisible} onClose={() => setEditVisible(false)}>
-        <View className="p-6 gap-4">
+      <SheetModal
+        visible={editVisible}
+        onClose={() => setEditVisible(false)}
+        snapPoints={["55%", "90%"]}
+        initialIndex={1}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-bold text-slate-900">Edit Shop</Text>
+            <Text className="text-lg font-bold text-on-surface">Edit Shop</Text>
             <Pressable onPress={() => setEditVisible(false)}>
-              <X size={22} color="#64748b" />
+              <X size={22} color="#434655" />
             </Pressable>
           </View>
 
@@ -236,53 +231,45 @@ export default function Settings() {
             placeholder="Shop name"
             value={form.name}
             onChangeText={(v) => setForm((p) => ({ ...p, name: v }))}
-            placeholderTextColor="#94a3b8"
-            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
           />
           <BottomSheetTextInput
             placeholder="Location"
             value={form.location}
             onChangeText={(v) => setForm((p) => ({ ...p, location: v }))}
-            placeholderTextColor="#94a3b8"
-            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
           />
           <BottomSheetTextInput
             placeholder="Shop phone"
             value={form.phone}
             onChangeText={(v) => setForm((p) => ({ ...p, phone: v }))}
             keyboardType="phone-pad"
-            placeholderTextColor="#94a3b8"
-            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
           />
           <BottomSheetTextInput
             placeholder="Owner name"
             value={form.ownerName}
             onChangeText={(v) => setForm((p) => ({ ...p, ownerName: v }))}
-            placeholderTextColor="#94a3b8"
-            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
           />
           <BottomSheetTextInput
-            placeholder="Tax rate (%)"
+            placeholder="VAT / Tax rate (%)"
             value={form.taxRatePercent}
             onChangeText={(v) => setForm((p) => ({ ...p, taxRatePercent: v }))}
             keyboardType="decimal-pad"
-            placeholderTextColor="#94a3b8"
-            className="px-4 py-3.5 rounded-2xl text-[15px] text-slate-900"
-            style={{ borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }}
+            placeholderTextColor="#737686"
+            className="border border-outline-variant/40 rounded-xl px-4 py-3.5 text-[15px] text-on-surface"
           />
 
           <Pressable
             onPress={handleSave}
             disabled={updateShop.isPending}
-            className="rounded-2xl py-4 items-center"
-            style={{
-              backgroundColor: "#2563eb",
-              opacity: updateShop.isPending ? 0.6 : 1,
-            }}
+            className="bg-primary rounded-2xl py-4 items-center"
+            style={{ opacity: updateShop.isPending ? 0.6 : 1 }}
           >
             <Text className="text-white font-semibold text-[15px]">
               {updateShop.isPending ? "Saving..." : "Save Changes"}
@@ -298,23 +285,20 @@ function MenuRow({ icon: Icon, label, subtitle, onPress, bordered }) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 px-4 py-4"
-      style={
-        bordered
-          ? { borderBottomWidth: 1, borderBottomColor: "rgba(0,0,0,0.06)" }
-          : undefined
-      }
+      className={`flex-row items-center gap-3 px-4 py-4 ${bordered ? "border-b border-outline-variant/15" : ""}`}
     >
-      <View className="w-10 h-10 rounded-full bg-blue-50 items-center justify-center">
-        <Icon size={18} color="#2563eb" strokeWidth={1.75} />
+      <View className="w-10 h-10 rounded-full bg-primary/10 items-center justify-center">
+        <Icon size={18} color="#004ac6" strokeWidth={1.75} />
       </View>
       <View className="flex-1">
-        <Text className="text-[14px] font-medium text-slate-900">{label}</Text>
+        <Text className="text-[14px] font-medium text-on-surface">{label}</Text>
         {subtitle ? (
-          <Text className="text-[12px] text-slate-500 mt-0.5">{subtitle}</Text>
+          <Text className="text-[12px] text-on-surface-variant mt-0.5">
+            {subtitle}
+          </Text>
         ) : null}
       </View>
-      <ChevronRight size={16} color="#94a3b8" />
+      <ChevronRight size={16} color="#9aa0a6" />
     </Pressable>
   );
 }

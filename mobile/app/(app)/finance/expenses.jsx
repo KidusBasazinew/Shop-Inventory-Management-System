@@ -356,8 +356,14 @@ export default function ExpensesScreen() {
       <FAB icon={Plus} onPress={openCreate} />
 
       {/* Main Form Drawer Modal */}
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4" style={{ flex: 1 }}>
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["60%", "90%"]}
+        initialIndex={1}
+        scrollable={false}
+      >
+        <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
             <View className="flex-row items-center gap-2">
               <Receipt size={20} color="#004ac6" />
@@ -452,8 +458,14 @@ export default function ExpensesScreen() {
       <SheetModal
         visible={categoryPickerVisible}
         onClose={() => setCategoryPickerVisible(false)}
+        snapPoints={["40%", "70%"]}
+        initialIndex={1}
+        scrollable={false}
       >
-        <View className="p-6 gap-4 border-t border-outline-variant/20">
+        <View
+          style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}
+          className="border-t border-outline-variant/20"
+        >
           <View className="flex-row justify-between items-center pb-2 border-b border-outline-variant/20">
             <Text className="text-lg font-bold text-on-surface">
               Select Category

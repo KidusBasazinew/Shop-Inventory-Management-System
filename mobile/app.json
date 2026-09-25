@@ -19,7 +19,7 @@
         "backgroundColor": "#2563eb"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.kidusbasazinew.PharmacyStockManagement"
+      "package": "com.kidusbasazinew.ShopStockManagement"
     },
     "web": {
       "favicon": "./assets/favicon.png"

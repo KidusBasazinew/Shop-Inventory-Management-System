@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import {
   ShoppingBag,
   X,
@@ -33,6 +32,7 @@ import { playSuccess, playError } from "../../../lib/feedback";
 
 const EMPTY_LINE = { productId: "", quantity: "", unitCost: "" };
 const PAGE_SIZE = 20;
+
 export default function PurchasesScreen() {
   const [search, setSearch] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -286,8 +286,13 @@ export default function PurchasesScreen() {
       <FAB icon={Plus} onPress={() => setModalVisible(true)} />
 
       {/* Create purchase modal */}
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["60%", "94%"]}
+        initialIndex={1}
+      >
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               New Purchase
@@ -297,108 +302,102 @@ export default function PurchasesScreen() {
             </Pressable>
           </View>
 
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 24 }}
-          >
-            <View className="gap-4 pb-2">
-              <View>
-                <Text className="text-xs font-medium text-on-surface-variant mb-2">
-                  Supplier
-                </Text>
-                <Pressable
-                  onPress={() => setSupplierPickerVisible(true)}
-                  className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
-                >
-                  <Text
-                    className={`flex-1 ${selectedSupplier ? "text-on-surface" : "text-[#737686]"}`}
-                    numberOfLines={1}
-                  >
-                    {selectedSupplier?.name ?? "Select a supplier"}
-                  </Text>
-                  <ChevronDown size={18} color="#737686" />
-                </Pressable>
-              </View>
-
-              <Text className="text-xs font-medium text-on-surface-variant">
-                Items
+          <View className="gap-4 pb-2">
+            <View>
+              <Text className="text-xs font-medium text-on-surface-variant mb-2">
+                Supplier
               </Text>
-              {lines.map((line, idx) => {
-                const product = products.find((p) => p.id === line.productId);
-                return (
-                  <View
-                    key={idx}
-                    className="border border-outline-variant/30 rounded-xl p-3 gap-2"
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <Pressable
-                        onPress={() => setProductPickerIndex(idx)}
-                        className="flex-1 border border-outline-variant/40 rounded-xl px-3 py-2.5 flex-row items-center justify-between mr-2"
+              <Pressable
+                onPress={() => setSupplierPickerVisible(true)}
+                className="border border-outline-variant/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+              >
+                <Text
+                  className={`flex-1 ${selectedSupplier ? "text-on-surface" : "text-[#737686]"}`}
+                  numberOfLines={1}
+                >
+                  {selectedSupplier?.name ?? "Select a supplier"}
+                </Text>
+                <ChevronDown size={18} color="#737686" />
+              </Pressable>
+            </View>
+
+            <Text className="text-xs font-medium text-on-surface-variant">
+              Items
+            </Text>
+            {lines.map((line, idx) => {
+              const product = products.find((p) => p.id === line.productId);
+              return (
+                <View
+                  key={idx}
+                  className="border border-outline-variant/30 rounded-xl p-3 gap-2"
+                >
+                  <View className="flex-row items-center justify-between">
+                    <Pressable
+                      onPress={() => setProductPickerIndex(idx)}
+                      className="flex-1 border border-outline-variant/40 rounded-xl px-3 py-2.5 flex-row items-center justify-between mr-2"
+                    >
+                      <Text
+                        className={`flex-1 text-sm ${product ? "text-on-surface" : "text-[#737686]"}`}
+                        numberOfLines={1}
                       >
-                        <Text
-                          className={`flex-1 text-sm ${product ? "text-on-surface" : "text-[#737686]"}`}
-                          numberOfLines={1}
-                        >
-                          {product?.name ?? "Select product"}
-                        </Text>
-                        <ChevronDown size={16} color="#737686" />
+                        {product?.name ?? "Select product"}
+                      </Text>
+                      <ChevronDown size={16} color="#737686" />
+                    </Pressable>
+                    {lines.length > 1 ? (
+                      <Pressable onPress={() => removeLine(idx)} hitSlop={10}>
+                        <Trash2 size={16} color="#BA1A1A" />
                       </Pressable>
-                      {lines.length > 1 ? (
-                        <Pressable onPress={() => removeLine(idx)} hitSlop={10}>
-                          <Trash2 size={16} color="#BA1A1A" />
-                        </Pressable>
-                      ) : null}
+                    ) : null}
+                  </View>
+                  <View className="flex-row gap-2">
+                    <View className="flex-1">
+                      <FormField
+                        placeholder="Quantity"
+                        value={line.quantity}
+                        onChangeText={(v) => updateLine(idx, { quantity: v })}
+                        keyboardType="numeric"
+                      />
                     </View>
-                    <View className="flex-row gap-2">
-                      <View className="flex-1">
-                        <FormField
-                          placeholder="Quantity"
-                          value={line.quantity}
-                          onChangeText={(v) => updateLine(idx, { quantity: v })}
-                          keyboardType="numeric"
-                        />
-                      </View>
-                      <View className="flex-1">
-                        <FormField
-                          placeholder="Unit cost"
-                          value={line.unitCost}
-                          onChangeText={(v) => updateLine(idx, { unitCost: v })}
-                          keyboardType="decimal-pad"
-                        />
-                      </View>
+                    <View className="flex-1">
+                      <FormField
+                        placeholder="Unit cost"
+                        value={line.unitCost}
+                        onChangeText={(v) => updateLine(idx, { unitCost: v })}
+                        keyboardType="decimal-pad"
+                      />
                     </View>
                   </View>
-                );
-              })}
+                </View>
+              );
+            })}
 
-              <Pressable
-                onPress={addLine}
-                className="border border-dashed border-primary/50 rounded-xl py-3 items-center"
-              >
-                <Text className="text-primary font-semibold text-sm">
-                  + Add another item
-                </Text>
-              </Pressable>
+            <Pressable
+              onPress={addLine}
+              className="border border-dashed border-primary/50 rounded-xl py-3 items-center"
+            >
+              <Text className="text-primary font-semibold text-sm">
+                + Add another item
+              </Text>
+            </Pressable>
 
-              <View className="flex-row items-center justify-between pt-2 border-t border-outline-variant/20">
-                <Text className="text-sm font-semibold text-on-surface-variant">
-                  Total
-                </Text>
-                <Text className="text-base font-black text-primary">
-                  ETB{" "}
-                  {lineTotal.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
+            <View className="flex-row items-center justify-between pt-2 border-t border-outline-variant/20">
+              <Text className="text-sm font-semibold text-on-surface-variant">
+                Total
+              </Text>
+              <Text className="text-base font-black text-primary">
+                ETB{" "}
+                {lineTotal.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
             </View>
-          </BottomSheetScrollView>
+          </View>
 
           <Pressable
             onPress={handleCreate}
             disabled={createMutation.isPending}
-            className="bg-primary rounded-xl py-4 items-center"
+            className="bg-primary rounded-xl py-4 items-center mt-2"
             style={{ opacity: createMutation.isPending ? 0.6 : 1 }}
           >
             <Text className="text-white font-semibold">
@@ -412,8 +411,10 @@ export default function PurchasesScreen() {
       <SheetModal
         visible={supplierPickerVisible}
         onClose={() => setSupplierPickerVisible(false)}
+        snapPoints={["50%", "85%"]}
+        initialIndex={0}
       >
-        <View className="p-6 gap-4">
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 60 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               Select Supplier
@@ -422,41 +423,36 @@ export default function PurchasesScreen() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 24 }}
-          >
-            <View className="gap-2 pb-2">
-              {suppliers.map((supplier) => {
-                const isSelected = supplier.id === supplierId;
-                return (
-                  <Pressable
-                    key={supplier.id}
-                    onPress={() => {
-                      setSupplierId(supplier.id);
-                      setSupplierPickerVisible(false);
-                    }}
-                    className={`p-4 rounded-xl border flex-row items-center justify-between ${
-                      isSelected
-                        ? "border-primary bg-primary/5"
-                        : "border-outline-variant/30 bg-surface-container-low"
-                    }`}
-                  >
-                    <View className="flex-1 pr-3">
-                      <Text className="font-semibold text-on-surface">
-                        {supplier.name}
-                      </Text>
-                      <Text className="text-xs text-on-surface-variant mt-0.5">
-                        {supplier.phone}
-                      </Text>
-                    </View>
-                    {isSelected ? <Check size={18} color="#004ac6" /> : null}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </BottomSheetScrollView>
+
+          <View className="gap-2 pb-2">
+            {suppliers.map((supplier) => {
+              const isSelected = supplier.id === supplierId;
+              return (
+                <Pressable
+                  key={supplier.id}
+                  onPress={() => {
+                    setSupplierId(supplier.id);
+                    setSupplierPickerVisible(false);
+                  }}
+                  className={`p-4 rounded-xl border flex-row items-center justify-between ${
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-outline-variant/30 bg-surface-container-low"
+                  }`}
+                >
+                  <View className="flex-1 pr-3">
+                    <Text className="font-semibold text-on-surface">
+                      {supplier.name}
+                    </Text>
+                    <Text className="text-xs text-on-surface-variant mt-0.5">
+                      {supplier.phone}
+                    </Text>
+                  </View>
+                  {isSelected ? <Check size={18} color="#004ac6" /> : null}
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </SheetModal>
 
@@ -464,8 +460,10 @@ export default function PurchasesScreen() {
       <SheetModal
         visible={productPickerIndex !== null}
         onClose={() => setProductPickerIndex(null)}
+        snapPoints={["50%", "85%"]}
+        initialIndex={0}
       >
-        <View className="p-6 gap-4">
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 60 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               Select Product
@@ -474,36 +472,32 @@ export default function PurchasesScreen() {
               <X size={22} color="#434655" />
             </Pressable>
           </View>
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 24 }}
-          >
-            <View className="gap-2 pb-2">
-              {products.map((product) => (
-                <Pressable
-                  key={product.id}
-                  onPress={() => {
-                    updateLine(productPickerIndex, { productId: product.id });
-                    setProductPickerIndex(null);
-                  }}
-                  className="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-low flex-row items-center justify-between"
+
+          <View className="gap-2 pb-2">
+            {products.map((product) => (
+              <Pressable
+                key={product.id}
+                onPress={() => {
+                  updateLine(productPickerIndex, { productId: product.id });
+                  setProductPickerIndex(null);
+                }}
+                className="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-low flex-row items-center justify-between"
+              >
+                <Text
+                  className="font-semibold text-on-surface flex-1"
+                  numberOfLines={1}
                 >
-                  <Text
-                    className="font-semibold text-on-surface flex-1"
-                    numberOfLines={1}
-                  >
-                    {product.name}
-                  </Text>
-                  <Text className="text-xs text-on-surface-variant">
-                    {product.quantity} in stock
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </BottomSheetScrollView>
+                  {product.name}
+                </Text>
+                <Text className="text-xs text-on-surface-variant">
+                  {product.quantity} in stock
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </SheetModal>
+
       {/* Record supplier payment */}
       <SheetModal
         visible={!!payingPurchase}
@@ -511,8 +505,10 @@ export default function PurchasesScreen() {
           setPayingPurchase(null);
           setPayAmount("");
         }}
+        snapPoints={["40%", "70%"]}
+        initialIndex={0}
       >
-        <View className="p-6 gap-4">
+        <View style={{ flexGrow: 1, padding: 24, gap: 16, paddingBottom: 60 }}>
           <Text className="text-lg font-bold text-on-surface">
             Pay {payingPurchase?.supplier?.name}
           </Text>
@@ -532,7 +528,7 @@ export default function PurchasesScreen() {
             onChangeText={setPayAmount}
             keyboardType="decimal-pad"
           />
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-3 pt-2">
             <Pressable
               onPress={() => {
                 setPayingPurchase(null);

@@ -8,7 +8,12 @@ import {
   Alert,
 } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import { useSuppliers, useUpdateSupplier } from "../../../hooks/useSuppliers";
+import { Store, Truck, Building2, X } from "lucide-react-native";
+import {
+  useSuppliers,
+  useCreateSupplier,
+  useUpdateSupplier,
+} from "../../../hooks/useSuppliers";
 import SearchBar from "../../../components/common/SearchBar";
 import EmptyState from "../../../components/common/EmptyState";
 import FormField from "../../../components/common/FormField";
@@ -203,8 +208,14 @@ export default function Suppliers() {
       <FAB icon={Truck} onPress={openCreate} />
 
       {/* Create / Edit Supplier Modal */}
-      <SheetModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <View className="p-6 gap-4">
+      <SheetModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        snapPoints={["50%", "80%"]}
+        initialIndex={1}
+        scrollable={false}
+      >
+        <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <View className="flex-row items-center gap-2">
               <Building2 size={20} color="#004ac6" />

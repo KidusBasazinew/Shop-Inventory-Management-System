@@ -34,6 +34,7 @@ import { useCreateSale } from "../../../hooks/useSales";
 import { playSuccess, playError, playTap } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
 import SheetModal from "../../../components/common/SheetModal";
+import CenterModal from "../../../components/common/CenterModal";
 
 const PAYMENT_METHODS = [
   "CASH",
@@ -319,8 +320,11 @@ export default function Sales() {
       <SheetModal
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
+        snapPoints={["60%", "90%"]}
+        initialIndex={1}
+        scrollable={false}
       >
-        <View className="p-6 gap-4" style={{ flex: 1 }}>
+        <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">Add Item</Text>
             <Pressable onPress={() => setPickerVisible(false)}>
@@ -377,11 +381,12 @@ export default function Sales() {
       </SheetModal>
 
       {/* Delete confirmation */}
-      <SheetModal
+      {/* Delete confirmation */}
+      <CenterModal
         visible={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
       >
-        <View className="p-5 gap-4 items-center">
+        <View className="w-full bg-surface rounded-3xl p-6 gap-4 items-center shadow-xl">
           <View className="w-12 h-12 rounded-full bg-red-500/10 items-center justify-center">
             <AlertTriangle size={24} color="#BA1A1A" />
           </View>
@@ -414,22 +419,25 @@ export default function Sales() {
             </Pressable>
           </View>
         </View>
-      </SheetModal>
+      </CenterModal>
 
       {/* Checkout modal */}
       <SheetModal
         visible={checkoutVisible}
         onClose={() => setCheckoutVisible(false)}
+        snapPoints={["65%", "94%"]}
+        initialIndex={1}
+        scrollable={false}
       >
-        <View className="p-6 gap-4" style={{ flex: 1 }}>
+        <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <Text className="text-lg font-bold text-on-surface">
             Confirm Sale
           </Text>
 
-          <View className="bg-surface-container-low p-3.5 rounded-2xl gap-2 max-h-40">
+          <View className="bg-surface-container-low p-3.5 rounded-2xl gap-2">
             <BottomSheetScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={{ paddingBottom: 24 }}
+              style={{ maxHeight: 120 }}
+              contentContainerStyle={{ paddingBottom: 8 }}
             >
               <View className="gap-2">
                 {cart.map((item) => (
@@ -577,8 +585,11 @@ export default function Sales() {
           setCustomerPickerVisible(false);
           setNewCustomerMode(false);
         }}
+        snapPoints={["55%", "90%"]}
+        initialIndex={1}
+        scrollable={false}
       >
-        <View className="p-6 gap-4" style={{ flex: 1 }}>
+        <View style={{ flex: 1, padding: 24, gap: 16, paddingBottom: 80 }}>
           <View className="flex-row justify-between items-center">
             <Text className="text-lg font-bold text-on-surface">
               {newCustomerMode ? "New Customer" : "Select Customer"}
@@ -731,8 +742,8 @@ function SaleSuccessModal({ sale, onClose }) {
   const moneyPositions = [8, 18, 30, 42, 55, 66, 78, 88, 96];
 
   return (
-    <SheetModal visible={!!sale} onClose={onClose}>
-      <View className="w-full max-w-sm overflow-hidden border border-green-200 shadow-xl">
+    <CenterModal visible={!!sale} onClose={onClose}>
+      <View className="w-full max-w-sm overflow-hidden rounded-3xl border border-green-200 shadow-xl bg-surface">
         {/* Header Banner with Green Background */}
         <View
           className="h-40 items-center justify-center overflow-hidden"
@@ -820,6 +831,6 @@ function SaleSuccessModal({ sale, onClose }) {
           </Pressable>
         </View>
       </View>
-    </SheetModal>
+    </CenterModal>
   );
 }
