@@ -10,8 +10,8 @@ const STATUS_BADGES = {
 };
 
 /**
- * Call list. When a shop stops using the software — or someone installs
- * the app store build and never activates — log the call here so nobody
+ * Call list. When a shop stops using the software or someone installs
+ * the app store build and never activates log the call here so nobody
  * is forgotten and follow-ups are visible.
  */
 export default function Outreach() {
@@ -64,21 +64,26 @@ export default function Outreach() {
     <>
       <h1 className="page-title">Outreach</h1>
       <p className="page-sub">
-        Call / SMS log — chase inactive shops, expired subscriptions, and
+        Call / SMS log chase inactive shops, expired subscriptions, and
         app-store installs that never started using the software.
       </p>
 
       <div className="grid-2">
         <div className="panel">
           <h3>Log a new outreach</h3>
-          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <form
+            onSubmit={submit}
+            style={{ display: "flex", flexDirection: "column", gap: 10 }}
+          >
             <select
               value={form.shopId}
               onChange={(e) => setForm({ ...form, shopId: e.target.value })}
             >
               <option value="">No shop (e.g. app-store install)</option>
               {(shops?.shops ?? []).map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
               ))}
             </select>
             <input
@@ -88,35 +93,52 @@ export default function Outreach() {
               required
             />
             <div className="row">
-              <select value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })}>
+              <select
+                value={form.reason}
+                onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              >
                 <option value="INACTIVE_SHOP">Not using the software</option>
-                <option value="EXPIRED_SUBSCRIPTION">Expired subscription</option>
-                <option value="APP_INSTALL_NO_USE">Installed app, never used</option>
+                <option value="EXPIRED_SUBSCRIPTION">
+                  Expired subscription
+                </option>
+                <option value="APP_INSTALL_NO_USE">
+                  Installed app, never used
+                </option>
                 <option value="SUPPORT">Support call</option>
                 <option value="OTHER">Other</option>
               </select>
-              <select value={form.channel} onChange={(e) => setForm({ ...form, channel: e.target.value })}>
+              <select
+                value={form.channel}
+                onChange={(e) => setForm({ ...form, channel: e.target.value })}
+              >
                 <option value="CALL">Call</option>
                 <option value="SMS">SMS</option>
                 <option value="WHATSAPP">WhatsApp</option>
               </select>
             </div>
             <input
-              placeholder="Note — what did you talk about?"
+              placeholder="Note what did you talk about?"
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
             />
             {createMutation.error ? (
-              <div className="error-text">{createMutation.error?.response?.data?.error}</div>
+              <div className="error-text">
+                {createMutation.error?.response?.data?.error}
+              </div>
             ) : null}
-            <button className="primary" disabled={createMutation.isPending}>Save log</button>
+            <button className="primary" disabled={createMutation.isPending}>
+              Save log
+            </button>
           </form>
         </div>
 
         <div className="panel">
           <h3>History</h3>
           <div className="toolbar">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="">All statuses</option>
               <option value="PENDING">Pending</option>
               <option value="DONE">Done</option>
@@ -131,32 +153,59 @@ export default function Outreach() {
           ) : (
             <table>
               <thead>
-                <tr><th>When</th><th>Shop / phone</th><th>Reason</th><th>Channel</th><th>Status</th><th></th></tr>
+                <tr>
+                  <th>When</th>
+                  <th>Shop / phone</th>
+                  <th>Reason</th>
+                  <th>Channel</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
               </thead>
               <tbody>
                 {logs.map((log) => (
                   <tr key={log.id}>
-                    <td className="muted" style={{ whiteSpace: "nowrap" }}>{new Date(log.createdAt).toLocaleDateString()}</td>
+                    <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(log.createdAt).toLocaleDateString()}
+                    </td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{log.shop?.name ?? "—"}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {log.shop?.name ?? "—"}
+                      </div>
                       <div className="mono">{log.phone}</div>
                     </td>
-                    <td className="muted" style={{ fontSize: 12 }}>{log.reason.replace(/_/g, " ")}</td>
+                    <td className="muted" style={{ fontSize: 12 }}>
+                      {log.reason.replace(/_/g, " ")}
+                    </td>
                     <td>{log.channel}</td>
                     <td>
-                      <span className={`badge ${STATUS_BADGES[log.status] ?? ""}`}>{log.status.replace("_", " ")}</span>
+                      <span
+                        className={`badge ${STATUS_BADGES[log.status] ?? ""}`}
+                      >
+                        {log.status.replace("_", " ")}
+                      </span>
                     </td>
                     <td>
                       {log.status === "PENDING" ? (
                         <div className="row">
                           <button
-                            onClick={() => updateMutation.mutate({ id: log.id, status: "DONE" })}
+                            onClick={() =>
+                              updateMutation.mutate({
+                                id: log.id,
+                                status: "DONE",
+                              })
+                            }
                             disabled={updateMutation.isPending}
                           >
                             ✓ Done
                           </button>
                           <button
-                            onClick={() => updateMutation.mutate({ id: log.id, status: "NO_ANSWER" })}
+                            onClick={() =>
+                              updateMutation.mutate({
+                                id: log.id,
+                                status: "NO_ANSWER",
+                              })
+                            }
                             disabled={updateMutation.isPending}
                           >
                             ↻ Retry

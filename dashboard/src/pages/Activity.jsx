@@ -3,14 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "../lib/api";
 
 /**
- * The full audit trail across all shops — "track everything the shop
+ * The full audit trail across all shops "track everything the shop
  * owner is doing with the software", including mistakes (failed
  * requests show their status code) and logins.
  */
 export default function Activity() {
   const [type, setType] = useState("");
 
-  // First page, keyed by filter — react-query replaces data when `type`
+  // First page, keyed by filter react-query replaces data when `type`
   // changes, so no manual state syncing is needed.
   const page1 = useQuery({
     queryKey: ["events", type || "all"],
@@ -27,7 +27,7 @@ export default function Activity() {
     <>
       <h1 className="page-title">Activity Feed</h1>
       <p className="page-sub">
-        Everything every shop does in the software — logins, sales, deletes,
+        Everything every shop does in the software logins, sales, deletes,
         mistakes. Failed requests show their error status.
       </p>
 
@@ -43,12 +43,21 @@ export default function Activity() {
       <div className="panel">
         <table>
           <thead>
-            <tr><th>When</th><th>Shop</th><th>User</th><th>Action</th><th>Result</th><th>Detail</th></tr>
+            <tr>
+              <th>When</th>
+              <th>Shop</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Result</th>
+              <th>Detail</th>
+            </tr>
           </thead>
           <tbody>
             {(page1.data?.events ?? []).map((ev) => (
               <tr key={ev.id}>
-                <td className="muted" style={{ whiteSpace: "nowrap" }}>{new Date(ev.createdAt).toLocaleString()}</td>
+                <td className="muted" style={{ whiteSpace: "nowrap" }}>
+                  {new Date(ev.createdAt).toLocaleString()}
+                </td>
                 <td>{ev.shop?.name ?? "—"}</td>
                 <td>{ev.user?.name ?? "system"}</td>
                 <td className="mono">{ev.type}</td>
@@ -61,20 +70,35 @@ export default function Activity() {
                     <span className="badge EXPIRED">{ev.statusCode}</span>
                   )}
                 </td>
-                <td className="mono muted" style={{ maxWidth: 360, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {ev.detail ? JSON.stringify(ev.detail) : `${ev.method ?? ""} ${ev.path ?? ""}`}
+                <td
+                  className="mono muted"
+                  style={{
+                    maxWidth: 360,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {ev.detail
+                    ? JSON.stringify(ev.detail)
+                    : `${ev.method ?? ""} ${ev.path ?? ""}`}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {page1.isLoading ? <div className="loading">Loading activity…</div> : null}
+        {page1.isLoading ? (
+          <div className="loading">Loading activity…</div>
+        ) : null}
         {!page1.isLoading && (page1.data?.events ?? []).length === 0 ? (
           <div className="empty">No activity found.</div>
         ) : null}
         {page1.data?.nextCursor ? (
-          <div className="muted" style={{ textAlign: "center", paddingTop: 12, fontSize: 13 }}>
-            Showing the 50 most recent events — filter by type to dig deeper.
+          <div
+            className="muted"
+            style={{ textAlign: "center", paddingTop: 12, fontSize: 13 }}
+          >
+            Showing the 50 most recent events filter by type to dig deeper.
           </div>
         ) : null}
       </div>

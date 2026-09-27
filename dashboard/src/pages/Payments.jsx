@@ -31,7 +31,8 @@ export default function Payments() {
     setNote("");
     setShotUrl(null);
     setShotError(false);
-    const remote = p.screenshotIsRemote ?? /^https?:\/\//.test(p.screenshotUrl ?? "");
+    const remote =
+      p.screenshotIsRemote ?? /^https?:\/\//.test(p.screenshotUrl ?? "");
     if (remote) {
       setShotUrl(p.screenshotView ?? p.screenshotUrl);
       return;
@@ -49,7 +50,8 @@ export default function Payments() {
   });
 
   const reviewMutation = useMutation({
-    mutationFn: ({ id, decision, note }) => adminApi.reviewPayment(id, decision, note),
+    mutationFn: ({ id, decision, note }) =>
+      adminApi.reviewPayment(id, decision, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["overview"] });
@@ -64,8 +66,8 @@ export default function Payments() {
       <h1 className="page-title">Subscription Payments</h1>
       <p className="page-sub">
         Shops transfer money manually and upload a screenshot. Approve to add
-        their plan months (30 days each) — unreviewed items get an AI check
-        after 15 minutes.
+        their plan months (30 days each) unreviewed items get an AI check after
+        15 minutes.
       </p>
 
       <div className="toolbar">
@@ -83,7 +85,7 @@ export default function Payments() {
       {isLoading ? (
         <div className="loading">Loading…</div>
       ) : (payments ?? []).length === 0 ? (
-        <div className="empty">Nothing here — all clear. 🎉</div>
+        <div className="empty">Nothing here all clear. 🎉</div>
       ) : (
         <div className="panel">
           <table>
@@ -104,18 +106,26 @@ export default function Payments() {
                 <tr key={p.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{p.shop?.name}</div>
-                    <div className="muted" style={{ fontSize: 12 }}>{p.shop?.phone}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      {p.shop?.phone}
+                    </div>
                   </td>
                   <td>{p.planMonths} mo</td>
-                  <td className="mono">ETB {Number(p.amountEtb).toLocaleString()}</td>
+                  <td className="mono">
+                    ETB {Number(p.amountEtb).toLocaleString()}
+                  </td>
                   <td>
                     <div>{p.payerName ?? "—"}</div>
-                    <div className="muted" style={{ fontSize: 12 }}>{p.payerPhone ?? ""}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>
+                      {p.payerPhone ?? ""}
+                    </div>
                   </td>
                   <td className="mono">{p.bankReference ?? "—"}</td>
                   <td>{new Date(p.submittedAt).toLocaleString()}</td>
                   <td>
-                    <span className={`badge ${p.status}`}>{p.status.replace("_", " ")}</span>
+                    <span className={`badge ${p.status}`}>
+                      {p.status.replace("_", " ")}
+                    </span>
                     {p.aiConfidence != null && (
                       <div className="muted" style={{ fontSize: 11 }}>
                         AI {Math.round(Number(p.aiConfidence) * 100)}%
@@ -137,7 +147,7 @@ export default function Payments() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="spread mb">
               <h3>
-                {reviewing.shop?.name} — {reviewing.planMonths} month
+                {reviewing.shop?.name} {reviewing.planMonths} month
                 {reviewing.planMonths > 1 ? "s" : ""} · ETB{" "}
                 {Number(reviewing.amountEtb).toLocaleString()}
               </h3>
@@ -146,11 +156,19 @@ export default function Payments() {
 
             <div className="grid-2 mb">
               <div>
-                <div className="muted" style={{ fontSize: 13 }}>Payment screenshot</div>
+                <div className="muted" style={{ fontSize: 13 }}>
+                  Payment screenshot
+                </div>
                 {shotUrl ? (
-                  <img className="screenshot mt" src={shotUrl} alt="Payment screenshot" />
+                  <img
+                    className="screenshot mt"
+                    src={shotUrl}
+                    alt="Payment screenshot"
+                  />
                 ) : shotError ? (
-                  <div className="empty mt">Could not load image — is the API running?</div>
+                  <div className="empty mt">
+                    Could not load image is the API running?
+                  </div>
                 ) : (
                   <div className="empty mt">Loading screenshot…</div>
                 )}
@@ -158,7 +176,10 @@ export default function Payments() {
               <div>
                 <div className="card mb">
                   <div className="label">Payer</div>
-                  <div>{reviewing.payerName ?? "—"} {reviewing.payerPhone ? `· ${reviewing.payerPhone}` : ""}</div>
+                  <div>
+                    {reviewing.payerName ?? "—"}{" "}
+                    {reviewing.payerPhone ? `· ${reviewing.payerPhone}` : ""}
+                  </div>
                   <div className="label mt">Bank reference</div>
                   <div className="mono">{reviewing.bankReference ?? "—"}</div>
                   <div className="label mt">Submitted</div>
@@ -178,7 +199,9 @@ export default function Payments() {
                   ) : null}
                 </div>
 
-                <label className="muted" style={{ fontSize: 13 }}>Note (optional, sent to the shop on reject)</label>
+                <label className="muted" style={{ fontSize: 13 }}>
+                  Note (optional, sent to the shop on reject)
+                </label>
                 <input
                   className="mt"
                   style={{ width: "100%" }}
@@ -217,7 +240,8 @@ export default function Payments() {
                 </div>
                 {reviewMutation.error ? (
                   <div className="error-text mt">
-                    {reviewMutation.error?.response?.data?.error ?? "Review failed"}
+                    {reviewMutation.error?.response?.data?.error ??
+                      "Review failed"}
                   </div>
                 ) : null}
               </div>

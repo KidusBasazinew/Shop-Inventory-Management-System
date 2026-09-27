@@ -16,7 +16,11 @@ function PaymentProofThumb({ payment }) {
 
   if (remote) {
     return (
-      <a href={payment.screenshotView ?? payment.screenshotUrl} target="_blank" rel="noreferrer">
+      <a
+        href={payment.screenshotView ?? payment.screenshotUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
         <img
           className="screenshot"
           style={{ width: 56, height: 40, objectFit: "cover", borderRadius: 8 }}
@@ -68,7 +72,7 @@ export default function ShopDetail() {
   const resetPassword = useMutation({
     mutationFn: () => adminApi.resetOwnerPassword(id, newPassword),
     onSuccess: () => {
-      setMessage("Owner password reset — all their sessions were logged out.");
+      setMessage("Owner password reset all their sessions were logged out.");
       setNewPassword("");
       refresh();
     },
@@ -100,13 +104,17 @@ export default function ShopDetail() {
 
   return (
     <>
-      <button onClick={() => navigate("/shops")} className="mb">← All shops</button>
+      <button onClick={() => navigate("/shops")} className="mb">
+        ← All shops
+      </button>
       <div className="spread">
         <div>
           <h1 className="page-title">{shop.name}</h1>
           <p className="page-sub">
             {shop.ownerName ?? "—"} · {shop.phone ?? "no phone"}{" "}
-            <span className={`badge ${shop.subscriptionStatus}`}>{shop.subscriptionStatus}</span>
+            <span className={`badge ${shop.subscriptionStatus}`}>
+              {shop.subscriptionStatus}
+            </span>
           </p>
         </div>
         <div className="row">
@@ -123,14 +131,28 @@ export default function ShopDetail() {
       {message ? <div className="panel">{message}</div> : null}
 
       <div className="cards">
-        <div className="card"><div className="label">Products</div><div className="value">{counts.products}</div></div>
-        <div className="card"><div className="label">Sales</div><div className="value">{counts.sales}</div></div>
-        <div className="card"><div className="label">Purchases</div><div className="value">{counts.purchases}</div></div>
-        <div className="card"><div className="label">Stock movements</div><div className="value">{counts.stockMovements}</div></div>
+        <div className="card">
+          <div className="label">Products</div>
+          <div className="value">{counts.products}</div>
+        </div>
+        <div className="card">
+          <div className="label">Sales</div>
+          <div className="value">{counts.sales}</div>
+        </div>
+        <div className="card">
+          <div className="label">Purchases</div>
+          <div className="value">{counts.purchases}</div>
+        </div>
+        <div className="card">
+          <div className="label">Stock movements</div>
+          <div className="value">{counts.stockMovements}</div>
+        </div>
         <div className="card">
           <div className="label">Subscription ends</div>
           <div className="value" style={{ fontSize: 18 }}>
-            {shop.subscriptionEnd ? new Date(shop.subscriptionEnd).toLocaleDateString() : "—"}
+            {shop.subscriptionEnd
+              ? new Date(shop.subscriptionEnd).toLocaleDateString()
+              : "—"}
           </div>
         </div>
       </div>
@@ -140,7 +162,12 @@ export default function ShopDetail() {
           <h3>Users</h3>
           <table>
             <thead>
-              <tr><th>Name</th><th>Role</th><th>Phone</th><th>Status</th></tr>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Phone</th>
+                <th>Status</th>
+              </tr>
             </thead>
             <tbody>
               {(shop.users ?? []).map((u) => (
@@ -148,7 +175,13 @@ export default function ShopDetail() {
                   <td>{u.name}</td>
                   <td>{u.role}</td>
                   <td className="mono">{u.phone ?? u.email ?? "—"}</td>
-                  <td>{u.isActive ? <span className="badge ACTIVE">active</span> : <span className="badge EXPIRED">disabled</span>}</td>
+                  <td>
+                    {u.isActive ? (
+                      <span className="badge ACTIVE">active</span>
+                    ) : (
+                      <span className="badge EXPIRED">disabled</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -157,7 +190,9 @@ export default function ShopDetail() {
 
         <div className="panel">
           <h3>Owner account actions</h3>
-          <div className="label mb">Reset owner password ("forgot password" support)</div>
+          <div className="label mb">
+            Reset owner password ("forgot password" support)
+          </div>
           <div className="row mb">
             <input
               type="text"
@@ -198,7 +233,15 @@ export default function ShopDetail() {
         ) : (
           <table>
             <thead>
-              <tr><th>Proof</th><th>Plan</th><th>Amount</th><th>Status</th><th>Submitted</th><th>AI check</th><th>Reviewed</th></tr>
+              <tr>
+                <th>Proof</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>AI check</th>
+                <th>Reviewed</th>
+              </tr>
             </thead>
             <tbody>
               {subscriptionPayments.map((p) => (
@@ -207,11 +250,21 @@ export default function ShopDetail() {
                     <PaymentProofThumb payment={p} />
                   </td>
                   <td>{p.planMonths} mo</td>
-                  <td className="mono">ETB {Number(p.amountEtb).toLocaleString()}</td>
-                  <td><span className={`badge ${p.status}`}>{p.status.replace("_", " ")}</span></td>
+                  <td className="mono">
+                    ETB {Number(p.amountEtb).toLocaleString()}
+                  </td>
+                  <td>
+                    <span className={`badge ${p.status}`}>
+                      {p.status.replace("_", " ")}
+                    </span>
+                  </td>
                   <td>{new Date(p.submittedAt).toLocaleString()}</td>
                   <td className="muted">
-                    {p.aiVerified == null ? "—" : p.aiVerified ? `pass ${Math.round(Number(p.aiConfidence) * 100)}%` : `fail ${Math.round(Number(p.aiConfidence) * 100)}%`}
+                    {p.aiVerified == null
+                      ? "—"
+                      : p.aiVerified
+                        ? `pass ${Math.round(Number(p.aiConfidence) * 100)}%`
+                        : `fail ${Math.round(Number(p.aiConfidence) * 100)}%`}
                   </td>
                   <td className="muted">{p.reviewNote ?? "—"}</td>
                 </tr>
@@ -225,22 +278,41 @@ export default function ShopDetail() {
         <h3>Recent activity (what they did in the app)</h3>
         <table>
           <thead>
-            <tr><th>When</th><th>User</th><th>Action</th><th>Detail</th></tr>
+            <tr>
+              <th>When</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Detail</th>
+            </tr>
           </thead>
           <tbody>
             {(recentEvents ?? []).map((ev) => (
               <tr key={ev.id}>
-                <td className="muted">{new Date(ev.createdAt).toLocaleString()}</td>
+                <td className="muted">
+                  {new Date(ev.createdAt).toLocaleString()}
+                </td>
                 <td>{ev.user?.name ?? "system"}</td>
                 <td className="mono">{ev.type}</td>
-                <td className="mono muted" style={{ maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {ev.detail ? JSON.stringify(ev.detail) : `${ev.method ?? ""} ${ev.path ?? ""}`}
+                <td
+                  className="mono muted"
+                  style={{
+                    maxWidth: 320,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {ev.detail
+                    ? JSON.stringify(ev.detail)
+                    : `${ev.method ?? ""} ${ev.path ?? ""}`}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {(recentEvents ?? []).length === 0 ? <div className="empty">No activity recorded yet.</div> : null}
+        {(recentEvents ?? []).length === 0 ? (
+          <div className="empty">No activity recorded yet.</div>
+        ) : null}
       </div>
     </>
   );

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { adminApi } from "../lib/api";
 
 /**
- * "Who is using the software and who isn't" — sorted by least recently
+ * "Who is using the software and who isn't" sorted by least recently
  * seen so the platform owner knows exactly who to call.
  */
 export default function Usage() {
@@ -42,29 +42,58 @@ export default function Usage() {
           </thead>
           <tbody>
             {shops.map((shop) => (
-              <tr key={shop.id} className="clickable" onClick={() => navigate(`/shops/${shop.id}`)}>
+              <tr
+                key={shop.id}
+                className="clickable"
+                onClick={() => navigate(`/shops/${shop.id}`)}
+              >
                 <td style={{ fontWeight: 600 }}>{shop.name}</td>
                 <td className="muted">
-                  {shop.lastSeenAt ? new Date(shop.lastSeenAt).toLocaleDateString() : "never"}
+                  {shop.lastSeenAt
+                    ? new Date(shop.lastSeenAt).toLocaleDateString()
+                    : "never"}
                 </td>
                 <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{
-                      width: 120, height: 6, borderRadius: 3,
-                      background: "var(--surface-2)",
-                    }}>
-                      <div style={{
-                        width: `${Math.min(100, (shop.activeDaysLast30 / 30) * 100)}%`,
-                        height: "100%",
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <div
+                      style={{
+                        width: 120,
+                        height: 6,
                         borderRadius: 3,
-                        background: shop.activeDaysLast30 >= 10 ? "var(--green)" : shop.activeDaysLast30 >= 3 ? "var(--amber)" : "var(--red)",
-                      }} />
+                        background: "var(--surface-2)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${Math.min(100, (shop.activeDaysLast30 / 30) * 100)}%`,
+                          height: "100%",
+                          borderRadius: 3,
+                          background:
+                            shop.activeDaysLast30 >= 10
+                              ? "var(--green)"
+                              : shop.activeDaysLast30 >= 3
+                                ? "var(--amber)"
+                                : "var(--red)",
+                        }}
+                      />
                     </div>
                     <span>{shop.activeDaysLast30}/30</span>
                   </div>
                 </td>
-                <td>{shop.activeToday ? <span className="badge ACTIVE">yes</span> : <span className="badge NO_ANSWER">no</span>}</td>
-                <td><span className={`badge ${shop.subscriptionStatus}`}>{shop.subscriptionStatus}</span></td>
+                <td>
+                  {shop.activeToday ? (
+                    <span className="badge ACTIVE">yes</span>
+                  ) : (
+                    <span className="badge NO_ANSWER">no</span>
+                  )}
+                </td>
+                <td>
+                  <span className={`badge ${shop.subscriptionStatus}`}>
+                    {shop.subscriptionStatus}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

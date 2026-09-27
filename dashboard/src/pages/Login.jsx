@@ -15,7 +15,7 @@ export default function Login() {
     <div className="login-wrap">
       <div className="login-card">
         <h1>ShopOS Admin</h1>
-        <p>Platform owner console — subscriptions, shops and usage.</p>
+        <p>Platform owner console subscriptions, shops and usage.</p>
         <form onSubmit={submit}>
           <input
             type="email"
