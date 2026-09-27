@@ -370,11 +370,6 @@ select:focus {
 
 .login-card {
   width: 380px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 }
 
 .login-card h1 {

@@ -86,6 +86,7 @@ const FINANCE_ITEMS = [
 
 const FOOTER_ITEMS = [
   { name: "staff-management", label: "Staff Management", icon: Users },
+  { name: "subscription", label: "Subscriptions", icon: Users },
   { name: "employees", label: "Employees & Payroll", icon: Briefcase },
   { name: "settings", label: "Settings", icon: Settings },
   { name: "help", label: "Help & Support", icon: HelpCircle },

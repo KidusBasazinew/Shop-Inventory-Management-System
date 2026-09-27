@@ -7,8 +7,12 @@ import axios from "axios";
  * endpoints with an ADMIN-role JWT. The token lives in localStorage —
  * this dashboard is only for you (the software owner), never the shops.
  */
-export const API_URL =
-  import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/v1";
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const defaultApiUrl = import.meta.env.DEV
+  ? "http://localhost:4000/api/v1"
+  : "https://shop-inventory-management-system-sand.vercel.app/api/v1";
+
+export const API_URL = (configuredApiUrl ?? defaultApiUrl).replace(/\/+$/, "");
 
 const api = axios.create({ baseURL: API_URL, timeout: 20000 });
 
@@ -62,8 +66,7 @@ api.interceptors.response.use(
       const { refreshToken } = getStoredAuth();
       if (!refreshToken) throw new Error("no refresh token");
       refreshing =
-        refreshing ??
-        axios.post(`${API_URL}/admin/refresh`, { refreshToken });
+        refreshing ?? axios.post(`${API_URL}/admin/refresh`, { refreshToken });
       const { data } = await refreshing;
       refreshing = null;
       storeAuth(data.accessToken, getStoredAuth().admin);

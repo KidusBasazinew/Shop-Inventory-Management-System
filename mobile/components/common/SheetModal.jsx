@@ -21,6 +21,7 @@ const SheetModal = forwardRef(function SheetModal(
     snapPoints: customSnapPoints,
     initialIndex = 1,
     scrollable = true,
+    enablePanDownToClose = true,
   },
   ref,
 ) {
@@ -73,9 +74,10 @@ const SheetModal = forwardRef(function SheetModal(
       index={initialIndex}
       stackBehavior="push"
       enableDynamicSizing={false}
+      enablePanDownToClose={enablePanDownToClose}
       onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
-      keyboardBehavior="extend"
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       backgroundStyle={{
