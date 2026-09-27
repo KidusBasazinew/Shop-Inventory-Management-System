@@ -25,7 +25,11 @@ import {
   useMySubscriptionPayments,
   useSubmitPayment,
 } from "../../hooks/useSubscription";
-import { useNotifications, useMarkNotificationsRead } from "../../hooks/useNotifications";
+import {
+  useNotifications,
+  useMarkNotificationsRead,
+} from "../../hooks/useNotifications";
+import { getErrorMessage } from "../../lib/errorMessage";
 
 const PLANS = [
   { months: 1, label: "1 Month", hint: "30 days" },
@@ -90,7 +94,10 @@ export default function Subscription() {
   const takePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Permission needed", "Allow camera access to photograph your receipt.");
+      Alert.alert(
+        "Permission needed",
+        "Allow camera access to photograph your receipt.",
+      );
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
@@ -101,7 +108,10 @@ export default function Subscription() {
 
   const handleSubmit = () => {
     if (!screenshot) {
-      Alert.alert("Screenshot required", "Attach a screenshot or photo of your payment proof.");
+      Alert.alert(
+        "Screenshot required",
+        "Attach a screenshot or photo of your payment proof.",
+      );
       return;
     }
     Alert.alert(
@@ -136,7 +146,7 @@ export default function Subscription() {
             } catch (e) {
               Alert.alert(
                 "Upload failed",
-                e?.response?.data?.error ?? e?.message ?? "Something went wrong",
+                getErrorMessage(e, "Something went wrong"),
               );
             }
           },
@@ -193,10 +203,17 @@ export default function Subscription() {
               onPress={() => markRead.mutate([n.id])}
             >
               <View className="flex-row items-center gap-2">
-                <Bell size={16} color={n.severity === "critical" ? "#BA1A1A" : "#F9A825"} />
-                <Text className="font-bold text-on-surface flex-1">{n.title}</Text>
+                <Bell
+                  size={16}
+                  color={n.severity === "critical" ? "#BA1A1A" : "#F9A825"}
+                />
+                <Text className="font-bold text-on-surface flex-1">
+                  {n.title}
+                </Text>
               </View>
-              <Text className="text-on-surface-variant text-sm mt-1">{n.body}</Text>
+              <Text className="text-on-surface-variant text-sm mt-1">
+                {n.body}
+              </Text>
               <Text className="text-[10px] text-outline mt-2">
                 Tap to dismiss · {new Date(n.createdAt).toLocaleString()}
               </Text>
@@ -209,7 +226,10 @@ export default function Subscription() {
       <View className="bg-surface rounded-2xl p-5 border border-outline-variant/30 gap-3">
         <View className="flex-row items-center gap-2">
           <StatusIcon size={22} color={statusInfo.color} />
-          <Text className="text-lg font-bold" style={{ color: statusInfo.color }}>
+          <Text
+            className="text-lg font-bold"
+            style={{ color: statusInfo.color }}
+          >
             {statusInfo.label}
           </Text>
         </View>
@@ -219,7 +239,9 @@ export default function Subscription() {
             <CalendarDays size={16} color="#737686" />
             <Text className="text-on-surface-variant text-sm">
               {days} day{days === 1 ? "" : "s"} remaining
-              {subscription?.subscriptionStatus === "TRIAL" ? " in your trial" : ""}
+              {subscription?.subscriptionStatus === "TRIAL"
+                ? " in your trial"
+                : ""}
             </Text>
           </View>
         ) : null}
@@ -239,7 +261,10 @@ export default function Subscription() {
               ⏳ Payment for {subscription.pendingRequest.planMonths} month
               {subscription.pendingRequest.planMonths > 1 ? "s" : ""} is under
               review (submitted{" "}
-              {new Date(subscription.pendingRequest.submittedAt).toLocaleString()}).
+              {new Date(
+                subscription.pendingRequest.submittedAt,
+              ).toLocaleString()}
+              ).
             </Text>
           </View>
         ) : null}
@@ -264,12 +289,16 @@ export default function Subscription() {
               <View>
                 <Text
                   className={`font-semibold ${
-                    selectedPlan === plan.months ? "text-primary" : "text-on-surface"
+                    selectedPlan === plan.months
+                      ? "text-primary"
+                      : "text-on-surface"
                   }`}
                 >
                   {plan.label}
                 </Text>
-                <Text className="text-xs text-on-surface-variant">{plan.hint}</Text>
+                <Text className="text-xs text-on-surface-variant">
+                  {plan.hint}
+                </Text>
               </View>
               <Text className="font-bold text-on-surface">
                 ETB{" "}
@@ -290,13 +319,19 @@ export default function Subscription() {
         <Text className="text-sm text-on-surface-variant">
           Transfer ETB{" "}
           <Text className="font-bold">
-            {((subscription?.monthlyPriceEtb ?? 1000) * selectedPlan).toLocaleString()}
+            {(
+              (subscription?.monthlyPriceEtb ?? 1000) * selectedPlan
+            ).toLocaleString()}
           </Text>{" "}
           to our account:
         </Text>
         <View className="bg-surface-container-low rounded-xl p-3 gap-1">
-          <Text className="text-sm text-on-surface">Telebirr / Bank: 0900-000-000</Text>
-          <Text className="text-sm text-on-surface">Account name: KixLabs Software</Text>
+          <Text className="text-sm text-on-surface">
+            Telebirr / Bank: 0900-000-000
+          </Text>
+          <Text className="text-sm text-on-surface">
+            Account name: KixLabs Software
+          </Text>
           <Text className="text-xs text-outline mt-1">
             (Update these details in server config before going live)
           </Text>
@@ -314,7 +349,9 @@ export default function Subscription() {
             className="flex-1 bg-surface border border-outline-variant/30 rounded-xl p-4 items-center gap-2"
           >
             <Upload size={20} color="#004ac6" />
-            <Text className="text-sm text-primary font-semibold">Choose photo</Text>
+            <Text className="text-sm text-primary font-semibold">
+              Choose photo
+            </Text>
           </Pressable>
           {Platform.OS !== "web" ? (
             <Pressable
@@ -322,7 +359,9 @@ export default function Subscription() {
               className="flex-1 bg-surface border border-outline-variant/30 rounded-xl p-4 items-center gap-2"
             >
               <CreditCard size={20} color="#004ac6" />
-              <Text className="text-sm text-primary font-semibold">Take photo</Text>
+              <Text className="text-sm text-primary font-semibold">
+                Take photo
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -367,7 +406,9 @@ export default function Subscription() {
           Payment History
         </Text>
         {(payments ?? []).length === 0 ? (
-          <Text className="text-on-surface-variant text-sm">No payments yet</Text>
+          <Text className="text-on-surface-variant text-sm">
+            No payments yet
+          </Text>
         ) : (
           <View className="gap-2">
             {payments.map((p) => {
@@ -390,7 +431,10 @@ export default function Subscription() {
                       {p.reviewNote ? ` · ${p.reviewNote}` : ""}
                     </Text>
                   </View>
-                  <Text className="text-xs font-bold" style={{ color: status.color }}>
+                  <Text
+                    className="text-xs font-bold"
+                    style={{ color: status.color }}
+                  >
                     {status.label}
                   </Text>
                 </View>

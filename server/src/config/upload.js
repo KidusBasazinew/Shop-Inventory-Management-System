@@ -1,5 +1,6 @@
 import path from "node:path";
 import crypto from "node:crypto";
+import os from "node:os";
 
 /**
  * Upload storage for subscription payment screenshots.
@@ -14,8 +15,9 @@ import crypto from "node:crypto";
  * images under a hard size cap — see uploads.middleware.js.
  */
 export const UPLOADS_DIR = path.resolve(
-  process.cwd(),
-  process.env.UPLOADS_DIR || "uploads",
+  process.env.VERCEL
+    ? path.join(os.tmpdir(), process.env.UPLOADS_DIR || "uploads")
+    : path.resolve(process.cwd(), process.env.UPLOADS_DIR || "uploads"),
 );
 
 export function makeSafeFilename(originalname) {

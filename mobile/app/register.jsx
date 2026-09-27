@@ -22,6 +22,7 @@ import {
   ArrowRight,
 } from "lucide-react-native";
 import { useAuth } from "../context/AuthContext";
+import { getErrorMessage } from "../lib/errorMessage";
 
 export default function Register() {
   const { register, registerPending, registerError } = useAuth();
@@ -75,9 +76,9 @@ export default function Register() {
     }
   };
 
-  const serverErrorMessage =
-    registerError?.response?.data?.message ||
-    registerError?.response?.data?.error;
+  const serverErrorMessage = registerError
+    ? getErrorMessage(registerError)
+    : null;
   const errorMessage = localError || serverErrorMessage;
 
   const canSubmit =

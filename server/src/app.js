@@ -9,6 +9,7 @@ import ApiError from "./utils/apiError.js";
 import activityAudit from "./middlewares/activity.middleware.js";
 import { recordUsageFireAndForget } from "./services/usage.service.js";
 import { UPLOADS_DIR } from "./config/upload.js";
+import { cloudinaryEnabled } from "./services/cloudinary.service.js";
 
 export function createApp() {
   const app = express();
@@ -19,7 +20,9 @@ export function createApp() {
 
   // Private uploads dir (payment screenshots) — created lazily so a
   // fresh checkout works without a setup step.
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  // Vercel's deployment directory is read-only. Cloudinary is the durable
+  // production store; the temporary directory is only a development fallback.
+  if (!cloudinaryEnabled) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
   // ---- platform-owner instrumentation ----
   // Daily usage heartbeat: one AppSession row per shop per UTC day.

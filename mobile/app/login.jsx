@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react-native";
 import { useAuth } from "../context/AuthContext";
+import { getErrorMessage } from "../lib/errorMessage";
 
 export default function Login() {
   const { login, loginPending, loginError } = useAuth();
@@ -36,10 +37,7 @@ export default function Login() {
     }
   };
 
-  const errorMessage =
-    loginError?.response?.data?.message ||
-    loginError?.response?.data?.error ||
-    (loginError ? "Something went wrong. Please try again." : null);
+  const errorMessage = loginError ? getErrorMessage(loginError) : null;
 
   const canSubmit = phone.length > 0 && password.length > 0 && !loginPending;
 
