@@ -1,15 +1,8 @@
 import { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Image } from "react-native";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { Link, router } from "expo-router";
-import {
-  Phone,
-  Lock,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-  ArrowRight,
-} from "lucide-react-native";
+import { Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react-native";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../lib/errorMessage";
 import SheetModal from "../components/common/SheetModal";
@@ -45,12 +38,20 @@ export default function Login() {
       <View className="flex-1 justify-center px-7">
         {/* Brand mark — same soft-circle language as onboarding */}
         <View className="items-center mb-10">
-          <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mb-4">
-            <ShieldCheck size={28} color="#2563eb" strokeWidth={1.75} />
+          <Image
+            source={require("../assets/kixlabs-logo.png")}
+            className="w-20 h-20 mb-3"
+            resizeMode="contain"
+          />
+          <View className="px-4 py-1.5 mb-3">
+            <Text className="text-2xl font-bold">
+              <Text className="text-primary">Kix</Text>
+              <Text className="text-on-surface">Labs</Text>
+            </Text>
           </View>
           <Text className="text-xl font-bold text-primary">Welcome back</Text>
           <Text className="text-sm text-on-surface-variant mt-1">
-            Sign in to continue to KLABS
+            Sign in to continue to KixLabs.
           </Text>
         </View>
 

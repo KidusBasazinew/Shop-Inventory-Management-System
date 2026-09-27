@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Image } from "react-native";
 import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
 import { Link, router } from "expo-router";
 import {
@@ -10,7 +10,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  ShieldCheck,
   ArrowRight,
 } from "lucide-react-native";
 import { useAuth } from "../context/AuthContext";
@@ -91,14 +90,22 @@ export default function Register() {
     >
       <View className="flex-1 justify-center px-7 py-10">
         <View className="items-center mb-8">
-          <View className="w-16 h-16 rounded-full bg-blue-50 items-center justify-center mb-4">
-            <ShieldCheck size={28} color="#2563eb" strokeWidth={1.75} />
+          <Image
+            source={require("../assets/kixlabs-logo.png")}
+            className="w-20 h-20 mb-3"
+            resizeMode="contain"
+          />
+          <View className="px-4 py-1.5 mb-3">
+            <Text className="text-2xl font-bold">
+              <Text className="text-primary">Kix</Text>
+              <Text className="text-on-surface">Labs</Text>
+            </Text>
           </View>
           <Text className="text-xl font-bold text-primary">
             Create your account
           </Text>
           <Text className="text-sm text-on-surface-variant mt-1 text-center">
-            Set up your shop on KLABS
+            Set up your shop on KixLabs
           </Text>
         </View>
 
