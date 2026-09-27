@@ -1,28 +1,36 @@
 import { useState } from "react";
-import { CheckCircle2, Clock, XCircle, CreditCard } from "lucide-react-native";
-/* Temporarily disabled until the payment hooks are restored.
 import {
+  ScrollView,
   View,
   Text,
-  ScrollView,
   Pressable,
+  Image,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
-import * as WebBrowser from "expo-web-browser";
+import * as ImagePicker from "expo-image-picker";
+import {
+  CheckCircle2,
+  Clock,
+  XCircle,
+  CreditCard,
+  Upload,
+  Bell,
+  CalendarDays,
+} from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import {
   useSubscription,
-  usePayments,
-  useInitializePayment,
-  useVerifyPayment,
-} from "../../hooks/usePayments";
-*/
+  useMySubscriptionPayments,
+  useSubmitPayment,
+} from "../../hooks/useSubscription";
+import { useNotifications, useMarkNotificationsRead } from "../../hooks/useNotifications";
 
 const PLANS = [
-  { months: 1, label: "1 Month" },
-  { months: 3, label: "3 Months" },
-  { months: 12, label: "12 Months" },
+  { months: 1, label: "1 Month", hint: "30 days" },
+  { months: 3, label: "3 Months", hint: "90 days" },
+  { months: 12, label: "12 Months", hint: "360 days" },
 ];
 
 const STATUS_CONFIG = {
@@ -31,6 +39,13 @@ const STATUS_CONFIG = {
   PAST_DUE: { label: "Past Due", color: "#F9A825", icon: Clock },
   EXPIRED: { label: "Expired", color: "#BA1A1A", icon: XCircle },
   CANCELED: { label: "Canceled", color: "#BA1A1A", icon: XCircle },
+};
+
+const PAYMENT_STATUS = {
+  PENDING: { label: "Under review", color: "#F9A825" },
+  AI_VERIFIED: { label: "Verified (auto)", color: "#0F9D58" },
+  MANUAL_VERIFIED: { label: "Verified", color: "#0F9D58" },
+  REJECTED: { label: "Rejected", color: "#BA1A1A" },
 };
 
 export default function Subscription() {
@@ -42,51 +57,99 @@ export default function Subscription() {
     isLoading: subLoading,
     refetch: refetchSub,
   } = useSubscription();
-  const { data: payments, isLoading: paymentsLoading } = usePayments();
-  const initializeMutation = useInitializePayment();
-  const verifyMutation = useVerifyPayment();
+  const { data: payments, isLoading: paymentsLoading } =
+    useMySubscriptionPayments();
+  const submitMutation = useSubmitPayment();
+  const { data: notifications } = useNotifications(20);
+  const markRead = useMarkNotificationsRead();
 
-  const [selectedPlan, setSelectedPlan] = useState(3);
-  const [pendingTxRef, setPendingTxRef] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(1);
+  const [screenshot, setScreenshot] = useState(null);
+  const [payerName, setPayerName] = useState("");
+  const [bankReference, setBankReference] = useState("");
 
-  const handleSubscribe = async () => {
-    try {
-      const { checkoutUrl, txRef } =
-        await initializeMutation.mutateAsync(selectedPlan);
-      setPendingTxRef(txRef);
-
-      const result = await WebBrowser.openBrowserAsync(checkoutUrl);
-
-      // The browser closing doesn't tell us the payment succeeded — Chapa's
-      // redirect happens inside that browser session. We always re-check
-      // against our own /verify endpoint once control returns to the app,
-      // since that's the only source of truth we trust.
-      await verifyMutation.mutateAsync(txRef);
-      await refetchSub();
-    } catch (e) {
+  const pickScreenshot = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
       Alert.alert(
-        "Payment error",
-        e?.response?.data?.message ?? "Something went wrong",
+        "Permission needed",
+        "Allow photo access so we can attach your payment screenshot.",
       );
-    } finally {
-      setPendingTxRef(null);
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+      allowsMultipleSelection: false,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setScreenshot(result.assets[0]);
     }
   };
 
-  const handleCheckStatus = async (txRef) => {
-    try {
-      const payment = await verifyMutation.mutateAsync(txRef);
-      Alert.alert("Payment status", payment.status);
-    } catch (e) {
-      Alert.alert("Error", "Could not check payment status");
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission needed", "Allow camera access to photograph your receipt.");
+      return;
     }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    if (!result.canceled && result.assets?.length) {
+      setScreenshot(result.assets[0]);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!screenshot) {
+      Alert.alert("Screenshot required", "Attach a screenshot or photo of your payment proof.");
+      return;
+    }
+    Alert.alert(
+      "Submit payment proof?",
+      `Plan: ${selectedPlan} month${selectedPlan > 1 ? "s" : ""}\nWe will verify it and activate your subscription.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Submit",
+          onPress: async () => {
+            try {
+              await submitMutation.mutateAsync({
+                payload: {
+                  planMonths: selectedPlan,
+                  payerName: payerName.trim() || undefined,
+                  payerPhone: user?.phone ?? undefined,
+                  bankReference: bankReference.trim() || undefined,
+                },
+                image: {
+                  uri: screenshot.uri,
+                  name: screenshot.fileName ?? "payment-screenshot.jpg",
+                  mimeType: screenshot.mimeType ?? "image/jpeg",
+                },
+              });
+              setScreenshot(null);
+              setBankReference("");
+              Alert.alert(
+                "Submitted ✓",
+                "Your payment proof is under review. You will get a notification once it is verified (usually within minutes).",
+              );
+              refetchSub();
+            } catch (e) {
+              Alert.alert(
+                "Upload failed",
+                e?.response?.data?.error ?? e?.message ?? "Something went wrong",
+              );
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (!isOwner) {
     return (
       <View className="flex-1 items-center justify-center px-6">
         <Text className="text-on-surface-variant text-center">
-          Subscription management is only available to the pharmacy owner
+          Subscription management is only available to the shop owner
         </Text>
       </View>
     );
@@ -103,45 +166,89 @@ export default function Subscription() {
   const statusInfo =
     STATUS_CONFIG[subscription?.subscriptionStatus] ?? STATUS_CONFIG.TRIAL;
   const StatusIcon = statusInfo.icon;
+  const days = subscription?.daysRemaining;
+  const urgent =
+    subscription?.subscriptionStatus === "ACTIVE" && days != null && days <= 3;
+
+  const unread = (notifications ?? []).filter((n) => !n.isRead);
 
   return (
     <ScrollView
       className="flex-1 bg-background"
       contentContainerStyle={{ padding: 16, gap: 20 }}
     >
+      {/* Platform messages / reminders */}
+      {unread.length > 0 ? (
+        <View className="gap-2">
+          {unread.map((n) => (
+            <Pressable
+              key={n.id}
+              className={`p-4 rounded-2xl border ${
+                n.severity === "critical"
+                  ? "bg-error-container border-error/30"
+                  : n.severity === "warning"
+                    ? "bg-surface-container-high border-outline-variant/40"
+                    : "bg-surface border-outline-variant/30"
+              }`}
+              onPress={() => markRead.mutate([n.id])}
+            >
+              <View className="flex-row items-center gap-2">
+                <Bell size={16} color={n.severity === "critical" ? "#BA1A1A" : "#F9A825"} />
+                <Text className="font-bold text-on-surface flex-1">{n.title}</Text>
+              </View>
+              <Text className="text-on-surface-variant text-sm mt-1">{n.body}</Text>
+              <Text className="text-[10px] text-outline mt-2">
+                Tap to dismiss · {new Date(n.createdAt).toLocaleString()}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       {/* Status card */}
       <View className="bg-surface rounded-2xl p-5 border border-outline-variant/30 gap-3">
         <View className="flex-row items-center gap-2">
           <StatusIcon size={22} color={statusInfo.color} />
-          <Text
-            className="text-lg font-bold"
-            style={{ color: statusInfo.color }}
-          >
+          <Text className="text-lg font-bold" style={{ color: statusInfo.color }}>
             {statusInfo.label}
           </Text>
         </View>
 
-        {subscription?.subscriptionStatus === "TRIAL" ? (
-          <Text className="text-on-surface-variant text-sm">
-            {subscription.daysRemainingInTrial} day
-            {subscription.daysRemainingInTrial === 1 ? "" : "s"} remaining in
-            your trial
-          </Text>
-        ) : subscription?.subscriptionStatus === "ACTIVE" ? (
-          <Text className="text-on-surface-variant text-sm">
-            Active — thanks for subscribing to KLABS Pharmacy
-          </Text>
-        ) : (
-          <Text className="text-on-surface-variant text-sm">
-            Subscribe below to restore full access
-          </Text>
-        )}
+        {subscription?.daysRemaining != null ? (
+          <View className="flex-row items-center gap-2">
+            <CalendarDays size={16} color="#737686" />
+            <Text className="text-on-surface-variant text-sm">
+              {days} day{days === 1 ? "" : "s"} remaining
+              {subscription?.subscriptionStatus === "TRIAL" ? " in your trial" : ""}
+            </Text>
+          </View>
+        ) : null}
+
+        {urgent ? (
+          <View className="bg-error-container rounded-xl p-3">
+            <Text className="text-on-error-container text-sm font-semibold">
+              Your subscription ends in {days} day{days === 1 ? "" : "s"}! Send
+              your payment and upload the screenshot below to keep access.
+            </Text>
+          </View>
+        ) : null}
+
+        {subscription?.pendingRequest ? (
+          <View className="bg-surface-container-low rounded-xl p-3">
+            <Text className="text-sm text-on-surface-variant">
+              ⏳ Payment for {subscription.pendingRequest.planMonths} month
+              {subscription.pendingRequest.planMonths > 1 ? "s" : ""} is under
+              review (submitted{" "}
+              {new Date(subscription.pendingRequest.submittedAt).toLocaleString()}).
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {/* Plan selector */}
       <View>
         <Text className="text-base font-bold text-on-background mb-3">
-          Choose a Plan
+          1. Choose a Plan
         </Text>
         <View className="gap-2">
           {PLANS.map((plan) => (
@@ -154,41 +261,105 @@ export default function Subscription() {
                   : "border-outline-variant/30"
               }`}
             >
-              <Text
-                className={`font-semibold ${
-                  selectedPlan === plan.months
-                    ? "text-primary"
-                    : "text-on-surface"
-                }`}
-              >
-                {plan.label}
+              <View>
+                <Text
+                  className={`font-semibold ${
+                    selectedPlan === plan.months ? "text-primary" : "text-on-surface"
+                  }`}
+                >
+                  {plan.label}
+                </Text>
+                <Text className="text-xs text-on-surface-variant">{plan.hint}</Text>
+              </View>
+              <Text className="font-bold text-on-surface">
+                ETB{" "}
+                {(
+                  (subscription?.monthlyPriceEtb ?? 1000) * plan.months
+                ).toLocaleString()}
               </Text>
-              {selectedPlan === plan.months ? (
-                <CheckCircle2 size={20} color="#004ac6" />
-              ) : null}
             </Pressable>
           ))}
         </View>
       </View>
 
-      <Pressable
-        onPress={handleSubscribe}
-        disabled={initializeMutation.isPending || verifyMutation.isPending}
-        className="bg-primary rounded-xl py-4 items-center flex-row justify-center gap-2"
-        style={{
-          opacity:
-            initializeMutation.isPending || verifyMutation.isPending ? 0.6 : 1,
-        }}
-      >
-        <CreditCard size={18} color="white" />
-        <Text className="text-white font-semibold">
-          {initializeMutation.isPending
-            ? "Starting checkout..."
-            : verifyMutation.isPending
-              ? "Confirming..."
-              : "Pay with Chapa"}
+      {/* Payment instructions */}
+      <View className="bg-surface rounded-2xl p-5 border border-outline-variant/30 gap-2">
+        <Text className="text-base font-bold text-on-background">
+          2. Send the payment
         </Text>
-      </Pressable>
+        <Text className="text-sm text-on-surface-variant">
+          Transfer ETB{" "}
+          <Text className="font-bold">
+            {((subscription?.monthlyPriceEtb ?? 1000) * selectedPlan).toLocaleString()}
+          </Text>{" "}
+          to our account:
+        </Text>
+        <View className="bg-surface-container-low rounded-xl p-3 gap-1">
+          <Text className="text-sm text-on-surface">Telebirr / Bank: 0900-000-000</Text>
+          <Text className="text-sm text-on-surface">Account name: KixLabs Software</Text>
+          <Text className="text-xs text-outline mt-1">
+            (Update these details in server config before going live)
+          </Text>
+        </View>
+      </View>
+
+      {/* Screenshot upload */}
+      <View>
+        <Text className="text-base font-bold text-on-background mb-3">
+          3. Upload payment screenshot
+        </Text>
+        <View className="flex-row gap-2 mb-3">
+          <Pressable
+            onPress={pickScreenshot}
+            className="flex-1 bg-surface border border-outline-variant/30 rounded-xl p-4 items-center gap-2"
+          >
+            <Upload size={20} color="#004ac6" />
+            <Text className="text-sm text-primary font-semibold">Choose photo</Text>
+          </Pressable>
+          {Platform.OS !== "web" ? (
+            <Pressable
+              onPress={takePhoto}
+              className="flex-1 bg-surface border border-outline-variant/30 rounded-xl p-4 items-center gap-2"
+            >
+              <CreditCard size={20} color="#004ac6" />
+              <Text className="text-sm text-primary font-semibold">Take photo</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {screenshot ? (
+          <View className="bg-surface rounded-2xl border border-outline-variant/30 p-3 gap-2">
+            <Image
+              source={{ uri: screenshot.uri }}
+              className="w-full h-48 rounded-xl"
+              resizeMode="cover"
+            />
+            <Text className="text-xs text-on-surface-variant">
+              {screenshot.fileName ?? "screenshot.jpg"} — tap Submit below
+            </Text>
+          </View>
+        ) : null}
+
+        <Text className="text-sm text-on-surface-variant mt-3 mb-1">
+          Bank / transaction reference (optional)
+        </Text>
+        <Text className="text-on-surface-variant text-sm">
+          e.g. the telebirr transaction ID on the receipt
+        </Text>
+
+        <Pressable
+          onPress={handleSubmit}
+          disabled={submitMutation.isPending || !screenshot}
+          className="bg-primary rounded-xl py-4 items-center mt-3"
+          style={{
+            opacity: submitMutation.isPending || !screenshot ? 0.5 : 1,
+          }}
+        >
+          <Text className="text-white font-semibold">
+            {submitMutation.isPending ? "Uploading…" : "Submit payment proof"}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Payment history */}
       <View>
@@ -196,62 +367,38 @@ export default function Subscription() {
           Payment History
         </Text>
         {(payments ?? []).length === 0 ? (
-          <Text className="text-on-surface-variant text-sm">
-            No payments yet
-          </Text>
+          <Text className="text-on-surface-variant text-sm">No payments yet</Text>
         ) : (
           <View className="gap-2">
-            {payments.map((p) => (
-              <Pressable
-                key={p.id}
-                onPress={() =>
-                  p.status === "PENDING" && handleCheckStatus(p.txRef)
-                }
-                className="bg-surface p-4 rounded-xl border border-outline-variant/30 flex-row justify-between items-center"
-              >
-                <View>
-                  <Text className="font-medium text-on-surface">
-                    {p.planMonths} month{p.planMonths > 1 ? "s" : ""} — ETB{" "}
-                    {Number(p.amount).toLocaleString()}
-                  </Text>
-                  <Text className="text-xs text-on-surface-variant mt-0.5">
-                    {new Date(p.createdAt).toLocaleDateString()}
+            {payments.map((p) => {
+              const status = PAYMENT_STATUS[p.status] ?? {
+                label: p.status,
+                color: "#737686",
+              };
+              return (
+                <View
+                  key={p.id}
+                  className="bg-surface p-4 rounded-xl border border-outline-variant/30 flex-row justify-between items-center"
+                >
+                  <View>
+                    <Text className="font-medium text-on-surface">
+                      {p.planMonths} month{p.planMonths > 1 ? "s" : ""} — ETB{" "}
+                      {Number(p.amountEtb).toLocaleString()}
+                    </Text>
+                    <Text className="text-xs text-on-surface-variant mt-0.5">
+                      {new Date(p.submittedAt).toLocaleDateString()}
+                      {p.reviewNote ? ` · ${p.reviewNote}` : ""}
+                    </Text>
+                  </View>
+                  <Text className="text-xs font-bold" style={{ color: status.color }}>
+                    {status.label}
                   </Text>
                 </View>
-                <StatusBadge status={p.status} />
-              </Pressable>
-            ))}
+              );
+            })}
           </View>
         )}
       </View>
     </ScrollView>
-  );
-}
-
-function StatusBadge({ status }) {
-  const config = {
-    PENDING: {
-      bg: "bg-surface-container-low",
-      text: "text-outline",
-      label: "Pending",
-    },
-    SUCCESS: { bg: "bg-primary/10", text: "text-primary", label: "Success" },
-    FAILED: {
-      bg: "bg-error-container",
-      text: "text-on-error-container",
-      label: "Failed",
-    },
-  }[status] ?? {
-    bg: "bg-surface-container-low",
-    text: "text-outline",
-    label: status,
-  };
-
-  return (
-    <View className={`px-2 py-1 rounded-full ${config.bg}`}>
-      <Text className={`text-[11px] font-bold ${config.text}`}>
-        {config.label}
-      </Text>
-    </View>
   );
 }

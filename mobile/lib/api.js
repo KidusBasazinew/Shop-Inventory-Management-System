@@ -1,4 +1,6 @@
 import axios from "axios";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 import {
   getAccessToken,
   getRefreshToken,
@@ -13,8 +15,13 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// Attach access token to every request
+// Device headers — the server records a daily AppSession (usage
+// analytics for the platform owner) from every authenticated request.
 api.interceptors.request.use(async (config) => {
+  config.headers["x-os-name"] = Platform.OS;
+  const appVersion = Constants.expoConfig?.version;
+  if (appVersion) config.headers["x-app-version"] = appVersion;
+
   const token = await getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

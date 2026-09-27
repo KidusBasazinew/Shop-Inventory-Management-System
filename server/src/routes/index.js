@@ -16,6 +16,9 @@ import wasteRouter from "./waste.routes.js";
 import taxRouter from "./tax.routes.js";
 import reportRouter from "./report.routes.js";
 import stockMovementRouter from "./stockMovement.routes.js";
+import subscriptionRouter from "./subscription.routes.js";
+import notificationRouter from "./notification.routes.js";
+import adminRouter from "./admin.routes.js";
 
 export const apiRouter = Router();
 
@@ -35,5 +38,8 @@ apiRouter.use("/waste", wasteRouter);
 apiRouter.use("/tax", taxRouter);
 apiRouter.use("/reports", reportRouter);
 apiRouter.use("/stock-movements", stockMovementRouter);
+apiRouter.use("/subscription", subscriptionRouter);
+apiRouter.use("/notifications", notificationRouter);
+apiRouter.use("/admin", adminRouter);
 
 export default apiRouter;

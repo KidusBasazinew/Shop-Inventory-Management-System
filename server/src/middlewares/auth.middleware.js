@@ -1,5 +1,6 @@
 import { verifyAccessToken } from "../wrapper/token.js";
 import ApiError from "../utils/apiError.js";
+import { setRequestContext } from "../utils/activity.js";
 
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -16,6 +17,8 @@ function authMiddleware(req, res, next) {
     // It is never read from req.body/req.query — that is what prevents a
     // caller from passing someone else's shopId to reach their data.
     req.shopId = payload.shopId;
+    // Remember who this is for the audit trail (ActivityEvent).
+    setRequestContext(req, { shopId: payload.shopId, userId: payload.userId, module: "api" });
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {

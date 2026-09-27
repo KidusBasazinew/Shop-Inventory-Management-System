@@ -91,10 +91,9 @@ async function login({ phone, password }) {
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) throw ApiError.unauthorized("Invalid phone number or password");
 
-  if (user.shop.subscriptionStatus === "EXPIRED") {
-    throw ApiError.paymentRequired("This shop's subscription has expired");
-  }
-
+  // NOTE: expired shops can still log in on purpose — they need to see
+  // their subscription status and submit a renewal payment screenshot.
+  // Business routes stay blocked by the subscriptionGuard middleware.
   const tokens = await issueTokenPair(user);
   return { user: sanitizeUser(user), shop: user.shop, ...tokens };
 }

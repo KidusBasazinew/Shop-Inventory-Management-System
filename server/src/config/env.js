@@ -47,13 +47,30 @@ export const env = {
   chapa: {
     secretKey: process.env.CHAPA_SECRET_KEY,
     webhookSecret: process.env.CHAPA_WEBHOOK_SECRET,
-    callbackUrl: process.env.CHAPA_CALLBACK_URL, // Chapa calls this after payment — must be your public webhook URL
-    returnUrl: process.env.CHAPA_RETURN_URL, // where Chapa's checkout redirects the user's browser/app afterward
+    callbackUrl: process.env.CHAPA_CALLBACK_URL,
+    returnUrl: process.env.CHAPA_RETURN_URL,
   },
   billing: {
-    // Placeholder pricing — replace with your actual monthly rate in ETB.
-    // No discount tiers yet: 3/12-month plans just multiply this by planMonths.
     monthlyPriceEtb: Number(process.env.MONTHLY_PRICE_ETB) || 1000,
+    // AI fallback for payments the owner hasn't reviewed by hand:
+    // after this many minutes the AI gets one shot at auto-verifying.
+    autoAiMinutes: Number(process.env.AUTO_AI_MINUTES) || 15,
+    // Confidence (0..1) the AI must reach to auto-approve/auto-reject.
+    // Below this it stays PENDING for a human decision.
+    autoAiThreshold: Number(process.env.AUTO_AI_THRESHOLD) || 0.8,
+    schedulerEnabled: process.env.SCHEDULER_ENABLED !== "false",
+    schedulerIntervalSeconds: Number(process.env.SCHEDULER_INTERVAL_SECONDS) || 60,
+  },
+  ai: {
+    provider: process.env.AI_PROVIDER || "stub", // "stub" | "openai"
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    openaiModel: process.env.OPENAI_MODEL || "gpt-4o-mini",
+  },
+  admin: {
+    // Used only by prisma/seed.js to create the first platform-owner admin.
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASSWORD,
+    name: process.env.ADMIN_NAME || "Platform Admin",
   },
 };
 
