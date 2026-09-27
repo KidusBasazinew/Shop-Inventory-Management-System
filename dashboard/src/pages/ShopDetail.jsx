@@ -1,7 +1,50 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "../lib/api";
+import { adminApi, fetchScreenshotBlobUrl } from "../lib/api";
+
+/**
+ * Small proof thumbnail in the payment history. Cloudinary images show
+ * inline and open full-size in a new tab; local dev files have no public
+ * URL, so they render a View button that fetches an authenticated blob.
+ */
+function PaymentProofThumb({ payment }) {
+  const [busy, setBusy] = useState(false);
+  const remote =
+    payment.screenshotIsRemote ??
+    /^https?:\/\//.test(payment.screenshotUrl ?? "");
+
+  if (remote) {
+    return (
+      <a href={payment.screenshotView ?? payment.screenshotUrl} target="_blank" rel="noreferrer">
+        <img
+          className="screenshot"
+          style={{ width: 56, height: 40, objectFit: "cover", borderRadius: 8 }}
+          src={payment.screenshotView ?? payment.screenshotUrl}
+          alt="proof"
+        />
+      </a>
+    );
+  }
+
+  const openLocal = async () => {
+    setBusy(true);
+    try {
+      const url = await fetchScreenshotBlobUrl("admin", payment.id);
+      window.open(url, "_blank", "noopener");
+    } catch {
+      /* ignore */
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button onClick={openLocal} disabled={busy} style={{ padding: "4px 10px" }}>
+      {busy ? "…" : "View"}
+    </button>
+  );
+}
 
 export default function ShopDetail() {
   const { id } = useParams();
@@ -155,11 +198,14 @@ export default function ShopDetail() {
         ) : (
           <table>
             <thead>
-              <tr><th>Plan</th><th>Amount</th><th>Status</th><th>Submitted</th><th>AI check</th><th>Reviewed</th></tr>
+              <tr><th>Proof</th><th>Plan</th><th>Amount</th><th>Status</th><th>Submitted</th><th>AI check</th><th>Reviewed</th></tr>
             </thead>
             <tbody>
               {subscriptionPayments.map((p) => (
                 <tr key={p.id}>
+                  <td>
+                    <PaymentProofThumb payment={p} />
+                  </td>
                   <td>{p.planMonths} mo</td>
                   <td className="mono">ETB {Number(p.amountEtb).toLocaleString()}</td>
                   <td><span className={`badge ${p.status}`}>{p.status.replace("_", " ")}</span></td>

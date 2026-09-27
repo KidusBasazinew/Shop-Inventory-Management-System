@@ -5,6 +5,11 @@ import { UPLOADS_DIR } from "../config/upload.js";
 import { env } from "../config/env.js";
 import { createNotification } from "./notification.service.js";
 import { aiVerifyScreenshot } from "./ai.service.js";
+import {
+  cloudinaryEnabled,
+  uploadScreenshotBuffer,
+  screenshotViewUrl,
+} from "./cloudinary.service.js";
 
 /**
  * Screenshot-based subscription flow
@@ -30,15 +35,49 @@ import { aiVerifyScreenshot } from "./ai.service.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** True when the screenshot lives in Cloudinary (vs local dev disk). */
+function isRemoteScreenshot(screenshotUrl) {
+  return /^https?:\/\/./.test(screenshotUrl ?? "");
+}
+
+/**
+ * Adds display fields for clients: `screenshotView` is a ready-to-render
+ * https URL for Cloudinary images (resized via delivery transforms), or
+ * null for local files — those must be streamed through the
+ * authenticated screenshot endpoints instead.
+ */
+export function decoratePayment(payment) {
+  if (!payment) return payment;
+  const remote = isRemoteScreenshot(payment.screenshotUrl);
+  return {
+    ...payment,
+    screenshotIsRemote: remote,
+    screenshotView: remote
+      ? screenshotViewUrl(payment.screenshotUrl, { width: 1000 })
+      : null,
+  };
+}
+
 function sanitizePayment(payment) {
   if (!payment) return payment;
   const { reviewedBy, ...rest } = payment;
-  return {
+  return decoratePayment({
     ...rest,
     reviewedBy: reviewedBy
       ? { id: reviewedBy.id, name: reviewedBy.name }
       : null,
-  };
+  });
+}
+
+/**
+ * What the AI verifier should read: a local file path, or the Cloudinary
+ * https URL (fetched server-side when the AI call runs).
+ */
+export function screenshotSourceForAi(payment) {
+  if (isRemoteScreenshot(payment.screenshotUrl)) {
+    return { kind: "url", value: payment.screenshotUrl };
+  }
+  return { kind: "path", value: resolveScreenshotPath(payment.screenshotUrl) };
 }
 
 export function resolveScreenshotPath(filename) {
@@ -110,6 +149,19 @@ export async function createPaymentRequest(shopId, req) {
 
   const amountEtb = (env.billing.monthlyPriceEtb * planMonths).toFixed(2);
 
+  // ---- storage: Cloudinary (production) or private local disk (dev) ----
+  let screenshotUrl;
+  let screenshotPublicId = null;
+  if (cloudinaryEnabled) {
+    // Memory storage: multer put the bytes in req.file.buffer.
+    const uploaded = await uploadScreenshotBuffer(req.file.buffer, { shopId });
+    screenshotUrl = uploaded.url; // durable https CDN URL stored in the DB
+    screenshotPublicId = uploaded.publicId;
+  } else {
+    // Disk storage: multer wrote a random-named file under UPLOADS_DIR.
+    screenshotUrl = req.file.filename;
+  }
+
   const payment = await prisma.subscriptionPayment.create({
     data: {
       shopId,
@@ -118,7 +170,8 @@ export async function createPaymentRequest(shopId, req) {
       payerName: payerName ?? null,
       payerPhone: payerPhone ?? null,
       bankReference: bankReference ?? null,
-      screenshotUrl: file.filename,
+      screenshotUrl,
+      screenshotPublicId,
       autoAiDueAt: new Date(Date.now() + env.billing.autoAiMinutes * 60 * 1000),
     },
   });
@@ -143,13 +196,20 @@ export async function listMyPayments(shopId) {
   return payments.map(sanitizePayment);
 }
 
-/** Streams the screenshot back to the shop that uploaded it. */
+/**
+ * Streams the screenshot back to the shop that uploaded it. Only used
+ * for local-file screenshots — Cloudinary images render straight from
+ * their https URL.
+ */
 export async function getMyScreenshotPath(shopId, paymentId) {
   const payment = await prisma.subscriptionPayment.findUnique({
     where: { id: paymentId },
   });
   if (!payment || payment.shopId !== shopId) {
     throw ApiError.notFound("Payment not found");
+  }
+  if (isRemoteScreenshot(payment.screenshotUrl)) {
+    throw ApiError.badRequest("Screenshot is hosted remotely");
   }
   return resolveScreenshotPath(payment.screenshotUrl);
 }
@@ -296,8 +356,10 @@ export async function runAutoAiVerification() {
   for (const payment of due) {
     let outcome = { verified: false, confidence: 0, details: { error: "AI unavailable" } };
     try {
+      // Cloudinary URL (fetched server-side) or local file path.
+      const source = screenshotSourceForAi(payment);
       outcome = await aiVerifyScreenshot(
-        resolveScreenshotPath(payment.screenshotUrl),
+        source.value,
         { amountEtb: Number(payment.amountEtb), planMonths: payment.planMonths },
       );
     } catch (err) {

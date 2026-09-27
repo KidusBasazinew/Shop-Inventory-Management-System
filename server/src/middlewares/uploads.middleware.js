@@ -1,6 +1,9 @@
 import multer from "multer";
+import path from "node:path";
+import crypto from "node:crypto";
 import ApiError from "../utils/apiError.js";
-import { UPLOADS_DIR, makeSafeFilename } from "../config/upload.js";
+import { UPLOADS_DIR } from "../config/upload.js";
+import { cloudinaryEnabled } from "../services/cloudinary.service.js";
 
 const ALLOWED_MIME = new Set([
   "image/jpeg",
@@ -14,18 +17,31 @@ const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — plenty for a phone screenshot
 
 /**
  * Multer middleware for the subscription payment screenshot upload.
- * - disk storage into the private uploads dir with a random filename
- * - images only, hard 8 MB cap, clear errors (not multer's HTML pages)
+ *
+ * Two storage modes, decided once at boot by cloudinaryEnabled:
+ *  - Cloudinary configured -> MEMORY storage; the buffer is piped to
+ *    Cloudinary in the controller and `screenshotUrl` becomes a CDN URL.
+ *  - dev fallback          -> private local disk (random filenames), the
+ *    same behavior as before; served via authenticated endpoints only.
+ *
+ * Images only, hard 8 MB cap, clear errors (not multer's HTML pages).
  */
 const upload = multer({
-  storage: multer.diskStorage({
-    destination(req, file, cb) {
-      cb(null, UPLOADS_DIR);
-    },
-    filename(req, file, cb) {
-      cb(null, makeSafeFilename(file.originalname));
-    },
-  }),
+  storage: cloudinaryEnabled
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination(req, file, cb) {
+          cb(null, UPLOADS_DIR);
+        },
+        filename(req, file, cb) {
+          const ext =
+            path
+              .extname(file.originalname || "")
+              .toLowerCase()
+              .slice(0, 10) || ".jpg";
+          cb(null, `${Date.now()}-${crypto.randomBytes(12).toString("hex")}${ext}`);
+        },
+      }),
   limits: { fileSize: MAX_BYTES, files: 1 },
   fileFilter(req, file, cb) {
     if (!ALLOWED_MIME.has(file.mimetype)) {

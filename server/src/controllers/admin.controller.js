@@ -77,7 +77,17 @@ export const reviewPayment = catchAsync(async (req, res) => {
   res.status(200).json(payment);
 });
 
+/**
+ * Screenshot delivery for the review queue / shop drilldown:
+ *  - Cloudinary-hosted: 302 redirect to the CDN URL — the browser loads
+ *    it straight from Cloudinary
+ *  - local dev file:    streamed from the private uploads dir
+ */
 export const getPaymentScreenshot = catchAsync(async (req, res) => {
+  const payment = await adminService.getPayment(req.params.id);
+  if (payment.screenshotView) {
+    return res.redirect(payment.screenshotView);
+  }
   await adminService.streamPaymentScreenshot(req.params.id, res);
 });
 

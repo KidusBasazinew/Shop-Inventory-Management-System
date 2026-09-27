@@ -204,7 +204,10 @@ model SubscriptionPayment {
   payerName     String?
   payerPhone    String?
   bankReference String?
+  // Cloudinary https URL (or, in local-dev fallback mode, the bare
+  // filename under UPLOADS_DIR served via authenticated endpoints).
   screenshotUrl String
+  screenshotPublicId String? // Cloudinary public_id for cleanup/deletion
 
   status        SubscriptionPaymentStatus @default(PENDING)
 

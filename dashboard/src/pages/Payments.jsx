@@ -21,6 +21,28 @@ export default function Payments() {
   const [shotError, setShotError] = useState(false);
   const queryClient = useQueryClient();
 
+  /**
+   * Screenshot loading: Cloudinary images come straight from their CDN
+   * URL (screenshotView, resized server-side via delivery transform);
+   * local dev files are fetched as authenticated blobs.
+   */
+  const openReview = async (p) => {
+    setReviewing(p);
+    setNote("");
+    setShotUrl(null);
+    setShotError(false);
+    const remote = p.screenshotIsRemote ?? /^https?:\/\//.test(p.screenshotUrl ?? "");
+    if (remote) {
+      setShotUrl(p.screenshotView ?? p.screenshotUrl);
+      return;
+    }
+    try {
+      setShotUrl(await fetchScreenshotBlobUrl("admin", p.id));
+    } catch {
+      setShotError(true);
+    }
+  };
+
   const { data: payments, isLoading } = useQuery({
     queryKey: ["payments", tab],
     queryFn: async () => (await adminApi.listPayments(tab)).data,
@@ -36,18 +58,6 @@ export default function Payments() {
       setNote("");
     },
   });
-
-  const openReview = async (p) => {
-    setReviewing(p);
-    setNote("");
-    setShotUrl(null);
-    setShotError(false);
-    try {
-      setShotUrl(await fetchScreenshotBlobUrl("admin", p.id));
-    } catch {
-      setShotError(true);
-    }
-  };
 
   return (
     <>

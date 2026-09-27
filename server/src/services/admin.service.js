@@ -264,6 +264,7 @@ export async function getShopDetail(shopId) {
   ]);
 
   const { appSessions, subscriptionPayments, ...shopBase } = shop;
+  const { decoratePayment } = await import("./subscription.service.js");
   return {
     shop: shopBase,
     counts: shop._count,
@@ -275,7 +276,7 @@ export async function getShopDetail(shopId) {
       appVersion: s.appVersion,
     })),
     recentEvents,
-    subscriptionPayments,
+    subscriptionPayments: subscriptionPayments.map(decoratePayment),
   };
 }
 
@@ -374,15 +375,21 @@ export async function toggleShopActive(shopId, { isActive }, adminUser) {
   return { shopId, isActive };
 }
 
-// thin wrappers around the subscription service for the queue
+// thin wrappers around the subscription service for the queue —
+// decorated with screenshotView (Cloudinary URL) for the dashboard
 export async function listPayments(status) {
-  const { listPaymentsForAdmin } = await import("./subscription.service.js");
-  return listPaymentsForAdmin(status);
+  const { listPaymentsForAdmin, decoratePayment } = await import(
+    "./subscription.service.js"
+  );
+  const payments = await listPaymentsForAdmin(status);
+  return payments.map(decoratePayment);
 }
 
 export async function getPayment(id) {
-  const { getPaymentForAdmin } = await import("./subscription.service.js");
-  return getPaymentForAdmin(id);
+  const { getPaymentForAdmin, decoratePayment } = await import(
+    "./subscription.service.js"
+  );
+  return decoratePayment(await getPaymentForAdmin(id));
 }
 
 export async function reviewPayment({ id, adminUser, decision, note }) {
@@ -396,6 +403,11 @@ export async function streamPaymentScreenshot(id, res) {
     "./subscription.service.js"
   );
   const payment = await getPaymentForAdmin(id);
+  if (/^https?:\/\//.test(payment.screenshotUrl ?? "")) {
+    // Cloudinary-hosted: the dashboard renders the URL directly;
+    // no local file to stream.
+    throw ApiError.badRequest("Screenshot is hosted remotely");
+  }
   const filePath = resolveScreenshotPath(payment.screenshotUrl);
   if (!fs.existsSync(filePath)) {
     throw ApiError.notFound("Screenshot file not found");

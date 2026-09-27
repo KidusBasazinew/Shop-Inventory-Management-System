@@ -58,11 +58,15 @@ function buildPrompt({ amountEtb }) {
   ].join(" ");
 }
 
-async function openaiVerify(filePath, { amountEtb }) {
+async function openaiVerify(source, { amountEtb }) {
   const apiKey = env.ai.openaiApiKey;
-  if (!apiKey) return stubVerify(filePath, { amountEtb });
+  if (!apiKey) return stubVerify(source, { amountEtb });
 
-  const imageBase64 = fs.readFileSync(filePath).toString("base64");
+  // source is either a local file path or an https URL (Cloudinary).
+  const isUrl = /^https?:\/\//.test(source);
+  const imageBase64 = isUrl
+    ? Buffer.from(await (await fetch(source)).arrayBuffer()).toString("base64")
+    : fs.readFileSync(source).toString("base64");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -110,11 +114,14 @@ async function openaiVerify(filePath, { amountEtb }) {
   };
 }
 
-export async function aiVerifyScreenshot(filePath, meta) {
+/**
+ * @param {string} source local file path OR https URL (Cloudinary)
+ */
+export async function aiVerifyScreenshot(source, meta) {
   if (env.ai.provider === "openai") {
-    return openaiVerify(filePath, meta);
+    return openaiVerify(source, meta);
   }
-  return stubVerify(filePath, meta);
+  return stubVerify(source, meta);
 }
 
 export default { aiVerifyScreenshot };

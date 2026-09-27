@@ -17,6 +17,11 @@ export const listMyPayments = catchAsync(async (req, res) => {
   res.status(200).json(payments);
 });
 
+/**
+ * Screenshot delivery for the shop's own uploads:
+ *  - Cloudinary-hosted: 302 to the https CDN URL (with resize transform)
+ *  - local dev file:    streamed from the private uploads dir
+ */
 export const getMyScreenshot = catchAsync(async (req, res) => {
   const filePath = await subscriptionService.getMyScreenshotPath(
     req.shopId,
