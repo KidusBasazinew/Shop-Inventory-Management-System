@@ -9,6 +9,7 @@ import {
   ScrollView,
   Animated,
   Easing,
+  TextInput,
 } from "react-native";
 import {
   BottomSheetScrollView,
@@ -35,6 +36,7 @@ import { playSuccess, playError, playTap } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
 import SheetModal from "../../../components/common/SheetModal";
 import CenterModal from "../../../components/common/CenterModal";
+import { toBaseQuantity, isPackagedUnit } from "../../../lib/unitConversion";
 
 const PAYMENT_METHODS = [
   "CASH",
@@ -54,6 +56,7 @@ export default function Sales() {
   const [customerId, setCustomerId] = useState("");
   const [partialAmount, setPartialAmount] = useState("");
   const [search, setSearch] = useState("");
+  const [isEditingQuantity, setIsEditingQuantity] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [completedSale, setCompletedSale] = useState(null);
 
@@ -78,7 +81,17 @@ export default function Sales() {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.productId === product.id
+            ? {
+                ...i,
+                displayQty: i.displayQty + 1,
+                quantity: toBaseQuantity(
+                  i.displayQty + 1,
+                  i.displayUnit,
+                  i.unitsPerPackage,
+                ),
+              }
+            : i,
         );
       }
       return [
@@ -87,8 +100,11 @@ export default function Sales() {
           productId: product.id,
           name: product.name,
           unitType: product.unitType,
+          unitsPerPackage: product.unitsPerPackage,
           sellingPrice: Number(product.sellingPrice),
-          quantity: 1,
+          displayUnit: "PIECE", // cashier can switch to CARTON below
+          displayQty: 1,
+          quantity: 1, // piece-equivalent, used for pricing/stock
           available: Number(product.quantity),
         },
       ];
@@ -98,15 +114,60 @@ export default function Sales() {
     setSearch("");
   };
 
-  const updateQuantity = (productId, delta) => {
+  // delta is applied in whatever unit the line is currently displayed in
+  const nudgeQuantity = (productId, delta) => {
     setCart((prev) =>
       prev
-        .map((i) =>
-          i.productId === productId
-            ? { ...i, quantity: i.quantity + delta }
-            : i,
-        )
-        .filter((i) => i.quantity > 0),
+        .map((i) => {
+          if (i.productId !== productId) return i;
+          const nextDisplayQty = i.displayQty + delta;
+          return {
+            ...i,
+            displayQty: nextDisplayQty,
+            quantity: toBaseQuantity(
+              nextDisplayQty,
+              i.displayUnit,
+              i.unitsPerPackage,
+            ),
+          };
+        })
+        .filter((i) => i.displayQty > 0),
+    );
+  };
+
+  // Cashier types an exact amount directly instead of tapping +/-
+  const setTypedQuantity = (productId, rawValue) => {
+    setCart((prev) =>
+      prev.map((i) => {
+        if (i.productId !== productId) return i;
+        const displayQty = rawValue === "" ? 0 : Number(rawValue) || 0;
+        return {
+          ...i,
+          displayQty,
+          quantity: toBaseQuantity(
+            displayQty,
+            i.displayUnit,
+            i.unitsPerPackage,
+          ),
+        };
+      }),
+    );
+  };
+
+  // Switching Piece <-> Carton resets the typed amount to 1 in the new
+  // unit, to avoid silently reinterpreting whatever number was already there.
+  const setDisplayUnit = (productId, unit) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.productId === productId
+          ? {
+              ...i,
+              displayUnit: unit,
+              displayQty: 1,
+              quantity: toBaseQuantity(1, unit, i.unitsPerPackage),
+            }
+          : i,
+      ),
     );
   };
 
@@ -205,46 +266,83 @@ export default function Sales() {
             <Text className="text-on-surface-variant">Cart is empty</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <View className="bg-surface p-4 rounded-2xl border border-outline-variant/30 flex-row items-center justify-between shadow-xs">
-            <View className="flex-1 pr-2">
-              <Text className="font-semibold text-on-surface text-base">
-                {item.name}
-              </Text>
-              <Text className="text-xs text-on-surface-variant">
-                {item.unitType} • ETB {item.sellingPrice.toFixed(2)} / unit
-              </Text>
+        renderItem={({ item }) => {
+          const canSellByCarton =
+            isPackagedUnit(item.unitType) && item.unitsPerPackage;
+          return (
+            <View className="bg-surface p-4 rounded-2xl border border-outline-variant/30 gap-3 shadow-xs">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-2">
+                  <Text className="font-semibold text-on-surface text-base">
+                    {item.name}
+                  </Text>
+                  <Text className="text-xs text-on-surface-variant">
+                    ETB {item.sellingPrice.toFixed(2)} / piece
+                    {item.displayUnit === "CARTON"
+                      ? ` · ${item.quantity} pcs total`
+                      : ""}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setItemToDelete(item)}
+                  hitSlop={8}
+                  className="p-1.5 rounded-lg bg-red-500/10"
+                >
+                  <Trash2 size={18} color="#BA1A1A" />
+                </Pressable>
+              </View>
+
+              <View className="flex-row items-center justify-between gap-2">
+                {canSellByCarton ? (
+                  <View className="flex-row bg-surface-container-low rounded-full p-0.5">
+                    {["PIECE", "CARTON"].map((unit) => (
+                      <Pressable
+                        key={unit}
+                        onPress={() => setDisplayUnit(item.productId, unit)}
+                        className={`px-3 py-1.5 rounded-full ${item.displayUnit === unit ? "bg-primary" : ""}`}
+                      >
+                        <Text
+                          className={`text-[11px] font-bold ${item.displayUnit === unit ? "text-white" : "text-on-surface-variant"}`}
+                        >
+                          {unit === "PIECE" ? "Piece" : "Carton"}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : (
+                  <View />
+                )}
+
+                <View className="flex-row items-center gap-2">
+                  <Pressable
+                    onPress={() => nudgeQuantity(item.productId, -1)}
+                    className="w-8 h-8 rounded-full border border-outline-variant/40 items-center justify-center bg-surface-container-low"
+                  >
+                    <Minus size={16} color="#434655" />
+                  </Pressable>
+
+                  <TextInput
+                    value={String(item.displayQty)}
+                    onChangeText={(v) =>
+                      setTypedQuantity(item.productId, v.replace(/[^0-9]/g, ""))
+                    }
+                    onFocus={() => setIsEditingQuantity(true)}
+                    onBlur={() => setIsEditingQuantity(false)}
+                    keyboardType="numeric"
+                    className="w-14 text-center font-bold text-sm text-on-surface border border-outline-variant/30 rounded-lg py-1"
+                  />
+
+                  <Pressable
+                    onPress={() => nudgeQuantity(item.productId, 1)}
+                    className="w-8 h-8 rounded-full border border-outline-variant/40 items-center justify-center bg-surface-container-low"
+                  >
+                    <Plus size={16} color="#434655" />
+                  </Pressable>
+                </View>
+              </View>
             </View>
-
-            <View className="flex-row items-center gap-3">
-              <Pressable
-                onPress={() => updateQuantity(item.productId, -1)}
-                className="w-8 h-8 rounded-full border border-outline-variant/40 items-center justify-center bg-surface-container-low"
-              >
-                <Minus size={16} color="#434655" />
-              </Pressable>
-
-              <Text className="font-bold text-sm w-6 text-center text-on-surface">
-                {item.quantity}
-              </Text>
-
-              <Pressable
-                onPress={() => updateQuantity(item.productId, 1)}
-                className="w-8 h-8 rounded-full border border-outline-variant/40 items-center justify-center bg-surface-container-low"
-              >
-                <Plus size={16} color="#434655" />
-              </Pressable>
-
-              <Pressable
-                onPress={() => setItemToDelete(item)}
-                hitSlop={8}
-                className="ml-2 p-1.5 rounded-lg bg-red-500/10"
-              >
-                <Trash2 size={18} color="#BA1A1A" />
-              </Pressable>
-            </View>
-          </View>
-        )}
+          );
+        }}
       />
 
       <Pressable
@@ -255,7 +353,7 @@ export default function Sales() {
         <Plus size={26} color="white" />
       </Pressable>
 
-      {cart.length > 0 && (
+      {cart.length > 0 && !isEditingQuantity && (
         <View className="absolute bottom-0 left-0 right-0 bg-surface-container-lowest border-t border-outline-variant/30 p-4 shadow-xl rounded-t-3xl">
           <View className="bg-surface p-3.5 rounded-2xl border border-outline-variant/20 mb-3 max-h-44">
             <View className="flex-row items-center gap-2 mb-2 pb-2 border-b border-outline-variant/15">

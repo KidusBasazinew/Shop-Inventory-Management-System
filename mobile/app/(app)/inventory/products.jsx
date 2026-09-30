@@ -34,6 +34,11 @@ import FormField from "../../../components/common/FormField";
 import DateField from "../../../components/common/DateField";
 import UnitPicker from "../../../components/medicines/UnitPicker";
 import ProductCard from "../../../components/inventory/ProductCard";
+import {
+  toBaseQuantity,
+  fromBaseQuantity,
+  formatQuantity,
+} from "../../../lib/unitConversion";
 import Pagination, {
   usePageCount,
 } from "../../../components/common/Pagination";
@@ -117,7 +122,13 @@ export default function Products() {
         : "",
       buyingPrice: String(product.buyingPrice ?? ""),
       sellingPrice: String(product.sellingPrice ?? ""),
-      minQuantityAlert: String(product.minQuantityAlert ?? 0),
+      minQuantityAlert: String(
+        fromBaseQuantity(
+          product.minQuantityAlert ?? 0,
+          product.unitType,
+          product.unitsPerPackage,
+        ),
+      ),
       quantity: String(product.quantity ?? 0),
       supplierId: product.preferredSupplierId ?? "",
     });
@@ -135,16 +146,21 @@ export default function Products() {
       return;
     }
 
+    const unitsPerPackage = form.unitsPerPackage
+      ? Number(form.unitsPerPackage)
+      : undefined;
     const basePayload = {
       name: form.name,
       category: form.category || undefined,
       unitType: form.unitType,
-      unitsPerPackage: form.unitsPerPackage
-        ? Number(form.unitsPerPackage)
-        : undefined,
+      unitsPerPackage,
       buyingPrice: Number(form.buyingPrice),
       sellingPrice: Number(form.sellingPrice),
-      minQuantityAlert: Number(form.minQuantityAlert) || 0,
+      minQuantityAlert: toBaseQuantity(
+        form.minQuantityAlert,
+        form.unitType,
+        unitsPerPackage,
+      ),
       expiryDate: expiryDate
         ? expiryDate.toISOString().split("T")[0]
         : undefined,
@@ -160,7 +176,11 @@ export default function Products() {
       } else {
         await createMutation.mutateAsync({
           ...basePayload,
-          quantity: Number(form.quantity) || 0,
+          quantity: toBaseQuantity(
+            form.quantity,
+            form.unitType,
+            unitsPerPackage,
+          ),
         });
       }
       playSuccess();
@@ -224,11 +244,16 @@ export default function Products() {
   };
 
   const handleStockSubmit = async () => {
-    const amount = Number(stockAmount);
-    if (!amount || amount <= 0) {
+    const typedAmount = Number(stockAmount);
+    if (!typedAmount || typedAmount <= 0) {
       Alert.alert("Invalid", "Enter a positive amount");
       return;
     }
+    const amount = toBaseQuantity(
+      typedAmount,
+      stockTarget.unitType,
+      stockTarget.unitsPerPackage,
+    );
     try {
       if (stockAction === "add") {
         await addStockMutation.mutateAsync({
@@ -420,7 +445,11 @@ export default function Products() {
               keyboardType="decimal-pad"
             />
             <FormField
-              label="Low stock alert threshold"
+              label={
+                form.unitType === "CARTON" && form.unitsPerPackage
+                  ? `Low stock alert (in cartons of ${form.unitsPerPackage})`
+                  : "Low stock alert threshold"
+              }
               placeholder="10"
               value={form.minQuantityAlert}
               onChangeText={(v) =>
@@ -430,7 +459,11 @@ export default function Products() {
             />
             {!editingId ? (
               <FormField
-                label="Starting quantity"
+                label={
+                  form.unitType === "CARTON" && form.unitsPerPackage
+                    ? `Starting quantity (in cartons of ${form.unitsPerPackage})`
+                    : "Starting quantity"
+                }
                 placeholder="0"
                 value={form.quantity}
                 onChangeText={(v) => setForm((p) => ({ ...p, quantity: v }))}
@@ -486,7 +519,14 @@ export default function Products() {
             Manage Stock — {stockTarget?.name}
           </Text>
           <Text className="text-xs text-on-surface-variant">
-            Current quantity: {stockTarget?.quantity}
+            Current quantity:{" "}
+            {stockTarget
+              ? formatQuantity(
+                  stockTarget.quantity,
+                  stockTarget.unitType,
+                  stockTarget.unitsPerPackage,
+                )
+              : ""}
           </Text>
 
           <UnitPicker
@@ -497,7 +537,13 @@ export default function Products() {
           />
 
           <FormField
-            label={stockAction === "adjust" ? "New exact quantity" : "Amount"}
+            label={
+              stockTarget?.unitType === "CARTON" && stockTarget?.unitsPerPackage
+                ? `${stockAction === "adjust" ? "New exact quantity" : "Amount"} (in cartons of ${stockTarget.unitsPerPackage})`
+                : stockAction === "adjust"
+                  ? "New exact quantity"
+                  : "Amount"
+            }
             placeholder={stockAction === "adjust" ? "e.g. 42" : "e.g. 10"}
             value={stockAmount}
             onChangeText={setStockAmount}

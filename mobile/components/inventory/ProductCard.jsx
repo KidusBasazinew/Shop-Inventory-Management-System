@@ -8,6 +8,7 @@ import {
   Layers,
 } from "lucide-react-native";
 import Badge from "../common/Badge";
+import { formatQuantity } from "../../lib/unitConversion";
 
 export default function ProductCard({ product, onPress, onDeactivate }) {
   const {
@@ -105,7 +106,8 @@ export default function ProductCard({ product, onPress, onDeactivate }) {
               className="text-[11px] font-semibold"
               style={{ color: isLowStock ? "#93000a" : "#004ac6" }}
             >
-              {quantity} in stock · reorder at {minQuantityAlert}
+              {formatQuantity(quantity, unitType, product.unitsPerPackage)} in
+              stock
             </Text>
           </View>
         </View>
