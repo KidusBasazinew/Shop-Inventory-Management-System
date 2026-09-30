@@ -121,11 +121,11 @@ export default function Login() {
           </View>
         </View>
 
-        <Pressable className="self-end mt-3">
+        {/* <Pressable className="self-end mt-3">
           <Text className="text-primary text-sm font-medium">
             Forgot password?
           </Text>
-        </Pressable>
+        </Pressable> */}
 
         <Pressable
           onPress={handleLogin}

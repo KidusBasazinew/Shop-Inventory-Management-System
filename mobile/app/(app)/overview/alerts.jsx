@@ -71,7 +71,7 @@ export default function AlertsScreen() {
         time: "Now",
         description: `${p.name} — ${p.quantity} ${p.unitType?.toLowerCase() ?? "units"} left (reorder at ${p.minQuantityAlert}).`,
         actionLabel: "VIEW PRODUCTS",
-        onActionPress: () => router.push("(app)/inventory/medicines"),
+        onActionPress: () => router.push("(app)/inventory/products"),
       });
     });
 
@@ -96,7 +96,7 @@ export default function AlertsScreen() {
           time: "Now",
           description: `Your trial ends in ${daysLeft}d. Renew now to keep full access.`,
           actionLabel: "RENEW PLAN",
-          onActionPress: () => router.push("/subscription"),
+          onActionPress: () => router.push("(app)/subscription"),
         });
       }
     }
