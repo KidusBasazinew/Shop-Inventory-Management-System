@@ -20,6 +20,25 @@ export const productsService = {
   deactivate: async (id) => {
     await api.delete(`/products/${id}`);
   },
+  /**
+   * Upload/replace a product photo.
+   * image: { uri, name?/fileName?, mimeType?/type? } from expo-image-picker.
+   * The server resizes + compresses it before storing, so the client can
+   * send a normal-quality camera photo without worrying about storage.
+   */
+  uploadPhoto: async (id, image) => {
+    const formData = new FormData();
+    formData.append("photo", {
+      uri: image.uri,
+      name: image.name ?? image.fileName ?? "product-photo.jpg",
+      type: image.mimeType ?? image.type ?? "image/jpeg",
+    });
+    const { data } = await api.post(`/products/${id}/photo`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 60000, // uploads can be slow on mobile data
+    });
+    return data;
+  },
   addStock: async (id, payload) => {
     const { data } = await api.post(`/products/${id}/stock/add`, payload);
     return data;

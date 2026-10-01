@@ -29,3 +29,17 @@ export const deactivate = catchAsync(async (req, res) => {
   await productService.deactivateProduct(req.shopId, req.params.id);
   res.status(204).send();
 });
+
+/**
+ * Multipart product photo upload (field: `photo`). The image is resized
+ * and compressed by Cloudinary before storage; the response is the
+ * updated product, so the client can refresh `photoUrl` directly.
+ */
+export const uploadPhoto = catchAsync(async (req, res) => {
+  const product = await productService.setProductPhoto(
+    req.shopId,
+    req.params.id,
+    req.file,
+  );
+  res.status(200).json(product);
+});

@@ -77,9 +77,13 @@ const SheetModal = forwardRef(function SheetModal(
       enablePanDownToClose={enablePanDownToClose}
       onDismiss={handleDismiss}
       backdropComponent={renderBackdrop}
+      // On Android with edge-to-edge (always on in SDK 54 / Android 15+),
+      // the OS disables `adjustResize`, so the sheet must NOT delegate to the
+      // native window resize. `adjustPan` is gorhom's default and makes the
+      // sheet lift itself by the keyboard height instead.
+      android_keyboardInputMode="adjustPan"
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
       backgroundStyle={{
         backgroundColor: "#ffffff",
         borderTopLeftRadius: 24,

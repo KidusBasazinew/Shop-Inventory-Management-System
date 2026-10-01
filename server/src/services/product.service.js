@@ -1,5 +1,11 @@
 import prisma from "../lib/prisma.js";
 import ApiError from "../utils/apiError.js";
+import {
+  cloudinaryEnabled,
+  uploadProductPhotoBuffer,
+  destroyImage,
+  publicIdFromUrl,
+} from "./cloudinary.service.js";
 
 export async function listProducts(shopId, query) {
   const { search, category, lowStock, expiringWithinDays, page, limit } = query;
@@ -88,7 +94,7 @@ export async function createProduct(shopId, data) {
 }
 
 export async function updateProduct(shopId, productId, data) {
-  await getOwnedProduct(shopId, productId);
+  const existing = await getOwnedProduct(shopId, productId);
   const { supplierId, ...rest } = data;
 
   if (supplierId) {
@@ -97,6 +103,12 @@ export async function updateProduct(shopId, productId, data) {
     });
     if (!supplier || supplier.shopId !== shopId)
       throw ApiError.notFound("Supplier not found");
+  }
+
+  // Clearing the photo (photoUrl: null) should not leave the old
+  // Cloudinary asset behind burning storage.
+  if (rest.photoUrl === null && existing.photoUrl) {
+    await destroyImage(publicIdFromUrl(existing.photoUrl));
   }
 
   return prisma.product.update({
@@ -116,6 +128,34 @@ export async function deactivateProduct(shopId, productId) {
   });
 }
 
+/**
+ * Attach or replace a product photo.
+ *
+ * The buffer is resized + compressed by Cloudinary before storage (see
+ * uploadProductPhotoBuffer), so a high-resolution phone camera photo
+ * costs ~100 KB of storage instead of several MB. Any previous asset is
+ * deleted first so replacing a photo never accumulates orphans.
+ */
+export async function setProductPhoto(shopId, productId, file) {
+  const product = await getOwnedProduct(shopId, productId);
+  if (!file) throw ApiError.badRequest("Product photo is required");
+  if (!cloudinaryEnabled) {
+    throw ApiError.badRequest(
+      "Image storage is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.",
+    );
+  }
+
+  if (product.photoUrl) {
+    await destroyImage(publicIdFromUrl(product.photoUrl));
+  }
+
+  const uploaded = await uploadProductPhotoBuffer(file.buffer, { shopId });
+  return prisma.product.update({
+    where: { id: productId },
+    data: { photoUrl: uploaded.url },
+  });
+}
+
 export default {
   listProducts,
   getProduct,
@@ -123,4 +163,5 @@ export default {
   createProduct,
   updateProduct,
   deactivateProduct,
+  setProductPhoto,
 };

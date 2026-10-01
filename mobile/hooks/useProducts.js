@@ -64,6 +64,14 @@ export function useDeactivateProduct() {
   });
 }
 
+export function useUploadProductPhoto() {
+  const invalidate = useInvalidateProducts();
+  return useMutation({
+    mutationFn: ({ id, image }) => productsService.uploadPhoto(id, image),
+    onSuccess: invalidate,
+  });
+}
+
 export function useAddStock() {
   const invalidate = useInvalidateProducts();
   return useMutation({

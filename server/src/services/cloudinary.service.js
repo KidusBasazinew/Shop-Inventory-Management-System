@@ -36,6 +36,12 @@ if (cloudinaryEnabled) {
 }
 
 const FOLDER = process.env.CLOUDINARY_FOLDER || "payment-screenshots";
+const PRODUCT_FOLDER =
+  process.env.CLOUDINARY_PRODUCT_FOLDER || "product-photos";
+
+// Product photos are display thumbnails, not assets — cap the stored
+// dimensions so a 12 MP phone camera photo costs ~100 KB, not several MB.
+const PHOTO_MAX_DIMENSION = 1000;
 
 /**
  * Upload a buffer to Cloudinary.
@@ -67,6 +73,42 @@ export async function uploadScreenshotBuffer(buffer, { shopId } = {}) {
 }
 
 /**
+ * Upload a product photo buffer.
+ *
+ * The `transformation` passed here is an *incoming* transformation:
+ * Cloudinary applies it before storing the asset, so the resized +
+ * compressed version IS the stored original. Combined with the client
+ * sending `quality: 0.6` from expo-image-picker, a high-resolution camera
+ * photo lands in storage at roughly 100-200 KB instead of many MB.
+ */
+export async function uploadProductPhotoBuffer(buffer, { shopId } = {}) {
+  if (!cloudinaryEnabled) {
+    throw new Error(
+      "Cloudinary is not configured (set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)",
+    );
+  }
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: shopId ? `${PRODUCT_FOLDER}/${shopId}` : PRODUCT_FOLDER,
+        resource_type: "image",
+        transformation: [
+          { width: PHOTO_MAX_DIMENSION, height: PHOTO_MAX_DIMENSION, crop: "limit" },
+          { quality: "auto:eco" },
+        ],
+        overwrite: false,
+        unique_filename: true,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve({ url: result.secure_url, publicId: result.public_id });
+      },
+    );
+    stream.end(buffer);
+  });
+}
+
+/**
  * Delete a screenshot (used if a submission is withdrawn/invalid).
  * Never throws — cleanup is best-effort.
  */
@@ -77,6 +119,30 @@ export async function destroyScreenshot(publicId) {
   } catch (err) {
     console.error("[cloudinary] destroy failed:", err?.message);
   }
+}
+
+/**
+ * Generic best-effort asset delete (used when a product photo is
+ * replaced or removed). Never throws.
+ */
+export async function destroyImage(publicId) {
+  if (!cloudinaryEnabled || !publicId) return;
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error("[cloudinary] destroy image failed:", err?.message);
+  }
+}
+
+/**
+ * Derive a Cloudinary public_id from a stored secure_url, so we can
+ * delete a replaced/removed product photo without a `photoPublicId`
+ * column. Returns null for non-Cloudinary (local) URLs.
+ */
+export function publicIdFromUrl(url) {
+  if (!url || !/^https?:\/\//.test(url)) return null;
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[a-zA-Z0-9]+)?$/);
+  return match ? match[1] : null;
 }
 
 /**
@@ -95,6 +161,9 @@ export function screenshotViewUrl(screenshotUrl, { width = 900 } = {}) {
 export default {
   cloudinaryEnabled,
   uploadScreenshotBuffer,
+  uploadProductPhotoBuffer,
   destroyScreenshot,
+  destroyImage,
   screenshotViewUrl,
+  publicIdFromUrl,
 };

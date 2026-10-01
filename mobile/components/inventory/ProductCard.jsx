@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Image } from "react-native";
 import {
   Package,
   PackageMinus,
@@ -21,6 +21,10 @@ export default function ProductCard({ product, onPress, onDeactivate }) {
     isActive,
   } = product;
   const isLowStock = Number(quantity) <= Number(minQuantityAlert);
+  // Only Cloudinary-style absolute URLs render directly; a bare filename
+  // (local dev storage without Cloudinary) falls back to the icon.
+  const photoUrl = product.photoUrl;
+  const hasPhoto = typeof photoUrl === "string" && /^https?:\/\//.test(photoUrl);
 
   return (
     <Pressable
@@ -62,9 +66,17 @@ export default function ProductCard({ product, onPress, onDeactivate }) {
         </View>
 
         <View className="flex-row items-center gap-3">
-          <View className="w-12 h-12 rounded-xl bg-surface-variant/60 border border-outline-variant/30 items-center justify-center flex-shrink-0">
-            <Package size={22} color="#004ac6" />
-          </View>
+          {hasPhoto ? (
+            <Image
+              source={{ uri: photoUrl }}
+              className="w-12 h-12 rounded-xl border border-outline-variant/30 flex-shrink-0"
+              resizeMode="cover"
+            />
+          ) : (
+            <View className="w-12 h-12 rounded-xl bg-surface-variant/60 border border-outline-variant/30 items-center justify-center flex-shrink-0">
+              <Package size={22} color="#004ac6" />
+            </View>
+          )}
 
           <View className="flex-1 min-w-0">
             <Text

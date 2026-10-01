@@ -3,6 +3,7 @@ import { Router } from "express";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import subscriptionGuard from "../middlewares/subscription.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
+import { uploadProductPhoto } from "../middlewares/uploads.middleware.js";
 import * as productController from "../controllers/product.controller.js";
 import * as stockController from "../controllers/stock.controller.js";
 import {
@@ -49,6 +50,16 @@ router.delete(
   requireRole("OWNER", "MANAGER"),
   validate({ params: productIdParamSchema }),
   productController.deactivate,
+);
+
+// Multipart product photo upload (field: `photo`). Resized + compressed
+// by Cloudinary before storage.
+router.post(
+  "/:id/photo",
+  requireRole("OWNER", "MANAGER"),
+  validate({ params: productIdParamSchema }),
+  uploadProductPhoto,
+  productController.uploadPhoto,
 );
 
 // Stock actions

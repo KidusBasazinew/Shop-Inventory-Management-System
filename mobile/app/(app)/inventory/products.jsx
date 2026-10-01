@@ -6,7 +6,10 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Image,
+  Platform,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import {
   Plus,
   X,
@@ -17,6 +20,9 @@ import {
   ChevronDown,
   Check,
   UserPlus,
+  Camera,
+  ImagePlus,
+  Trash2,
 } from "lucide-react-native";
 import {
   useProducts,
@@ -26,6 +32,7 @@ import {
   useAddStock,
   useRemoveStock,
   useAdjustStock,
+  useUploadProductPhoto,
 } from "../../../hooks/useProducts";
 import { useSuppliers, useCreateSupplier } from "../../../hooks/useSuppliers";
 import SearchBar from "../../../components/common/SearchBar";
@@ -92,11 +99,16 @@ export default function Products() {
   const addStockMutation = useAddStock();
   const removeStockMutation = useRemoveStock();
   const adjustStockMutation = useAdjustStock();
+  const uploadPhotoMutation = useUploadProductPhoto();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [expiryDate, setExpiryDate] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  // Photo picked in this session (not yet uploaded) + the existing saved one
+  const [photo, setPhoto] = useState(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState(null);
+  const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false);
 
   const [stockTarget, setStockTarget] = useState(null);
   const [stockAction, setStockAction] = useState("add");
@@ -109,6 +121,9 @@ export default function Products() {
     setForm(EMPTY_FORM);
     setExpiryDate(null);
     setEditingId(null);
+    setPhoto(null);
+    setExistingPhotoUrl(null);
+    setRemoveExistingPhoto(false);
     setModalVisible(true);
   };
 
@@ -134,7 +149,58 @@ export default function Products() {
     });
     setExpiryDate(product.expiryDate ? new Date(product.expiryDate) : null);
     setEditingId(product.id);
+    setPhoto(null);
+    setExistingPhotoUrl(product.photoUrl ?? null);
+    setRemoveExistingPhoto(false);
     setModalVisible(true);
+  };
+
+  // Pick from gallery or camera. `quality` + a 1:1 crop keep the upload
+  // small; the server then resizes and compresses it before storage.
+  const pickPhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission needed",
+        "Allow photo access so you can attach a product photo.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.6,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setPhoto(result.assets[0]);
+      setRemoveExistingPhoto(false);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Permission needed",
+        "Allow camera access to photograph the product.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.6,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setPhoto(result.assets[0]);
+      setRemoveExistingPhoto(false);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setRemoveExistingPhoto(true);
   };
 
   const handleSave = async () => {
@@ -168,13 +234,18 @@ export default function Products() {
     };
 
     try {
+      let savedProduct = null;
       if (editingId) {
-        await updateMutation.mutateAsync({
+        savedProduct = await updateMutation.mutateAsync({
           id: editingId,
-          payload: basePayload,
+          payload: {
+            ...basePayload,
+            // Explicit null clears the photo (server deletes the asset).
+            ...(removeExistingPhoto && !photo ? { photoUrl: null } : {}),
+          },
         });
       } else {
-        await createMutation.mutateAsync({
+        savedProduct = await createMutation.mutateAsync({
           ...basePayload,
           quantity: toBaseQuantity(
             form.quantity,
@@ -183,9 +254,30 @@ export default function Products() {
           ),
         });
       }
+
+      // The photo is a separate multipart request once the product exists.
+      const productId = editingId ?? savedProduct?.id;
+      if (photo && productId) {
+        try {
+          await uploadPhotoMutation.mutateAsync({
+            id: productId,
+            image: photo,
+          });
+        } catch (uploadError) {
+          Alert.alert(
+            "Photo upload failed",
+            uploadError?.response?.data?.error ??
+              "The product was saved, but its photo could not be uploaded. Try again from Edit Product.",
+          );
+        }
+      }
+
       playSuccess();
       setModalVisible(false);
       setForm(EMPTY_FORM);
+      setPhoto(null);
+      setExistingPhotoUrl(null);
+      setRemoveExistingPhoto(false);
       setEditingId(null);
     } catch (e) {
       playError();
@@ -285,7 +377,12 @@ export default function Products() {
     }
   };
 
-  const saving = createMutation.isPending || updateMutation.isPending;
+  const saving =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    uploadPhotoMutation.isPending;
+  const photoPreviewUri =
+    photo?.uri ?? (removeExistingPhoto ? null : existingPhotoUrl);
 
   if (isLoading) {
     return (
@@ -379,6 +476,62 @@ export default function Products() {
             <Pressable onPress={() => setModalVisible(false)}>
               <X size={22} color="#434655" />
             </Pressable>
+          </View>
+
+          {/* Product photo — gallery or camera. Auto resized/compressed
+              server-side, so a large camera photo stays tiny in storage. */}
+          <View className="items-center gap-3">
+            {photoPreviewUri ? (
+              <Image
+                source={{ uri: photoPreviewUri }}
+                className="w-28 h-28 rounded-2xl border border-outline-variant/30"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="w-28 h-28 rounded-2xl bg-surface-container-low border border-dashed border-outline-variant/50 items-center justify-center">
+                <ImagePlus size={28} color="#737686" />
+              </View>
+            )}
+
+            <View className="flex-row gap-2 justify-center">
+              <Pressable
+                onPress={pickPhoto}
+                className="flex-row items-center gap-1.5 border border-outline-variant/40 rounded-xl px-3 py-2"
+              >
+                <ImagePlus size={15} color="#004ac6" />
+                <Text className="text-xs font-semibold text-primary">
+                  {photoPreviewUri ? "Change" : "Choose photo"}
+                </Text>
+              </Pressable>
+
+              {Platform.OS !== "web" ? (
+                <Pressable
+                  onPress={takePhoto}
+                  className="flex-row items-center gap-1.5 border border-outline-variant/40 rounded-xl px-3 py-2"
+                >
+                  <Camera size={15} color="#004ac6" />
+                  <Text className="text-xs font-semibold text-primary">
+                    Camera
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              {photoPreviewUri ? (
+                <Pressable
+                  onPress={removePhoto}
+                  className="flex-row items-center gap-1.5 border border-error/30 rounded-xl px-3 py-2"
+                >
+                  <Trash2 size={15} color="#BA1A1A" />
+                  <Text className="text-xs font-semibold text-error">
+                    Remove
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            <Text className="text-[11px] text-on-surface-variant text-center">
+              Photos are resized and compressed automatically to save storage.
+            </Text>
           </View>
 
           <View className="gap-4 pb-2">

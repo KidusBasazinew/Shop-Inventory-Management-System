@@ -23,7 +23,8 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z
   .object({
     name: z.string().min(2).max(150).optional(),
-    photoUrl: z.string().url().optional(),
+    // null clears the photo (the server deletes the old asset)
+    photoUrl: z.string().url().nullable().optional(),
     category: z.string().max(80).optional(),
     supplierId: z.string().cuid().optional(),
     unitType: unitTypeSchema.optional(),
