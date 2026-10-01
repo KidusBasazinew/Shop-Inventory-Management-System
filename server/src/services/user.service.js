@@ -15,7 +15,7 @@ export async function listUsers(shopId) {
   return users.map(sanitize);
 }
 
-export async function createUser(shopId, { fullName, phone, password, role }) {
+export async function createUser(shopId, { name, phone, password, role }) {
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing)
     throw ApiError.conflict("An account with this phone number already exists");
@@ -23,7 +23,7 @@ export async function createUser(shopId, { fullName, phone, password, role }) {
   const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.create({
-    data: { shopId, fullName, phone, passwordHash, role },
+    data: { shopId, name, phone, passwordHash, role },
   });
 
   return sanitize(user);
