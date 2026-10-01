@@ -36,7 +36,11 @@ import { playSuccess, playError, playTap } from "../../../lib/feedback";
 import { UserPlus } from "lucide-react-native";
 import SheetModal from "../../../components/common/SheetModal";
 import CenterModal from "../../../components/common/CenterModal";
-import { toBaseQuantity, isPackagedUnit } from "../../../lib/unitConversion";
+import {
+  toBaseQuantity,
+  isPackagedUnit,
+  formatQuantity,
+} from "../../../lib/unitConversion";
 
 const PAYMENT_METHODS = [
   "CASH",
@@ -466,7 +470,12 @@ export default function Sales() {
                     </Text>
                     <Text className="text-xs text-on-surface-variant">
                       {item.unitType} • ETB{" "}
-                      {Number(item.sellingPrice).toFixed(2)} • {item.quantity}{" "}
+                      {Number(item.sellingPrice).toFixed(2)} •{" "}
+                      {formatQuantity(
+                        item.quantity,
+                        item.unitType,
+                        item.unitsPerPackage,
+                      )}{" "}
                       in stock
                     </Text>
                   </View>

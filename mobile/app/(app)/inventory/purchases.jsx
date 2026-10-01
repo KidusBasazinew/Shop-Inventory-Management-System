@@ -29,6 +29,10 @@ import Pagination, {
 import FAB from "../../../components/common/FAB";
 import SheetModal from "../../../components/common/SheetModal";
 import { playSuccess, playError } from "../../../lib/feedback";
+import {
+  toBaseQuantity,
+  isPackagedUnit,
+} from "../../../lib/unitConversion";
 
 const EMPTY_LINE = { productId: "", quantity: "", unitCost: "" };
 const PAGE_SIZE = 20;
@@ -125,11 +129,26 @@ export default function PurchasesScreen() {
     try {
       await createMutation.mutateAsync({
         supplierId,
-        items: validLines.map((l) => ({
-          productId: l.productId,
-          quantity: Number(l.quantity),
-          unitCost: Number(l.unitCost),
-        })),
+        items: validLines.map((l) => {
+          const product = products.find((p) => p.id === l.productId);
+          const packaged =
+            isPackagedUnit(product?.unitType) && product?.unitsPerPackage;
+          return {
+            productId: l.productId,
+            // Cashier types in the product's natural unit (cartons for a
+            // packaged product); the API always stores/expects pieces.
+            quantity: toBaseQuantity(
+              l.quantity,
+              product?.unitType,
+              product?.unitsPerPackage,
+            ),
+            // Cost is per carton for packaged products, but PurchaseItem.
+            // unitCost is per piece, so divide it down before sending.
+            unitCost: packaged
+              ? Number(l.unitCost) / Number(product.unitsPerPackage)
+              : Number(l.unitCost),
+          };
+        }),
       });
       playSuccess();
       resetForm();
@@ -326,6 +345,10 @@ export default function PurchasesScreen() {
             </Text>
             {lines.map((line, idx) => {
               const product = products.find((p) => p.id === line.productId);
+              const packaged =
+                isPackagedUnit(product?.unitType) && product?.unitsPerPackage;
+              const lineSubtotal =
+                (Number(line.quantity) || 0) * (Number(line.unitCost) || 0);
               return (
                 <View
                   key={idx}
@@ -353,7 +376,12 @@ export default function PurchasesScreen() {
                   <View className="flex-row gap-2">
                     <View className="flex-1">
                       <FormField
-                        placeholder="Quantity"
+                        label={
+                          packaged
+                            ? `Quantity (in cartons of ${product.unitsPerPackage})`
+                            : "Quantity"
+                        }
+                        placeholder="0"
                         value={line.quantity}
                         onChangeText={(v) => updateLine(idx, { quantity: v })}
                         keyboardType="numeric"
@@ -361,13 +389,22 @@ export default function PurchasesScreen() {
                     </View>
                     <View className="flex-1">
                       <FormField
-                        placeholder="Unit cost"
+                        label={packaged ? "Cost per carton" : "Cost per unit"}
+                        placeholder="0.00"
                         value={line.unitCost}
                         onChangeText={(v) => updateLine(idx, { unitCost: v })}
                         keyboardType="decimal-pad"
                       />
                     </View>
                   </View>
+                  {lineSubtotal > 0 ? (
+                    <Text className="text-right text-[11px] font-semibold text-on-surface-variant">
+                      Line subtotal: ETB{" "}
+                      {lineSubtotal.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </Text>
+                  ) : null}
                 </View>
               );
             })}

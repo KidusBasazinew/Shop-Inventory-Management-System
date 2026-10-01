@@ -9,6 +9,7 @@ import {
   HelpCircle,
 } from "lucide-react-native";
 import Badge from "../common/Badge";
+import { formatQuantity } from "../../lib/unitConversion";
 
 const REASON_CONFIG = {
   EXPIRED: {
@@ -96,10 +97,11 @@ export default function WasteCard({ record }) {
             Quantity Lost
           </Text>
           <Text className="text-sm font-extrabold text-on-surface mt-0.5">
-            {record.quantity}{" "}
-            <Text className="text-xs font-normal text-on-surface-variant">
-              {record.product?.unitType?.toLowerCase() ?? "units"}
-            </Text>
+            {formatQuantity(
+              record.quantity,
+              record.product?.unitType,
+              record.product?.unitsPerPackage,
+            )}
           </Text>
         </View>
 

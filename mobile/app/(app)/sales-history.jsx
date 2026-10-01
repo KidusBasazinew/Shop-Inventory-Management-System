@@ -21,6 +21,7 @@ import Pagination, { usePageCount } from "../../components/common/Pagination";
 import { useCreateCustomerPayment } from "../../hooks/usePayments";
 import { playSuccess, playError } from "../../lib/feedback";
 import SheetModal from "../../components/common/SheetModal";
+import { formatQuantity } from "../../lib/unitConversion";
 
 const STATUS_CONFIG = {
   PAID: {
@@ -400,8 +401,12 @@ function SaleDetailModal({ saleId, onClose }) {
                       {item.product?.name ?? "Product"}
                     </Text>
                     <Text className="text-[11px] text-on-surface-variant mt-0.5">
-                      {item.quantity} units × ETB{" "}
-                      {Number(item.unitPrice).toLocaleString()}
+                      {formatQuantity(
+                        item.quantity,
+                        item.product?.unitType,
+                        item.product?.unitsPerPackage,
+                      )}{" "}
+                      × ETB {Number(item.unitPrice).toLocaleString()}
                     </Text>
                   </View>
                   <Text className="font-bold text-sm text-on-surface">

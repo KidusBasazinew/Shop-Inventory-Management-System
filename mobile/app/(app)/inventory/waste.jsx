@@ -33,6 +33,11 @@ import FAB from "../../../components/common/FAB";
 import SheetModal from "../../../components/common/SheetModal";
 import WasteCard from "../../../components/waste/WasteCard";
 import { playSuccess, playError } from "../../../lib/feedback";
+import {
+  toBaseQuantity,
+  formatQuantity,
+  isPackagedUnit,
+} from "../../../lib/unitConversion";
 
 const REASONS = [
   { id: "EXPIRED", label: "Expired", icon: Flame },
@@ -112,7 +117,13 @@ export default function WasteScreen() {
     try {
       await createWaste.mutateAsync({
         productId,
-        quantity: Number(quantity),
+        // The field is filled in the product's natural unit (cartons for a
+        // packaged product); the API always expects pieces.
+        quantity: toBaseQuantity(
+          quantity,
+          selectedProduct?.unitType,
+          selectedProduct?.unitsPerPackage,
+        ),
         reason,
       });
       playSuccess();
@@ -328,8 +339,12 @@ export default function WasteScreen() {
             {selectedProduct ? (
               <View className="flex-row items-center justify-between mt-1.5 px-1">
                 <Text className="text-[11px] font-medium text-primary">
-                  Available: {selectedProduct.quantity}{" "}
-                  {selectedProduct.unitType?.toLowerCase() ?? "units"}
+                  Available:{" "}
+                  {formatQuantity(
+                    selectedProduct.quantity,
+                    selectedProduct.unitType,
+                    selectedProduct.unitsPerPackage,
+                  )}
                 </Text>
                 {selectedProduct.buyPrice ? (
                   <Text className="text-[11px] text-on-surface-variant">
@@ -343,7 +358,12 @@ export default function WasteScreen() {
 
           {/* Quantity Input */}
           <FormField
-            label="Quantity Lost"
+            label={
+              isPackagedUnit(selectedProduct?.unitType) &&
+              selectedProduct?.unitsPerPackage
+                ? `Quantity lost (in cartons of ${selectedProduct.unitsPerPackage})`
+                : "Quantity Lost"
+            }
             placeholder="e.g. 5"
             value={quantity}
             onChangeText={setQuantity}
@@ -443,7 +463,12 @@ export default function WasteScreen() {
                         {product.name}
                       </Text>
                       <Text className="text-xs text-on-surface-variant mt-0.5">
-                        {product.quantity} in stock
+                        {formatQuantity(
+                          product.quantity,
+                          product.unitType,
+                          product.unitsPerPackage,
+                        )}{" "}
+                        in stock
                       </Text>
                     </View>
                     {isSelected ? <Check size={18} color="#004ac6" /> : null}

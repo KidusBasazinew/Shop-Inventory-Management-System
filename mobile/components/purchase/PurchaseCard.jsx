@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { Truck, Layers, Calendar } from "lucide-react-native";
 import Badge from "../common/Badge";
+import { formatQuantity } from "../../lib/unitConversion";
 
 const STATUS_TONE = { UNPAID: "error", PARTIAL: "warning", PAID: "success" };
 
@@ -41,7 +42,7 @@ export default function PurchaseCard({ purchase, onRecordPayment }) {
           <View className="bg-primary/10 px-2.5 py-1 rounded-full flex-row items-center gap-1">
             <Layers size={12} color="#004ac6" />
             <Text className="text-xs font-bold text-primary">
-              {totalUnits} units
+              {totalUnits} pieces
             </Text>
           </View>
         </View>
@@ -53,7 +54,12 @@ export default function PurchaseCard({ purchase, onRecordPayment }) {
                 className="text-xs text-on-surface-variant flex-1"
                 numberOfLines={1}
               >
-                {i.product?.name ?? "Product"} × {i.quantity}
+                {i.product?.name ?? "Product"} ×{" "}
+                {formatQuantity(
+                  i.quantity,
+                  i.product?.unitType,
+                  i.product?.unitsPerPackage,
+                )}
               </Text>
               <Text className="text-xs font-semibold text-on-surface">
                 ETB {Number(i.subtotal).toFixed(2)}

@@ -20,6 +20,7 @@ import {
 } from "lucide-react-native";
 import { useAuth } from "../../../context/AuthContext";
 import { useStockMovements } from "../../../hooks/useStockMovements";
+import { isPackagedUnit } from "../../../lib/unitConversion";
 
 const MOVEMENT_TYPES = ["PURCHASE", "SALE", "RETURN", "WASTE", "ADJUSTMENT"];
 
@@ -212,6 +213,18 @@ export default function Activity() {
           const config = TYPE_CONFIG[item.type] ?? TYPE_CONFIG.ADJUSTMENT;
           const Icon = config.icon;
           const isPositive = Number(item.quantity) > 0;
+          // The delta stays in pieces, but packaged products also show its
+          // carton equivalent so the number is easy to read at a glance.
+          const packaged =
+            isPackagedUnit(item.product?.unitType) &&
+            item.product?.unitsPerPackage;
+          const deltaLabel = packaged
+            ? `${isPositive ? "+" : ""}${item.quantity} (${(
+                Number(item.quantity) / Number(item.product.unitsPerPackage)
+              ).toFixed(1)} ctn)`
+            : isPositive
+              ? `+${item.quantity}`
+              : item.quantity;
 
           return (
             <View className="bg-surface-container-lowest rounded-3xl overflow-hidden shadow-xs border border-outline-variant/20 flex-row">
@@ -247,7 +260,7 @@ export default function Activity() {
                     <Text
                       className={`font-bold text-xs ${isPositive ? "text-emerald-700" : "text-red-700"}`}
                     >
-                      {isPositive ? `+${item.quantity}` : item.quantity}
+                      {deltaLabel}
                     </Text>
                   </View>
                 </View>

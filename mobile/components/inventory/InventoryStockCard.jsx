@@ -9,6 +9,7 @@ import {
   Clock,
   Layers,
 } from "lucide-react-native";
+import { formatQuantity } from "../../lib/unitConversion";
 
 export default function InventoryStockCard({ product, onPress }) {
   const {
@@ -16,6 +17,7 @@ export default function InventoryStockCard({ product, onPress }) {
     genericName,
     category,
     unitType,
+    unitsPerPackage,
     minQuantityAlert,
     quantity,
     isExpiringSoon,
@@ -121,7 +123,9 @@ export default function InventoryStockCard({ product, onPress }) {
               className="text-[11px] font-semibold"
               style={{ color: isLowStock ? "#93000a" : "#004ac6" }}
             >
-              {totalQuantity} in stock · reorder at {reorderLevel}
+              {formatQuantity(totalQuantity, unitType, unitsPerPackage)} in
+              stock · reorder at{" "}
+              {formatQuantity(reorderLevel, unitType, unitsPerPackage)}
             </Text>
           </View>
         </View>

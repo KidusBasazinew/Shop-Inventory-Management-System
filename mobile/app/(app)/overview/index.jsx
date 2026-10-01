@@ -30,6 +30,7 @@ import ChartCard from "../../../components/analytics/ChartCard";
 import TrialBanner from "../../../components/overview/TrialBanner";
 import QuickAction from "../../../components/overview/QuickAction";
 import AlertRow from "../../../components/overview/AlertRow";
+import { formatQuantity } from "../../../lib/unitConversion";
 
 const PAYMENT_COLORS = {
   CASH: "#004ac6",
@@ -402,8 +403,16 @@ export default function OverviewPage() {
                     icon={PackageMinus}
                     tone="warning"
                     title={p.name}
-                    subtitle={`Reorder threshold: ${p.minQuantityAlert}`}
-                    trailing={`${p.quantity} ${p.unitType?.toLowerCase() ?? ""}`}
+                    subtitle={`Reorder threshold: ${formatQuantity(
+                      p.minQuantityAlert,
+                      p.unitType,
+                      p.unitsPerPackage,
+                    )}`}
+                    trailing={formatQuantity(
+                      p.quantity,
+                      p.unitType,
+                      p.unitsPerPackage,
+                    )}
                     onPress={() => router.push("(app)/inventory/products")}
                   />
                 ))
@@ -433,7 +442,11 @@ export default function OverviewPage() {
                     tone="error"
                     title={p.name}
                     subtitle={`Expiry: ${new Date(p.expiryDate).toLocaleDateString()}`}
-                    trailing={`${p.quantity} units`}
+                    trailing={formatQuantity(
+                      p.quantity,
+                      p.unitType,
+                      p.unitsPerPackage,
+                    )}
                   />
                 ))
             )}

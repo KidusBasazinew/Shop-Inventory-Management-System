@@ -19,7 +19,18 @@ export async function listPurchases(
       take: limit,
       include: {
         supplier: { select: { id: true, name: true } },
-        items: { include: { product: { select: { id: true, name: true } } } },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                unitType: true,
+                unitsPerPackage: true,
+              },
+            },
+          },
+        },
       },
     }),
     prisma.purchase.count({ where }),
@@ -43,7 +54,18 @@ export async function getPurchase(shopId, purchaseId) {
     where: { id: purchaseId },
     include: {
       supplier: true,
-      items: { include: { product: { select: { id: true, name: true } } } },
+      items: {
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              unitType: true,
+              unitsPerPackage: true,
+            },
+          },
+        },
+      },
       allocations: { include: { payment: true } },
     },
   });

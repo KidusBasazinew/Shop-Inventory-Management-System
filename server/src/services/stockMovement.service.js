@@ -25,7 +25,14 @@ export async function listStockMovements(
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        product: { select: { id: true, name: true, unitType: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            unitType: true,
+            unitsPerPackage: true,
+          },
+        },
         createdBy: { select: { id: true, name: true } },
       },
     }),

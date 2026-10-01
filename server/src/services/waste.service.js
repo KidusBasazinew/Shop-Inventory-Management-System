@@ -21,7 +21,15 @@ export async function listWaste(
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        product: { select: { id: true, name: true, buyingPrice: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            buyingPrice: true,
+            unitType: true,
+            unitsPerPackage: true,
+          },
+        },
       },
     }),
     prisma.wasteRecord.count({ where }),

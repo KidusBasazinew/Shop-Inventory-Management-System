@@ -25,7 +25,15 @@ export async function listSales(
         soldBy: { select: { id: true, name: true } },
         items: {
           include: {
-            product: { select: { id: true, name: true, buyingPrice: true } },
+            product: {
+              select: {
+                id: true,
+                name: true,
+                buyingPrice: true,
+                unitType: true,
+                unitsPerPackage: true,
+              },
+            },
           },
         },
       },
@@ -41,7 +49,18 @@ export async function getSale(shopId, saleId) {
     where: { id: saleId },
     include: {
       customer: true,
-      items: { include: { product: { select: { id: true, name: true } } } },
+      items: {
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              unitType: true,
+              unitsPerPackage: true,
+            },
+          },
+        },
+      },
       allocations: { include: { payment: true } },
     },
   });

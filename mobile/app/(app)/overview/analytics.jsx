@@ -14,6 +14,7 @@ import { useSuppliers } from "../../../hooks/useSuppliers";
 
 import PillTabs from "../../../components/common/PillTabs";
 import KPICard from "../../../components/analytics/KPICard";
+import { formatQuantity } from "../../../lib/unitConversion";
 import { ChartCard } from "../../../components/ChartCard";
 
 const DATE_OPTIONS = [
@@ -248,7 +249,12 @@ export default function AnalyticsScreen() {
                           {item.name}
                         </Text>
                         <Text className="text-xs text-on-surface-variant">
-                          {item.quantity} units left
+                          {formatQuantity(
+                            item.quantity,
+                            item.unitType,
+                            item.unitsPerPackage,
+                          )}{" "}
+                          left
                         </Text>
                       </View>
                     </View>

@@ -11,6 +11,10 @@ import {
   useExpiringProducts,
 } from "../../../hooks/useProducts";
 import { useStockMovements } from "../../../hooks/useStockMovements";
+import {
+  formatQuantity,
+  isPackagedUnit,
+} from "../../../lib/unitConversion";
 
 function daysUntil(dateStr) {
   return Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
@@ -69,7 +73,15 @@ export default function AlertsScreen() {
         severity: isOut ? "critical" : "warning",
         title: isOut ? "Out of Stock" : "Low Stock Alert",
         time: "Now",
-        description: `${p.name} — ${p.quantity} ${p.unitType?.toLowerCase() ?? "units"} left (reorder at ${p.minQuantityAlert}).`,
+        description: `${p.name} — ${formatQuantity(
+          p.quantity,
+          p.unitType,
+          p.unitsPerPackage,
+        )} left (reorder at ${formatQuantity(
+          p.minQuantityAlert,
+          p.unitType,
+          p.unitsPerPackage,
+        )}).`,
         actionLabel: "VIEW PRODUCTS",
         onActionPress: () => router.push("(app)/inventory/products"),
       });
@@ -82,7 +94,11 @@ export default function AlertsScreen() {
         severity: daysLeft <= 14 ? "critical" : "warning",
         title: "Expiry Warning",
         time: "Now",
-        description: `${p.name} — ${p.quantity} units expire in ${daysLeft}d.`,
+        description: `${p.name} — ${formatQuantity(
+          p.quantity,
+          p.unitType,
+          p.unitsPerPackage,
+        )} expire in ${daysLeft}d.`,
       });
     });
 
@@ -109,12 +125,18 @@ export default function AlertsScreen() {
     const buckets = { today: [], yesterday: [], earlier: [] };
     (movementsData?.items ?? []).forEach((mv) => {
       const bucket = relativeDay(mv.createdAt);
+      const packaged =
+        isPackagedUnit(mv.product?.unitType) && mv.product?.unitsPerPackage;
       buckets[bucket].push({
         id: `movement-${mv.id}`,
         severity: "success",
         title: "Stock Arrived",
         time: formatTime(mv.createdAt),
-        description: `${mv.product?.name ?? "Product"} — +${mv.quantity} units added.`,
+        description: `${mv.product?.name ?? "Product"} — ${
+          packaged
+            ? `+${mv.quantity} (${(mv.quantity / mv.product.unitsPerPackage).toFixed(1)} ctn) units`
+            : `+${mv.quantity} units`
+        } added.`,
       });
     });
     return buckets;
